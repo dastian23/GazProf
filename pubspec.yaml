@@ -68,7 +68,15 @@ flutter:
     - assets/flame.svg
     - assets/google_logo.png
     - assets/verified.svg
-
+    - assets/home.svg
+    - assets/time.svg
+    - assets/user.svg
+    - assets/file.svg
+    - assets/harta.svg
+    - assets/password.svg
+    - assets/theme.svg
+    - assets/deconnect.svg
+    - assets/cut.svg
 
   # To add assets to your application, add an assets section, like this:
   # assets:

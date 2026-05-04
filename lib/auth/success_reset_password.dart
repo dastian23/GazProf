@@ -141,7 +141,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
 
 
 
-              // 6. BTN
+              // 5. BTN
               Container(
                 width: 220,
                 height: 55,
