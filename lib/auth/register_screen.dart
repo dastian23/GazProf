@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'success_screen.dart';
+import '../../../core/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -11,200 +14,187 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isObscured = true;
-  final Color darkGrey = const Color(0xFF312F2F);
-  final Color brandBlue = const Color(0xFF0779B7);
   final TextEditingController _emailController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context);
+
+    // activating the status bar
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+    ));
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Column(
-              children: [
-                const SizedBox(height: 50),
-                // 1. LOGO & FLAME
-                Stack(
-                  alignment: Alignment.center,
+      backgroundColor: theme.scaffoldBg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 45),
+          child: Column(
+            children: [
+              // space to push down the logo
+              const SizedBox(height: 10),
+
+              // 1.LOGO & FLAME
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 25,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.brandBlue.withValues(alpha: 0.4),
+                          blurRadius: 35,
+                          spreadRadius: 6,
+                        ),
+                      ],
+                    ),
+                  ),
+                  SvgPicture.asset(
+                    'assets/flame.svg',
+                    width: 45,
+                    height: 65,
+                    fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Image.asset('assets/logo_gazprof.png', height: 20),
+              Text(
+                'Gestionare livrări',
+                style: TextStyle(color: theme.textGriFix, fontSize: 12),
+              ),
+
+              // space to push up the logo & everything down
+              const Spacer(flex: 1),
+
+              // 2. TITLE
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Back glow
-                    Container(
-                      width: 40,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: brandBlue.withValues(alpha: 0.4),
-                            blurRadius: 45,
-                            spreadRadius: 10,
-                          ),
-                        ],
+                    Text(
+                      'Crează un cont nou',
+                      style: TextStyle(
+                        color: theme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                    // Flacăra propriu-zisă
-                    SvgPicture.asset(
-                      'assets/flame.svg',
-                      width: 69,
-                      height: 95,
-                      fit: BoxFit.fill,
-                      colorFilter: ColorFilter.mode(brandBlue, BlendMode.srcIn),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Completează datele de mai jos.',
+                      style: TextStyle(color: theme.textGriFix, fontSize: 13),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+              ),
 
-                Image.asset('assets/logo_gazprof.png', height: 30),
-                const Text(
-                  'Gestionare livrări',
-                  style: TextStyle(color: Colors.white70, fontSize: 16),
+              const SizedBox(height: 15),
+
+              // 3.TEXT FIELDS
+              _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme),
+              const SizedBox(height: 10),
+              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme),
+              const SizedBox(height: 10),
+              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme),
+              const SizedBox(height: 10),
+              _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme),
+
+              const SizedBox(height: 8),
+              Text(
+                'Minim 8 caractere, o litere mare și o cifră',
+                style: TextStyle(color: theme.textGriFix, fontSize: 11),
+              ),
+
+              // space to push down the buton & footer
+              const Spacer(flex: 1),
+
+              // 4.BUTON ÎNREGISTREAZĂ-TE
+              Container(
+                width: 180,
+                height: 45,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: theme.buttonOutline, width: 1.5),
+                  boxShadow: theme.buttonShadow,
                 ),
-
-                const SizedBox(height: 45),
-
-                // 2. TITLU
-                const Align(
-                  alignment: Alignment.centerLeft,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (context) => SuccessScreen(email: _emailController.text)));
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.brandBlue,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  ),
                   child: Text(
-                    'Crează un cont nou',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'Înregistrează-te',
+                    style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Completează datele de mai jos pentru a începe.',
-                    style: TextStyle(color: Colors.white60, fontSize: 16),
-                  ),
-                ),
+              ),
 
-                const SizedBox(height: 35),
+              // space between buton & footer
+              const SizedBox(height: 19),
 
-                // 3. TEXT FIELDS
-                _buildTextField(hint: 'Nume complet', icon: Icons.person_outline),
-                const SizedBox(height: 20),
-                _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined),
-                const SizedBox(height: 20),
-                _buildTextField(hint: 'E-mail', icon: Icons.email_outlined),
-                const SizedBox(height: 20),
-                _buildTextField(
-                  hint: 'Parolă',
-                  icon: Icons.lock_outline,
-                  isPassword: true,
-                ),
-
-                // 4. TEXT INSTRUCȚIUNI (14px)
-                const SizedBox(height: 12),
-                const Text(
-                  'Minim 8 caractere, o litere mare și o cifră',
-                  style: TextStyle(color: Colors.white54, fontSize: 14), // 14px
-                ),
-
-                const SizedBox(height: 45),
-
-                // 5. BUTON ÎNREGISTREAZĂ-TE (Glow neon + 16px)
-                Container(
-                  width: 220,
-                  height: 55,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: Colors.white, width: 2.0),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.white.withValues(alpha: 0.25),
-                        spreadRadius: 1,
-                        blurRadius: 12,
-                      ),
-                    ],
-                  ),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SuccessScreen(email: _emailController.text),
-                        ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: brandBlue,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    ),
-                    child: const Text(
-                      'Înregistrează-te',
-                      style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                // 6. FOOTER (14px)
-                Row(
+              // 5.FOOTER
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text(
-                        'Ai deja cont? ',
-                        style: TextStyle(color: Colors.white70, fontSize: 14)
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
+                    Text('Ai deja cont? ', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
                       child: Text(
                         'Conectează-te',
-                        style: TextStyle(
-                            color: Color(0xFF00B4D8),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14
-                        ),
+                        style: TextStyle(color: theme.links, fontWeight: FontWeight.bold, fontSize: 13),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 10),
-              ],
-            ),
+              ),
+
+              //space to push everything up
+              const SizedBox(height: 40),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField({required String hint, required IconData icon, bool isPassword = false}) {
+  Widget _buildTextField({required String hint, required IconData icon, bool isPassword = false, required ThemeProvider theme}) {
     return TextField(
       controller: hint == 'E-mail' ? _emailController : null,
       obscureText: isPassword ? _isObscured : false,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
+      style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,
-        fillColor: darkGrey,
-        prefixIcon: Icon(icon, color: Colors.white),
+        fillColor: theme.textCard,
+        prefixIcon: Icon(icon, color: theme.textFieldIcon, size: 18),
         suffixIcon: isPassword
             ? IconButton(
-            icon: Icon(_isObscured ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
+            icon: Icon(_isObscured ? Icons.visibility_off : Icons.visibility, color: theme.textFieldIcon, size: 18),
             onPressed: () => setState(() => _isObscured = !_isObscured))
             : null,
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white60, fontSize: 16),
+        hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Colors.white, width: 1.5), // Outline alb
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.textCardOutline, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: brandBlue, width: 2.0),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
         ),
       ),
     );

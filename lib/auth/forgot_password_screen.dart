@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'otp_screen.dart';
+import '../../../core/theme_provider.dart';
+import 'package:provider/provider.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -11,173 +14,164 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
-  final Color brandBlue = const Color(0xFF0779B7);
-  final Color darkGrey = const Color(0xFF312F2F);
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context);
+
+    // activating the status bar
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light, // Pentru iOS
+    ));
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false,
+      backgroundColor: theme.scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 5),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: darkGrey,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-                onPressed: () => Navigator.pop(context),
-              ),
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+          statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
+        ),
+        title: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: theme.arrowFill,
+              shape: BoxShape.circle,
             ),
+            child: Icon(Icons.arrow_back, color: theme.arrowIcon, size: 20),
           ),
         ),
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: IntrinsicHeight(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 20),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 45),
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
 
-                      // 1. FLAME
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: brandBlue.withValues(alpha: 0.5),
-                                  blurRadius: 50,
-                                  spreadRadius: 15,
-                                ),
-                              ],
-                            ),
-                          ),
-                          SvgPicture.asset(
-                            'assets/flame.svg',
-                            width: 69,
-                            height: 95,
-                            fit: BoxFit.fill,
-                            colorFilter: ColorFilter.mode(brandBlue, BlendMode.srcIn),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // 2. LOGO GAZPROF
-                      Image.asset(
-                        'assets/logo_gazprof.png',
-                        width: 171,
-                        height: 21,
-                        fit: BoxFit.contain,
-                      ),
-                      const Text(
-                        'Gestionare livrări',
-                        style: TextStyle(color: Colors.white70, fontSize: 16),
-                      ),
-
-                      const SizedBox(height: 85),
-
-                      // 3. TITLE & TEXT
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Ai uitat parola?',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
+              // space to push down the logo
+              // 1. LOGO & FLAME
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 25,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.brandBlue.withValues(alpha: 0.4),
+                          blurRadius: 35,
+                          spreadRadius: 6,
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Vă rugăm să introduceți adresa de e-mail pentru a primi instrucțiunile de resetare.',
-                          style: TextStyle(color: Colors.white60, fontSize: 16, height: 1.4),
-                        ),
-                      ),
+                      ],
+                    ),
+                  ),
+                  SvgPicture.asset(
+                    'assets/flame.svg',
+                    width: 45,
+                    height: 65,
+                    fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              Image.asset('assets/logo_gazprof.png', height: 20),
+              Text(
+                'Gestionare livrări',
+                style: TextStyle(color: theme.textGriFix, fontSize: 12),
+              ),
 
-                      const SizedBox(height: 30),
+              const Spacer(flex: 1),
 
-                      // 4. EMAIL
-                      _buildTextField(
-                        hint: 'Introduceți e-mailul',
-                        icon: Icons.email_outlined,
-                        controller: _emailController,
+              // 2. TITLE  & DESCRIPTION
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Ai uitat parola?',
+                      style: TextStyle(
+                        color: theme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-
-                      // 5. SPACER to push down the btn
-                      const SizedBox(height: 250),
-
-                      // 6. RESET BTN
-                      Container(
-                        width: 240,
-                        height: 55,
-                        margin: const EdgeInsets.only(bottom: 50),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.white, width: 2.0),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withValues(alpha: 0.15),
-                              blurRadius: 15,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const OtpScreen()),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: brandBlue,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          child: const Text(
-                            'Resetează parola',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Vă rugăm să introduceți adresa de e-mail pentru a primi instrucțiunile de resetare.',
+                      style: TextStyle(
+                          color: theme.textGriFix,
+                          fontSize: 13,
+                          height: 1.4
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+              ),
+              // space between title and input field
+              const SizedBox(height: 25),
+
+              // 3. INPUT FIELD - E-MAIL
+              _buildTextField(
+                hint: 'Introduceți e-mailul',
+                icon: Icons.email_outlined,
+                controller: _emailController,
+                theme: theme,
+              ),
+
+              // space between input field & reset buton
+              const Spacer(flex: 2),
+
+              // 4. BUTON RESETEAZA PAROLA
+              Container(
+                width: 210,
+                height: 45,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(30),
+                  border: Border.all(color: theme.buttonOutline, width: 1.5),
+                  boxShadow: theme.buttonShadow,
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const OtpScreen()),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: theme.brandBlue,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                  ),
+                  child: Text(
+                    'Resetează parola',
+                    style: TextStyle(
+                      color: theme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        },
+              //space to push everything up
+              const SizedBox(height: 60),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -186,23 +180,25 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     required String hint,
     required IconData icon,
     TextEditingController? controller,
+    required ThemeProvider theme,
   }) {
     return TextField(
       controller: controller,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
+      style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,
-        fillColor: darkGrey,
-        prefixIcon: Icon(icon, color: Colors.white),
+        fillColor: theme.textCard,
+        prefixIcon: Icon(icon, color: theme.textFieldIcon, size: 18),
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white54, fontSize: 16),
+        hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.textCardOutline, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: brandBlue, width: 2.0),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
         ),
       ),
     );

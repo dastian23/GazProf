@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+import '../../../core/theme_provider.dart';
 
 class SuccessResetPassword extends StatefulWidget {
   const SuccessResetPassword({super.key});
@@ -13,14 +16,9 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
   double _checkOpacity = 0.0;
   double _checkScale = 0.4;
 
-  // Defined colors
-  final Color brandBlue = const Color(0xFF0779B7);   // Fill color
-  final Color outlineBlue = const Color(0xFF00A5FF); // outline & verified color
-
   @override
   void initState() {
     super.initState();
-    // Starting the animation after 400ms delay
     Future.delayed(const Duration(milliseconds: 400), () {
       if (mounted) {
         setState(() {
@@ -33,68 +31,75 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context);
+
+    // activating the status bar
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
+    ));
+
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: Center(
+      backgroundColor: theme.scaffoldBg,
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 45),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // 1. FlAME
+              const SizedBox(height: 10),
+
+              // 1.LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
-                  // Back glow
                   Container(
-                    width: 40,
-                    height: 60,
+                    width: 25,
+                    height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: brandBlue.withValues(alpha: 0.4),
-                          blurRadius: 45,
-                          spreadRadius: 10,
+                          color: theme.brandBlue.withValues(alpha: 0.4),
+                          blurRadius: 35,
+                          spreadRadius: 6,
                         ),
                       ],
                     ),
                   ),
-
                   SvgPicture.asset(
                     'assets/flame.svg',
-                    width: 69,
-                    height: 95,
-                    fit: BoxFit.fill,
-                    colorFilter: ColorFilter.mode(brandBlue, BlendMode.srcIn),
+                    width: 45,
+                    height: 65,
+                    fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
-
-              // 2. LOGO
-              Image.asset('assets/logo_gazprof.png', height: 30),
-              const Text(
+              const SizedBox(height: 5),
+              Image.asset('assets/logo_gazprof.png', height: 20),
+              Text(
                 'Gestionare livrări',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: theme.textGriFix, fontSize: 12),
               ),
-              const SizedBox(height: 80),
 
+              // space between logo & success icon
+              const Spacer(flex: 2),
 
-              // 3. SUCCESS AT RESETING THE PASSWORD
+              // 2. SUCCESS ICON
               Container(
-                height: 160,
-                width: 160,
+                height: 140,
+                width: 140,
                 decoration: BoxDecoration(
-                  color: brandBlue, // Fill
+                  color: theme.brandBlue,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: outlineBlue, // Outline
+                    color: theme.outlineBlue,
                     width: 2.0,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: outlineBlue.withValues(alpha: 0.25),
+                      color: theme.outlineBlue.withValues(alpha: 0.25),
                       blurRadius: 25,
                       spreadRadius: 2,
                     ),
@@ -111,73 +116,68 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
                       curve: Curves.easeOutBack,
                       child: SvgPicture.asset(
                         'assets/verified.svg',
-                        width: 85,
-                        colorFilter: ColorFilter.mode(outlineBlue, BlendMode.srcIn),
+                        width: 70,
+                        colorFilter: ColorFilter.mode(theme.outlineBlue, BlendMode.srcIn),
                       ),
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 40),
+              // space between success icon & TEXT MESSAGE
+              const SizedBox(height: 30),
 
-              // 4. TEXT
-              const Text(
+              // 3. TEXT MESSAGE
+              Text(
                 'Succes!',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: theme.textPrimary,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 20),
-              const Text(
+              const SizedBox(height: 15),
+              Text(
                 'Felicitări! Parola ta a fost modificată! Apasă pe continuă pentru a te autentifica.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: theme.textGriFix, fontSize: 14),
               ),
 
-              const SizedBox(height: 120),
+              // space between text message & buton
+              const Spacer(flex: 3),
 
-
-
-              // 5. BTN
+              // 4. BUTON CONTINUĂ
               Container(
-                width: 220,
-                height: 55,
+                width: 180,
+                height: 45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 2.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withOpacity(0.3),
-                      spreadRadius: 1,
-                      blurRadius: 12,
-                      offset: const Offset(0, 0),
-                    ),
-                  ],
+                  border: Border.all(color: theme.buttonOutline, width: 1.5),
+                  boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: brandBlue,
+                    backgroundColor: theme.brandBlue,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Continuă',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
+                      color: theme.textPrimary,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
+              //space to push everything up
+              const SizedBox(height: 60),
             ],
           ),
         ),

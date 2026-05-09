@@ -9,15 +9,19 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  // -- BLUE COLORS FOR FLAME, LINKS & SUCCESS --
+  Color get brandBlue => const Color(0xFF0779B7);
+  Color get links => const Color(0xFF00B4D8);
+  Color get outlineBlue => const Color(0xFF00A5FF);
+
   // --- BACKGROUND COLORS ---
   Color get scaffoldBg => _isDark ? Colors.black : const Color(0xFFF7F7F7);
 
   // Fundalul pentru zona de profil de sus: Negru pe Dark, Alb pe Light
   Color get headerBg => _isDark ? Colors.black : Colors.white;
-
   Color get backCircle => _isDark ? const Color(0xFF312F2F) : const Color(0xFFD9D9D9);
 
-  // --- CARD COLORS ---
+  // --- PROFILE CARD COLORS ---
   // Pe Light, cardurile (placeholderele) devin albe conform noii cerințe
   Color get cardFill => _isDark ? const Color(0xFF312F2F) : Colors.white;
   Color get cardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
@@ -26,21 +30,27 @@ class ThemeProvider extends ChangeNotifier {
   // Alb pe Dark, D1D1D1 pe Light
   Color get sectionLabel => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
-  // --- TEXTBOX COLORS ---
+  // --- TEXTBOX COLORS  & CARDS ---
   Color get textFieldFill => _isDark ? const Color(0xFF312F2F) : Colors.white;
   Color get textFieldOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
   Color get textFieldIcon => _isDark ? Colors.white : Colors.black;
+  Color get textCard => _isDark ? const Color(0xFF312F2F) : const Color(0xFFEEEEEE);
+  Color get textCardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
   // --- TEXT COLOR ---
   Color get textPrimary => _isDark ? Colors.white : Colors.black;
   Color get textSecondary => _isDark ? Colors.white60 : const Color(0xFF888888);
   Color get textGriFix => const Color(0xFF888888);
-  Color get linkBlue => const Color(0xFF0779B7);
 
   // --- BTN COLOR ---
-  Color get brandBlue => const Color(0xFF0779B7);
   Color get buttonText => _isDark ? Colors.white : Colors.black;
+  Color get buttonCard => _isDark ? const Color(0xFF312F2F) : const Color(0xFFEEEEEE);
+  Color get buttonCardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
   Color get buttonOutline => _isDark ? Colors.white : Colors.black;
+
+  // --- BACK ARROW ---
+  Color get arrowFill => _isDark ? const Color(0xFF312F2F) : const Color(0xFFD9D9D9);
+  Color get arrowIcon => _isDark ? Colors.white : Colors.black;
 
   // Umbra butonului: Albă pe Dark, Neagră pe Light
   List<BoxShadow> get buttonShadow => [

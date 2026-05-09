@@ -19,9 +19,24 @@ class GazProfApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    final theme = Provider.of<ThemeProvider>(context);
+
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: Scaffold(
+        // Aici schimbi între LoginScreen(), RegisterScreen() etc.
+        body: const LoginScreen(),
+
+        // Butonul care va pluti deasupra oricărui ecran
+        floatingActionButton: FloatingActionButton(
+          backgroundColor: theme.brandBlue,
+          onPressed: () => theme.toggleTheme(),
+          child: Icon(
+            theme.isDark ? Icons.light_mode : Icons.dark_mode,
+            color: Colors.white,
+          ),
+        ),
+      ),
     );
   }
 }

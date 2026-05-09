@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gazprof/auth/success_reset_password.dart';
+import 'package:provider/provider.dart';
+import '../../../core/theme_provider.dart';
 import 'success_reset_password.dart';
 
 class PasswordSetScreen extends StatefulWidget {
@@ -11,150 +13,145 @@ class PasswordSetScreen extends StatefulWidget {
 }
 
 class _PasswordSetScreenState extends State<PasswordSetScreen> {
-  final Color brandBlue = const Color(0xFF0779B7);
-  final Color darkGrey = const Color(0xFF312F2F);
-
   bool _isObscured1 = true;
   bool _isObscured2 = true;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context);
+
+    // activating the status bar
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
+    ));
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      resizeToAvoidBottomInset: false,
+      backgroundColor: theme.scaffoldBg,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         automaticallyImplyLeading: false,
-        title: Padding(
-          padding: const EdgeInsets.only(left: 5),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: darkGrey,
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                padding: EdgeInsets.zero,
-                icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-                onPressed: () => Navigator.pop(context),
-              ),
+        systemOverlayStyle: SystemUiOverlayStyle(
+          statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+        ),
+        title: GestureDetector(
+          onTap: () => Navigator.pop(context),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: theme.arrowFill,
+              shape: BoxShape.circle,
             ),
+            child: Icon(Icons.arrow_back, color: theme.arrowIcon, size: 20),
           ),
         ),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 45),
           child: Column(
             children: [
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
 
-              // 1. FLAME
+              // 1. LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 30,
-                    height: 30,
+                    width: 25,
+                    height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: brandBlue.withValues(alpha: 0.5),
-                          blurRadius: 50,
-                          spreadRadius: 15,
+                          color: theme.brandBlue.withValues(alpha: 0.4),
+                          blurRadius: 35,
+                          spreadRadius: 6,
                         ),
                       ],
                     ),
                   ),
                   SvgPicture.asset(
                     'assets/flame.svg',
-                    width: 69,
-                    height: 95,
-                    fit: BoxFit.fill,
-                    colorFilter: ColorFilter.mode(brandBlue, BlendMode.srcIn),
+                    width: 45,
+                    height: 65,
+                    fit: BoxFit.contain,
+                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
                   ),
                 ],
               ),
-
-              const SizedBox(height: 12),
-
-              // 2. LOGO GAZPROF
-              Image.asset(
-                'assets/logo_gazprof.png',
-                width: 171,
-                height: 21,
-                fit: BoxFit.contain,
-              ),
-              const Text(
+              const SizedBox(height: 5),
+              Image.asset('assets/logo_gazprof.png', height: 20),
+              Text(
                 'Gestionare livrări',
-                style: TextStyle(color: Colors.white70, fontSize: 16),
+                style: TextStyle(color: theme.textGriFix, fontSize: 12),
               ),
 
-              const SizedBox(height: 50),
+              // space between logo & title
+              const Spacer(flex: 1),
 
-              // 3. TEXT (Stilul tău de Align)
-              const Align(
+              // 2. TITLE
+              Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  'Setează o parolă nouă',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Setează o parolă nouă',
+                      style: TextStyle(
+                        color: theme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Creează o parolă nouă, diferită de cea anterioară.',
+                      style: TextStyle(color: theme.textGriFix, fontSize: 13),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              const Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Creează o parolă nouă. Asigură-te că este diferită de cea anterioară pentru securitatea contului. Minim 8 caractere, o litere mare și o cifră.',
-                  style: TextStyle(
-                    color: Colors.white60,
-                    fontSize: 16,
-                    height: 1.4,
-                  ),
-                ),
-              ),
 
+              // space between title & inputs fields
               const SizedBox(height: 25),
 
-              // 4. TEXT
-              _buildLabel('Parolă'),
+              // 3. INPUTS FIELDS
               _buildPasswordField(
                 hint: 'Introdu noua parolă',
                 isObscured: _isObscured1,
+                theme: theme,
                 onToggle: () => setState(() => _isObscured1 = !_isObscured1),
               ),
               const SizedBox(height: 15),
-              _buildLabel('Confirmă parola'),
               _buildPasswordField(
                 hint: 'Reintrodu parola',
                 isObscured: _isObscured2,
+                theme: theme,
                 onToggle: () => setState(() => _isObscured2 = !_isObscured2),
               ),
 
-              const SizedBox(height: 115),
+              const SizedBox(height: 12),
+              Text(
+                'Minim 8 caractere, o literă mare și o cifră.',
+                style: TextStyle(color: theme.textGriFix, fontSize: 11),
+              ),
 
-              // 5. BTN
+              // space between inputs field & buton
+              const Spacer(flex: 2),
+
+              // 4. BUTON ACTUALIZEAZĂ
               Container(
-                width: 240,
-                height: 55,
-                margin: const EdgeInsets.only(bottom: 80),
+                width: 200,
+                height: 45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: Colors.white, width: 2.0),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      blurRadius: 15,
-                      spreadRadius: 1,
-                    ),
-                  ],
+                  border: Border.all(color: theme.buttonOutline, width: 1.5),
+                  boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
                   onPressed: () {
@@ -164,22 +161,25 @@ class _PasswordSetScreenState extends State<PasswordSetScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: brandBlue,
+                    backgroundColor: theme.brandBlue,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'Actualizează',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
+                      color: theme.textPrimary,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
+
+              //space to push everything up
+              const SizedBox(height: 60),
             ],
           ),
         ),
@@ -187,42 +187,37 @@ class _PasswordSetScreenState extends State<PasswordSetScreen> {
     );
   }
 
-  // Helper pentru etichete (Labels)
-  Widget _buildLabel(String text) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 8.0),
-        child: Text(
-          text,
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ),
-    );
-  }
-
-  // Helper pentru câmpurile de parolă
-  Widget _buildPasswordField({required String hint, required bool isObscured, required VoidCallback onToggle}) {
+  Widget _buildPasswordField({
+    required String hint,
+    required bool isObscured,
+    required VoidCallback onToggle,
+    required ThemeProvider theme,
+  }) {
     return TextField(
       obscureText: isObscured,
-      style: const TextStyle(color: Colors.white, fontSize: 16),
+      style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,
-        fillColor: darkGrey,
-        prefixIcon: const Icon(Icons.lock_outline, color: Colors.white),
+        fillColor: theme.textCard,
+        prefixIcon: Icon(Icons.lock_outline, color: theme.textFieldIcon, size: 18),
         suffixIcon: IconButton(
-          icon: Icon(isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined, color: Colors.white70),
+          icon: Icon(
+              isObscured ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+              color: theme.textFieldIcon,
+              size: 18
+          ),
           onPressed: onToggle,
         ),
         hintText: hint,
-        hintStyle: const TextStyle(color: Colors.white38, fontSize: 15),
+        hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.textCardOutline, width: 1.0),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(15),
-          borderSide: BorderSide(color: brandBlue, width: 2.0),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
         ),
       ),
     );
