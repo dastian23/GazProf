@@ -9,25 +9,24 @@ class ThemeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // -- BLUE COLORS FOR FLAME, LINKS & SUCCESS --
+  // --- BLUE COLORS FOR FLAME, LINKS & SUCCESS ---
   Color get brandBlue => const Color(0xFF0779B7);
   Color get links => const Color(0xFF00B4D8);
   Color get outlineBlue => const Color(0xFF00A5FF);
 
+  // --- COLOR LINE UNDER SECTIONS ---
+  Color get sectionLine => _isDark ? Colors.white : const Color(0xFF888888);
+
   // --- BACKGROUND COLORS ---
   Color get scaffoldBg => _isDark ? Colors.black : const Color(0xFFF7F7F7);
-
-  // Fundalul pentru zona de profil de sus: Negru pe Dark, Alb pe Light
   Color get headerBg => _isDark ? Colors.black : Colors.white;
   Color get backCircle => _isDark ? const Color(0xFF312F2F) : const Color(0xFFD9D9D9);
 
   // --- PROFILE CARD COLORS ---
-  // Pe Light, cardurile (placeholderele) devin albe conform noii cerințe
   Color get cardFill => _isDark ? const Color(0xFF312F2F) : Colors.white;
   Color get cardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
   // --- SECTION LABELS (CONT, PREFERINȚE) ---
-  // Alb pe Dark, D1D1D1 pe Light
   Color get sectionLabel => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
   // --- TEXTBOX COLORS  & CARDS ---
@@ -52,7 +51,7 @@ class ThemeProvider extends ChangeNotifier {
   Color get arrowFill => _isDark ? const Color(0xFF312F2F) : const Color(0xFFD9D9D9);
   Color get arrowIcon => _isDark ? Colors.white : Colors.black;
 
-  // Umbra butonului: Albă pe Dark, Neagră pe Light
+  // --- SHADOW BTN COLOR ---
   List<BoxShadow> get buttonShadow => [
     BoxShadow(
       color: _isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.3),
@@ -70,13 +69,10 @@ class ThemeProvider extends ChangeNotifier {
   // --- PROFILE ICONS COLORS ---
   Color get iconPerson => const Color(0xFFFF6B00);
   Color get bgPerson => const Color(0xFFFF6B00).withValues(alpha: 0.2);
-
   Color get iconLock => const Color(0xFF0779B7);
   Color get bgLock => const Color(0xFF0779B7).withValues(alpha: 0.2);
-
   Color get iconMaps => const Color(0xFF888888);
   Color get bgMaps => const Color(0xFFD1D1D1).withValues(alpha: 0.3);
-
   Color get iconLogout => const Color(0xFFFF0000);
   Color get bgLogout => const Color(0xFFFF0000).withValues(alpha: 0.3);
 

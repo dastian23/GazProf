@@ -49,7 +49,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
             children: [
               const SizedBox(height: 10),
 
-              // 1.LOGO & FLAME
+              // LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -86,7 +86,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
               // space between logo & success icon
               const Spacer(flex: 2),
 
-              // 2. SUCCESS ICON
+              // SUCCESS ICON
               Container(
                 height: 140,
                 width: 140,
@@ -127,7 +127,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
               // space between success icon & TEXT MESSAGE
               const SizedBox(height: 30),
 
-              // 3. TEXT MESSAGE
+              // TEXT MESSAGE
               Text(
                 'Succes!',
                 style: TextStyle(
@@ -146,7 +146,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
               // space between text message & buton
               const Spacer(flex: 3),
 
-              // 4. BUTON CONTINUĂ
+              // BUTON CONTINUĂ
               Container(
                 width: 180,
                 height: 45,

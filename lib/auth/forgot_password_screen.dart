@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'otp_screen.dart';
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:gazprof/services/auth_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -14,16 +15,61 @@ class ForgotPasswordScreen extends StatefulWidget {
 
 class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSendOtp() async {
+    final email = _emailController.text.trim();
+
+    if (email.isEmpty || !email.contains('@')) {
+      _showError("Te rugăm să introduci o adresă de e-mail validă.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final String? error = await AuthService().sendOtpCode(email);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (error == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Codul de verificare a fost trimis!"),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        _showError(error);
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.orange),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
 
-    // activating the status bar
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
-      statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light, // Pentru iOS
+      systemNavigationBarColor: theme.scaffoldBg, // Opțional: face și bara de jos să se potrivească
     ));
 
     return Scaffold(
@@ -35,7 +81,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         automaticallyImplyLeading: false,
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
-          statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
         ),
         title: GestureDetector(
           onTap: () => Navigator.pop(context),
@@ -57,8 +102,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             children: [
               const SizedBox(height: 10),
 
-              // space to push down the logo
-              // 1. LOGO & FLAME
+              // LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -91,10 +135,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 'Gestionare livrări',
                 style: TextStyle(color: theme.textGriFix, fontSize: 12),
               ),
-
               const Spacer(flex: 1),
 
-              // 2. TITLE  & DESCRIPTION
+              // TITLE & DESCRIPTION
               Align(
                 alignment: Alignment.centerLeft,
                 child: Column(
@@ -120,21 +163,18 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
-              // space between title and input field
               const SizedBox(height: 25),
 
-              // 3. INPUT FIELD - E-MAIL
+              // INPUT FIELD
               _buildTextField(
                 hint: 'Introduceți e-mailul',
                 icon: Icons.email_outlined,
                 controller: _emailController,
                 theme: theme,
               ),
-
-              // space between input field & reset buton
               const Spacer(flex: 2),
 
-              // 4. BUTON RESETEAZA PAROLA
+              // BUTTON
               Container(
                 width: 210,
                 height: 45,
@@ -144,12 +184,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const OtpScreen()),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _handleSendOtp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.brandBlue,
                     elevation: 0,
@@ -157,17 +192,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       borderRadius: BorderRadius.circular(30),
                     ),
                   ),
-                  child: Text(
+                  child: _isLoading
+                      ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                  )
+                      : const Text(
                     'Resetează parola',
                     style: TextStyle(
-                      color: theme.textPrimary,
+                      color: Colors.white,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ),
-              //space to push everything up
               const SizedBox(height: 60),
             ],
           ),
@@ -179,11 +219,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Widget _buildTextField({
     required String hint,
     required IconData icon,
-    TextEditingController? controller,
+    required TextEditingController controller,
     required ThemeProvider theme,
   }) {
     return TextField(
       controller: controller,
+      keyboardType: TextInputType.emailAddress,
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,

@@ -4,17 +4,21 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'password_reset_info_screen.dart';
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:gazprof/services/auth_service.dart';
 
 class OtpScreen extends StatefulWidget {
-  const OtpScreen({super.key});
+  final String email;
+
+  const OtpScreen({super.key, required this.email});
 
   @override
   State<OtpScreen> createState() => _OtpScreenState();
 }
 
 class _OtpScreenState extends State<OtpScreen> {
-  final List<TextEditingController> _controllers = List.generate(5, (_) => TextEditingController());
-  final List<FocusNode> _focusNodes = List.generate(5, (_) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,166 +27,180 @@ class _OtpScreenState extends State<OtpScreen> {
     super.dispose();
   }
 
+  Future<void> _handleVerifyOtp() async {
+    String enteredCode = _controllers.map((c) => c.text).join();
+
+    if (enteredCode.length < 4) {
+      _showError("Te rugăm să introduci tot codul.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    bool isValid = await AuthService().verifyOtp(widget.email, enteredCode);
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (isValid) {
+        // Navigation to success screen
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => PasswordResetInfoScreen(email: widget.email),
+          ),
+        );
+      } else {
+        _showError("Codul este incorect sau a expirat.");
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.orange,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
 
     // activating the status bar
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    final SystemUiOverlayStyle overlayStyle = SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
       statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
-    ));
+    );
 
-    return Scaffold(
-      resizeToAvoidBottomInset: false,
-      backgroundColor: theme.scaffoldBg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        systemOverlayStyle: SystemUiOverlayStyle(
-          statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
-        ),
-        title: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: theme.arrowFill,
-              shape: BoxShape.circle,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Scaffold(
+        resizeToAvoidBottomInset: false,
+        backgroundColor: theme.scaffoldBg,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          automaticallyImplyLeading: false,
+          systemOverlayStyle: overlayStyle,
+          title: GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: theme.arrowFill,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.arrow_back, color: theme.arrowIcon, size: 20),
             ),
-            child: Icon(Icons.arrow_back, color: theme.arrowIcon, size: 20),
+          ),
+        ),
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 45),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+
+                // LOGO & FLAME
+                _buildLogo(theme),
+                const SizedBox(height: 5),
+                Image.asset('assets/logo_gazprof.png', height: 20),
+                Text('Gestionare livrări', style: TextStyle(color: theme.textGriFix, fontSize: 12)),
+
+                const Spacer(flex: 1),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Verifică adresa de e-mail',
+                        style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Introdu codul de 4 cifre primit prin e-mail pe ${widget.email}',
+                        style: TextStyle(color: theme.textGriFix, fontSize: 13, height: 1.4),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 30),
+
+                // OTP Inputs
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(4, (index) => _buildOtpBox(index, theme)),
+                ),
+
+                const Spacer(flex: 2),
+
+                // BUTTON VERIFICARE
+                _buildVerifyButton(theme),
+                const SizedBox(height: 60),
+              ],
+            ),
           ),
         ),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 45),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
+    );
+  }
 
-              // 1. LOGO & FLAME
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 25,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.brandBlue.withValues(alpha: 0.4),
-                          blurRadius: 35,
-                          spreadRadius: 6,
-                        ),
-                      ],
-                    ),
-                  ),
-                  SvgPicture.asset(
-                    'assets/flame.svg',
-                    width: 45,
-                    height: 65,
-                    fit: BoxFit.contain,
-                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
-                  ),
-                ],
+  Widget _buildLogo(ThemeProvider theme) {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        Container(
+          width: 25, height: 40,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: theme.brandBlue.withValues(alpha: 0.4),
+                blurRadius: 35, spreadRadius: 6,
               ),
-              const SizedBox(height: 5),
-              Image.asset('assets/logo_gazprof.png', height: 20),
-              Text(
-                'Gestionare livrări',
-                style: TextStyle(color: theme.textGriFix, fontSize: 12),
-              ),
-
-              // space between logo & title
-              const Spacer(flex: 1),
-
-              // 2. TITLE
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Verifică adresa de e-mail',
-                      style: TextStyle(
-                          color: theme.textPrimary,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Introdu codul de 5 cifre primit prin e-mail.',
-                      style: TextStyle(
-                          color: theme.textGriFix,
-                          fontSize: 13,
-                          height: 1.4
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // space between title & otp rows
-              const SizedBox(height: 30),
-
-              // 3. OTP ROWS
-              FittedBox(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(5, (index) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 5),
-                      child: _buildOtpBox(index, theme),
-                    );
-                  }),
-                ),
-              ),
-
-              // space between otp rows & buton
-              const Spacer(flex: 2),
-
-              // 4. BUTON VERIFICĂ
-              Container(
-                width: 180,
-                height: 45,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: theme.buttonOutline, width: 1.5),
-                  boxShadow: theme.buttonShadow,
-                ),
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const PasswordResetInfoScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.brandBlue,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  ),
-                  child: Text(
-                    'Verifică cod',
-                    style: TextStyle(
-                        color: theme.textPrimary,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold
-                    ),
-                  ),
-                ),
-              ),
-
-              //space to push everything up
-              const SizedBox(height: 60),
             ],
           ),
+        ),
+        SvgPicture.asset(
+          'assets/flame.svg',
+          width: 45, height: 65,
+          fit: BoxFit.contain,
+          colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVerifyButton(ThemeProvider theme) {
+    return Container(
+      width: 180,
+      height: 45,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: theme.buttonOutline, width: 1.5),
+        boxShadow: theme.buttonShadow,
+      ),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _handleVerifyOtp,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: theme.brandBlue,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        ),
+        child: _isLoading
+            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+            : const Text(
+          'Verifică cod',
+          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -190,38 +208,35 @@ class _OtpScreenState extends State<OtpScreen> {
 
   Widget _buildOtpBox(int index, ThemeProvider theme) {
     return Container(
-      width: 42,
-      height: 55,
+      width: 50,
+      height: 60,
       decoration: BoxDecoration(
         color: theme.textCard,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: theme.textCardOutline, width: 1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+            color: _controllers[index].text.isNotEmpty ? theme.brandBlue : theme.textCardOutline,
+            width: 1.5
+        ),
       ),
-      child: TextField(
-        controller: _controllers[index],
-        focusNode: _focusNodes[index],
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: theme.textPrimary
+      child: Center(
+        child: TextField(
+          controller: _controllers[index],
+          focusNode: _focusNodes[index],
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 1,
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: theme.textPrimary),
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          decoration: const InputDecoration(counterText: "", border: InputBorder.none),
+          onChanged: (value) {
+            setState(() {});
+            if (value.isNotEmpty && index < 3) {
+              _focusNodes[index + 1].requestFocus();
+            } else if (value.isEmpty && index > 0) {
+              _focusNodes[index - 1].requestFocus();
+            }
+          },
         ),
-        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-        decoration: InputDecoration(
-          counterText: "",
-          border: InputBorder.none,
-          hintText: "0",
-          hintStyle: TextStyle(color: theme.textSecondary.withOpacity(0.2)),
-        ),
-        onChanged: (value) {
-          if (value.isNotEmpty && index < 4) {
-            _focusNodes[index + 1].requestFocus();
-          } else if (value.isEmpty && index > 0) {
-            _focusNodes[index - 1].requestFocus();
-          }
-        },
       ),
     );
   }

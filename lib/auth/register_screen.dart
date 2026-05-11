@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'success_screen.dart';
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:gazprof/services/auth_service.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,13 +15,79 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   bool _isObscured = true;
+  bool _isLoading = false;
+
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleSignUp() async {
+    if (_nameController.text.trim().isEmpty) {
+      _showError("Te rugăm să introduci numele complet.");
+      return;
+    }
+
+    if (_phoneController.text.trim().length < 10) {
+      _showError("Numărul de telefon este invalid.");
+      return;
+    }
+
+    if (!_emailController.text.contains('@')) {
+      _showError("Adresa de email nu este validă.");
+      return;
+    }
+
+    if (_passwordController.text.length < 8) {
+      _showError("Parola trebuie să aibă cel puțin 8 caractere.");
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final String? error = await AuthService().signUpUser(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim(),
+    );
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (error == null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SuccessScreen(email: _emailController.text),
+          ),
+        );
+      } else {
+
+        _showError(error);
+      }
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.orange),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
 
-    // activating the status bar
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
@@ -33,31 +100,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 45),
           child: Column(
             children: [
-              // space to push down the logo
               const SizedBox(height: 10),
-
-              // 1.LOGO & FLAME
+              // --- LOGO & FLAME ---
               Stack(
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 25,
-                    height: 40,
+                    width: 25, height: 40,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
                           color: theme.brandBlue.withValues(alpha: 0.4),
-                          blurRadius: 35,
-                          spreadRadius: 6,
+                          blurRadius: 35, spreadRadius: 6,
                         ),
                       ],
                     ),
                   ),
                   SvgPicture.asset(
                     'assets/flame.svg',
-                    width: 45,
-                    height: 65,
+                    width: 45, height: 65,
                     fit: BoxFit.contain,
                     colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
                   ),
@@ -65,86 +127,56 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
               const SizedBox(height: 5),
               Image.asset('assets/logo_gazprof.png', height: 20),
-              Text(
-                'Gestionare livrări',
-                style: TextStyle(color: theme.textGriFix, fontSize: 12),
-              ),
-
-              // space to push up the logo & everything down
+              Text('Gestionare livrări', style: TextStyle(color: theme.textGriFix, fontSize: 12)),
               const Spacer(flex: 1),
-
-              // 2. TITLE
               Align(
                 alignment: Alignment.centerLeft,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Crează un cont nou',
-                      style: TextStyle(
-                        color: theme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    Text('Crează un cont nou', style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
-                    Text(
-                      'Completează datele de mai jos.',
-                      style: TextStyle(color: theme.textGriFix, fontSize: 13),
-                    ),
+                    Text('Completează datele de mai jos.', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
                   ],
                 ),
               ),
-
               const SizedBox(height: 15),
 
-              // 3.TEXT FIELDS
-              _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme),
+              // --- TEXT FIELDS ---
+              _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme, controller: _nameController),
               const SizedBox(height: 10),
-              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme),
+              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme, controller: _phoneController),
               const SizedBox(height: 10),
-              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme),
+              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController),
               const SizedBox(height: 10),
-              _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme),
+              _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
 
               const SizedBox(height: 8),
-              Text(
-                'Minim 8 caractere, o litere mare și o cifră',
-                style: TextStyle(color: theme.textGriFix, fontSize: 11),
-              ),
-
-              // space to push down the buton & footer
+              Text('Minim 8 caractere, o litere mare și o cifră', style: TextStyle(color: theme.textGriFix, fontSize: 11)),
               const Spacer(flex: 1),
 
-              // 4.BUTON ÎNREGISTREAZĂ-TE
+              // --- BUTTON ---
               Container(
-                width: 180,
-                height: 45,
+                width: 180, height: 45,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(30),
                   border: Border.all(color: theme.buttonOutline, width: 1.5),
                   boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => SuccessScreen(email: _emailController.text)));
-                  },
+                  onPressed: _isLoading ? null : _handleSignUp,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.brandBlue,
                     elevation: 0,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
                   ),
-                  child: Text(
-                    'Înregistrează-te',
-                    style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : Text('Înregistrează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
               ),
 
-              // space between buton & footer
               const SizedBox(height: 19),
-
-              // 5.FOOTER
               FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Row(
@@ -153,16 +185,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     Text('Ai deja cont? ', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
                     GestureDetector(
                       onTap: () => Navigator.pop(context),
-                      child: Text(
-                        'Conectează-te',
-                        style: TextStyle(color: theme.links, fontWeight: FontWeight.bold, fontSize: 13),
-                      ),
+                      child: Text('Conectează-te', style: TextStyle(color: theme.links, fontWeight: FontWeight.bold, fontSize: 13)),
                     ),
                   ],
                 ),
               ),
-
-              //space to push everything up
               const SizedBox(height: 40),
             ],
           ),
@@ -171,9 +198,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField({required String hint, required IconData icon, bool isPassword = false, required ThemeProvider theme}) {
+  Widget _buildTextField({required String hint, required IconData icon, bool isPassword = false, required ThemeProvider theme, required TextEditingController controller}) {
     return TextField(
-      controller: hint == 'E-mail' ? _emailController : null,
+      controller: controller,
       obscureText: isPassword ? _isObscured : false,
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
@@ -188,14 +215,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.textCardOutline, width: 1.0),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
-        ),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),
       ),
     );
   }

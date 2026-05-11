@@ -6,7 +6,8 @@ import 'password_set_screen.dart';
 import '../../../core/theme_provider.dart';
 
 class PasswordResetInfoScreen extends StatelessWidget {
-  const PasswordResetInfoScreen({super.key});
+  final String email;
+  const PasswordResetInfoScreen({super.key, required this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +50,7 @@ class PasswordResetInfoScreen extends StatelessWidget {
             children: [
               const SizedBox(height: 10),
 
-              // 1. LOGO & FLAME
+              // LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -113,10 +114,9 @@ class PasswordResetInfoScreen extends StatelessWidget {
                 ),
               ),
 
-              // space between title & buton
               const Spacer(flex: 3),
 
-              // 4. BUTON CONFIRMĂ
+              // 4. BUTTON CONFIRMĂ
               Container(
                 width: 180,
                 height: 45,
@@ -129,7 +129,7 @@ class PasswordResetInfoScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const PasswordSetScreen()),
+                      MaterialPageRoute(builder: (context) => PasswordSetScreen(email: email)),
                     );
                   },
                   style: ElevatedButton.styleFrom(
