@@ -225,10 +225,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       height: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
                   )
-                      : const Text(
+                      : Text(
                     'Resetează parola',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: theme.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),

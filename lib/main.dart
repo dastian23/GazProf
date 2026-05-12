@@ -4,13 +4,12 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // 👈 adăugat
+import 'package:firebase_auth/firebase_auth.dart'; //
 import 'package:cloud_firestore/cloud_firestore.dart';
 // --- PROVIDERS ---
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
 
-// 👇 importă ecranul principal (înlocuiește cu calea corectă)
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
 
 void main() async {
@@ -43,15 +42,13 @@ class GazProfApp extends StatelessWidget {
       title: 'GazProf',
       themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
-        body: const AuthWrapper(), // 👈 înlocuit LoginScreen cu AuthWrapper
+        body: const AuthWrapper(),
       ),
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// AuthWrapper — ascultă starea autentificării
-// ─────────────────────────────────────────────
+// AuthWrapper — listen to authentification state
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -61,29 +58,27 @@ class AuthWrapper extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
          
-        // 1. Se încarcă
+        // 1. Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           final theme = Provider.of<ThemeProvider>(context, listen: false);
           return Scaffold(
-            backgroundColor: theme.scaffoldBg, // același fundal ca restul aplicației
+            backgroundColor: theme.scaffoldBg,
           );
         }
 
-        // 2. Utilizator autentificat — citește rolul din Firestore
+        // 2. User authenticated
         if (snapshot.hasData && snapshot.data != null) {
-          return const RoleRouter(); // 👈 widget nou
+          return const RoleRouter();
         }
 
-        // 3. Neautentificat
+        // 3. Not registered
         return const LoginScreen();
       },
     );
   }
 }
 
-// ─────────────────────────────────────────────
-// RoleRouter — citește rolul și redirecționează
-// ─────────────────────────────────────────────
+// RoleRouter — reads the role and redirect to the right screen
 class RoleRouter extends StatelessWidget {
   const RoleRouter({super.key});
 
@@ -115,16 +110,13 @@ class RoleRouter extends StatelessWidget {
         final String nume = data['nume'] ?? '';
         final String status = data['status'] ?? 'neatribuit';
 
-        // Salvează în Provider
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, status);
         });
 
-        // Redirecționează după rol
         if (rol == 'niciunul') {
           return const NiciunulHomeScreen();
         } else {
-          // Alte roluri în lucru — deloghez și trimit la Login
           FirebaseAuth.instance.signOut();
           return const LoginScreen();
         }

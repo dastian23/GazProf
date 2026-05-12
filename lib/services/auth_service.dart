@@ -3,7 +3,8 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
-import 'package:flutter_dotenv/flutter_dotenv.dart'; // Added dotenv import
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:google_sign_in/google_sign_in.dart' as g_auth;
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -64,6 +65,57 @@ class AuthService {
       }
     } catch (e) {
       return {'success': false, 'error': 'E-mail sau parolă incorectă.'};
+    }
+  }
+
+  // --- GOOGLE SIGN IN ---
+  Future<Map<String, dynamic>> loginWithGoogle() async {
+    try {
+      final g_auth.GoogleSignInAccount? googleUser = await g_auth.GoogleSignIn().signIn();
+      if (googleUser == null) {
+        return {'success': false, 'error': 'Conectarea a fost anulată.'};
+      }
+
+      final g_auth.GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      User? user = userCredential.user;
+
+      if (user != null) {
+        DocumentSnapshot doc = await _db.collection('users').doc(user.uid).get();
+
+        if (doc.exists) {
+          return {
+            'success': true,
+            'rol': doc['rol'] ?? 'niciunul',
+            'nume': doc['nume'] ?? user.displayName ?? 'Utilizator Google',
+            'status': doc['status'] ?? 'neatribuit',
+          };
+        } else {
+          await _db.collection('users').doc(user.uid).set({
+            'nume': user.displayName ?? 'Utilizator Google',
+            'email': user.email,
+            'rol': 'niciunul',
+            'esteAprobat': false,
+            'status': 'neatribuit',
+            'data_creare': FieldValue.serverTimestamp(),
+          });
+
+          return {
+            'success': true,
+            'rol': 'niciunul',
+            'nume': user.displayName ?? 'Utilizator Google',
+            'status': 'neatribuit',
+          };
+        }
+      }
+      return {'success': false, 'error': 'Eroare necunoscută la conectare.'};
+    } catch (e) {
+      return {'success': false, 'error': 'Eroare la conectarea cu Google: ${e.toString()}'};
     }
   }
 
@@ -135,6 +187,17 @@ class AuthService {
       return "Utilizatorul nu a fost găsit.";
     } catch (e) {
       return e.toString();
+    }
+  }
+
+  // --- LOGOUT ---
+  Future<void> logOut() async {
+    try {
+      await _auth.signOut();
+
+      await g_auth.GoogleSignIn().signOut();
+    } catch (e) {
+      print("Eroare la deconectare: $e");
     }
   }
 }

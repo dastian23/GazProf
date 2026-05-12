@@ -2,12 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:gazprof/services/auth_service.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
+import 'package:provider/provider.dart';
+
 
 // --- SCREENS ---
 import '../home/niciunul_home_screen.dart';
@@ -93,17 +95,15 @@ class NiciunulProfileScreen extends StatelessWidget {
                             ),
                             trailing: const SizedBox(width: 40),
                             onTap: () async {
-                              // 1. We clear the session data from the phone's memory
-                              final prefs = await SharedPreferences.getInstance();
-                              await prefs.clear(); // Această metodă elimină 'is_logged_in', 'user_name' etc.
+                              await AuthService().logOut();
 
-                              
-                              // 2. We navigate to Login and clear the entire navigation history
-                              // We use pushAndRemoveUntil with rootNavigator: true to ensure that all previous routes are cleared, including those from other tabs if any.
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.clear();
+
                               if (context.mounted) {
                                 Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                                   MaterialPageRoute(builder: (context) => const LoginScreen()),
-                                  (route) => false,
+                                      (route) => false,
                                 );
                               }
                             },
@@ -294,7 +294,7 @@ class NiciunulProfileScreen extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 3) return; // Already on Profile
+    if (index == 3) return;
 
     Widget nextScreen;
     // Removed constructor parameters for clean navigation

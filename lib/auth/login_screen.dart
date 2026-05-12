@@ -92,6 +92,45 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  // --- GOOGLE LOGIN LOGIC ---
+  Future<void> _handleGoogleLogin() async {
+    setState(() => _isLoading = true);
+
+    final result = await AuthService().loginWithGoogle();
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+
+      if (result['success'] == true) {
+        String rol = result['rol'];
+        String nume = result['nume'];
+        String status = result['status'] ?? 'neatribuit';
+
+        if (rol == 'niciunul') {
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),
+          );
+        } else if (rol == 'sofer') {
+          _showError("Ecranul Șofer este în lucru!");
+        } else if (rol == 'dispecer') {
+          _showError("Ecranul Dispecer este în lucru!");
+        } else if (rol == 'admin') {
+          _showError("Ecranul Admin este în lucru!");
+        } else {
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),
+          );
+        }
+      } else {
+        _showError(result['error']);
+      }
+    }
+  }
+
   void _showError(String message) {
     Flushbar(
       messageText: Text(
@@ -194,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : const Text('Conectează-te', style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold)),
+                      : Text('Conectează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
               ),
 
@@ -211,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: Border.all(color: theme.buttonCardOutline, width: 1.2),
                 ),
                 child: InkWell(
-                  onTap: () {},
+                  onTap: _isLoading ? null : _handleGoogleLogin,
                   borderRadius: BorderRadius.circular(30),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -275,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen> {
             : null,
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
-        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15), // Ușor mărit vertical pentru UI modern
+        contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline, width: 1.0)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),
       ),

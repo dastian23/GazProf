@@ -131,7 +131,7 @@ class _PasswordSetScreenState extends State<PasswordSetScreen> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : _handleUpdate,
         style: ElevatedButton.styleFrom(backgroundColor: theme.brandBlue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30))),
-        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) : const Text('Actualizează', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: _isLoading ? const CircularProgressIndicator(color: Colors.white) :  Text('Actualizează', style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold)),
       ),
     );
   }

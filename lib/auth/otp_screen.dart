@@ -210,9 +210,9 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
         child: _isLoading
             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : const Text(
+            : Text(
           'Verifică cod',
-          style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.bold),
+          style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
         ),
       ),
     );

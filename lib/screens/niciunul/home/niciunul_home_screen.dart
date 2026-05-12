@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
-import '../../../../core/user_provider.dart'; // Added UserProvider import
+import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
 import '../documente/niciunul_documente_screen.dart';
@@ -43,7 +43,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme), // Used provider here
+                      _buildProfileCircle(userProvider.userName, theme),
                     ],
                   ),
                 ),
@@ -60,10 +60,10 @@ class NiciunulHomeScreen extends StatelessWidget {
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                           children: [
-                            TextSpan(text: userProvider.userName), // Used provider here
+                            TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                              text: userProvider.userStatus, // Used provider here
+                              text: userProvider.userStatus,
                               style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
                             ),
                           ],

@@ -43,6 +43,7 @@ dependencies:
   flutter_dotenv: ^6.0.1
   shared_preferences: ^2.5.5
   another_flushbar: ^2.0.1
+  google_sign_in: ^6.2.1
 
 dev_dependencies:
   flutter_test:

@@ -87,7 +87,7 @@ class PasswordResetInfoScreen extends StatelessWidget {
               // space between logo & title
               const Spacer(flex: 1),
 
-              // 2. TITLE
+              //  TITLE
               Align(
                 alignment: Alignment.centerLeft,
                 child: Column(
@@ -116,7 +116,7 @@ class PasswordResetInfoScreen extends StatelessWidget {
 
               const Spacer(flex: 3),
 
-              // 4. BUTTON CONFIRMĂ
+              // BUTTON CONFIRMĂ
               Container(
                 width: 180,
                 height: 45,

@@ -128,7 +128,7 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: theme.sectionLabel.withOpacity(0.3), // Changed to sectionLabel to avoid undefined error
+            color: theme.sectionLabel.withOpacity(0.3),
             height: 1.0,
           ),
         ),
@@ -240,7 +240,6 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                       : Text(
                       'Salvează',
-                      // Textul butonului adaptabil
                       style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)
                   ),
                 ),
@@ -268,7 +267,7 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
       style: TextStyle(color: isReadOnly ? theme.textGriFix : theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,
-        fillColor: theme.textCard, // #EEEEEE pe light, #312F2F pe dark
+        fillColor: theme.textCard,
         prefixIcon: Icon(icon, color: theme.textFieldIcon, size: 18),
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
