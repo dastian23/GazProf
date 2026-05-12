@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -13,7 +14,7 @@ import '../home/niciunul_home_screen.dart';
 import '../documente/niciunul_documente_screen.dart';
 import '../istoric/niciunul_istoric_screen.dart';
 import 'niciunul_personal_data_screen.dart';
-
+import 'package:gazprof/auth/login_screen.dart';
 
 class NiciunulProfileScreen extends StatelessWidget {
   const NiciunulProfileScreen({super.key});
@@ -91,8 +92,20 @@ class NiciunulProfileScreen extends StatelessWidget {
                                 )
                             ),
                             trailing: const SizedBox(width: 40),
-                            onTap: () {
-                              // Logica de log out
+                            onTap: () async {
+                              // 1. We clear the session data from the phone's memory
+                              final prefs = await SharedPreferences.getInstance();
+                              await prefs.clear(); // Această metodă elimină 'is_logged_in', 'user_name' etc.
+
+                              
+                              // 2. We navigate to Login and clear the entire navigation history
+                              // We use pushAndRemoveUntil with rootNavigator: true to ensure that all previous routes are cleared, including those from other tabs if any.
+                              if (context.mounted) {
+                                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                                  MaterialPageRoute(builder: (context) => const LoginScreen()),
+                                  (route) => false,
+                                );
+                              }
                             },
                           ),
                         ]),

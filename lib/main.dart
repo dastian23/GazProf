@@ -63,7 +63,10 @@ class AuthWrapper extends StatelessWidget {
          
         // 1. Se încarcă
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          final theme = Provider.of<ThemeProvider>(context, listen: false);
+          return Scaffold(
+            backgroundColor: theme.scaffoldBg, // același fundal ca restul aplicației
+          );
         }
 
         // 2. Utilizator autentificat — citește rolul din Firestore
@@ -94,7 +97,13 @@ class RoleRouter extends StatelessWidget {
       builder: (context, snapshot) {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
+          final theme = Provider.of<ThemeProvider>(context, listen: false);
+          return Scaffold(
+            backgroundColor: theme.scaffoldBg,
+            body: Center(
+              child: Image.asset('assets/app_icon.png', height: 100),
+            ),
+          );
         }
 
         if (!snapshot.hasData || !snapshot.data!.exists) {
