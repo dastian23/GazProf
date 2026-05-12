@@ -6,7 +6,7 @@ import 'package:provider/provider.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
-import '../../../../core/user_provider.dart'; // Added UserProvider import
+import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
 import '../home/niciunul_home_screen.dart';
@@ -16,13 +16,14 @@ import 'niciunul_personal_data_screen.dart';
 
 
 class NiciunulProfileScreen extends StatelessWidget {
-  // Removed constructor parameters since we use Provider now
   const NiciunulProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context); // Fetch user data from Provider
+    final userProvider = Provider.of<UserProvider>(context);
+    final bottomSafePadding = MediaQuery.of(context).padding.bottom;
+
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -36,10 +37,10 @@ class NiciunulProfileScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // 1. HEADER (Dynamically populated from Provider)
+                // HEADER
                 _buildHeader(theme, userProvider.userName, userProvider.userStatus),
 
-                // 2. CONȚINUT PROFIL
+                // PROFILE CONTENT
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -57,7 +58,6 @@ class NiciunulProfileScreen extends StatelessWidget {
                             theme.iconPerson,
                             theme.bgPerson,
                             onTap: () {
-                              // Simple push. Provider handles the UI refresh automatically when you save and pop back!
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(builder: (context) => const NiciunulPersonalDataScreen()),
@@ -98,7 +98,7 @@ class NiciunulProfileScreen extends StatelessWidget {
                         ]),
 
                         const Spacer(flex: 1),
-                        const SizedBox(height: 80), // Safe space for NavBar
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -107,9 +107,9 @@ class NiciunulProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // 3. NAVBAR (Index 3 = Profil)
+          // NAVBAR
           Positioned(
-            bottom: 22,
+            bottom: 5 + bottomSafePadding,
             left: 18,
             right: 18,
             child: _buildCustomNavBar(context, theme, 3),

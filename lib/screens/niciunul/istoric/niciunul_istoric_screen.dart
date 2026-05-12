@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
-import '../../../../core/user_provider.dart'; // Added UserProvider import
+import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
 import '../home/niciunul_home_screen.dart';
@@ -13,13 +13,14 @@ import '../documente/niciunul_documente_screen.dart';
 import '../profile/niciunul_profile_screen.dart';
 
 class NiciunulIstoricScreen extends StatelessWidget {
-  // Removed userName and userStatus from the constructor
   const NiciunulIstoricScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context); // Get data from provider
+    final userProvider = Provider.of<UserProvider>(context);
+    final bottomSafePadding = MediaQuery.of(context).padding.bottom;
+
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -33,19 +34,19 @@ class NiciunulIstoricScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // 1. TOP HEADER
+                // TOP HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme), // Used provider here
+                      _buildProfileCircle(userProvider.userName, theme),
                     ],
                   ),
                 ),
 
-                // 2. WELCOME BAR
+                //  WELCOME BAR
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -57,10 +58,10 @@ class NiciunulIstoricScreen extends StatelessWidget {
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                           children: [
-                            TextSpan(text: userProvider.userName), // Used provider here
+                            TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                              text: userProvider.userStatus, // Used provider here
+                              text: userProvider.userStatus,
                               style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -72,7 +73,7 @@ class NiciunulIstoricScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 3. CONȚINUT CENTRAL (ISTORIC RESTRICȚIONAT)
+                // CENTRAL CONTENT
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -102,7 +103,7 @@ class NiciunulIstoricScreen extends StatelessWidget {
                           style: TextStyle(color: theme.textGriFix, fontSize: 13, height: 1.4),
                         ),
 
-                        const SizedBox(height: 120), // Spațiu tehnic Navbar
+                        const SizedBox(height: 120),
                       ],
                     ),
                   ),
@@ -111,8 +112,11 @@ class NiciunulIstoricScreen extends StatelessWidget {
             ),
           ),
 
-          // 4. NAVBAR (Index 2 = Istoric)
-          Positioned(bottom: 22, left: 18, right: 18, child: _buildCustomNavBar(context, theme, 2)),
+          // NAVBAR
+          Positioned(bottom: 5 + bottomSafePadding,
+              left: 18,
+              right: 18,
+              child: _buildCustomNavBar(context, theme, 2)),
         ],
       ),
     );
@@ -167,7 +171,7 @@ class NiciunulIstoricScreen extends StatelessWidget {
                       child: Center(
                         child: SvgPicture.asset(
                           navItems[index]['path'],
-                          width: navItems[index]['inactiveSize'], // Use inactive size here
+                          width: navItems[index]['inactiveSize'],
                           height: navItems[index]['inactiveSize'],
                           colorFilter: ColorFilter.mode(theme.navIconUnselected, BlendMode.srcIn),
                         ),
@@ -203,11 +207,11 @@ class NiciunulIstoricScreen extends StatelessWidget {
 
     Widget nextScreen;
     if (index == 0) {
-      nextScreen = const NiciunulHomeScreen(); // Removed parameters
+      nextScreen = const NiciunulHomeScreen();
     } else if (index == 1) {
-      nextScreen = const NiciunulDocumenteScreen(); // Removed parameters
+      nextScreen = const NiciunulDocumenteScreen();
     } else {
-      nextScreen = const NiciunulProfileScreen(); // Removed parameters
+      nextScreen = const NiciunulProfileScreen();
     }
 
     Navigator.pushReplacement(
@@ -221,7 +225,6 @@ class NiciunulIstoricScreen extends StatelessWidget {
   }
 }
 
-// Renamed to _NavBarClipper to keep it private and avoid conflicts
 class _NavBarClipper extends CustomClipper<Path> {
   final double buttonLeft;
   final double buttonBottom;

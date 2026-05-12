@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:another_flushbar/flushbar.dart';
+
+// --- SCREENS ---
 import 'password_reset_info_screen.dart';
+
+// --- SERVICES & PROVIDERS ---
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gazprof/services/auth_service.dart';
@@ -57,13 +62,20 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.orange,
-        behavior: SnackBarBehavior.floating,
+    Flushbar(
+      messageText: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
       ),
-    );
+      backgroundColor: Colors.orange.shade800,
+      flushbarPosition: FlushbarPosition.TOP,
+      margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+      borderRadius: BorderRadius.circular(15),
+      duration: const Duration(seconds: 2),
+      animationDuration: const Duration(milliseconds: 400),
+      icon: const Icon(Icons.error_outline, color: Colors.white, size: 24),
+    ).show(context);
   }
 
   @override

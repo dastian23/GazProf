@@ -15,13 +15,14 @@ import '../profile/niciunul_profile_screen.dart';
 
 
 class NiciunulHomeScreen extends StatelessWidget {
-  // Removed userName and userStatus from the constructor
   const NiciunulHomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context); // Get data from provider
+    final userProvider = Provider.of<UserProvider>(context);
+    final bottomSafePadding = MediaQuery.of(context).padding.bottom;
+
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -35,7 +36,7 @@ class NiciunulHomeScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // 1. TOP HEADER
+                // TOP HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: Row(
@@ -47,7 +48,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 2. WELCOME BAR
+                //  WELCOME BAR
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -74,7 +75,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 3. CONȚINUT CENTRAL
+                // CENTRAL CONTENT
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -142,8 +143,11 @@ class NiciunulHomeScreen extends StatelessWidget {
             ),
           ),
 
-          // 4. NAVBAR (Index 0 = Acasă)
-          Positioned(bottom: 22, left: 18, right: 18, child: _buildCustomNavBar(context, theme, 0)),
+          // NAVBAR
+          Positioned(bottom: 5 + bottomSafePadding,
+              left: 18,
+              right: 18,
+              child: _buildCustomNavBar(context, theme, 0)),
         ],
       ),
     );
@@ -183,7 +187,7 @@ class NiciunulHomeScreen extends StatelessWidget {
     double btnLeft = (tabWidth * selectedIndex) + (tabWidth / 2) - (btnSize / 2);
     const double btnBottom = 12.0;
 
-    // Added active/inactive sizes to prevent icon distortion
+
     List<Map<String, dynamic>> navItems = [
       {'path': 'assets/home.svg', 'inactiveSize': 24.0, 'activeSize': 22.0},
       {'path': 'assets/file.svg', 'inactiveSize': 29.0, 'activeSize': 22.0},
@@ -211,7 +215,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                       child: Center(
                         child: SvgPicture.asset(
                           navItems[index]['path'],
-                          width: navItems[index]['inactiveSize'], // Use inactive size here
+                          width: navItems[index]['inactiveSize'],
                           height: navItems[index]['inactiveSize'],
                           colorFilter: ColorFilter.mode(theme.navIconUnselected, BlendMode.srcIn),
                         ),
@@ -230,7 +234,7 @@ class NiciunulHomeScreen extends StatelessWidget {
               child: Center(
                   child: SvgPicture.asset(
                       navItems[selectedIndex]['path'],
-                      width: navItems[selectedIndex]['activeSize'], // Use active size here
+                      width: navItems[selectedIndex]['activeSize'],
                       height: navItems[selectedIndex]['activeSize'],
                       colorFilter: const ColorFilter.mode(Colors.white, BlendMode.srcIn)
                   )
@@ -247,11 +251,11 @@ class NiciunulHomeScreen extends StatelessWidget {
 
     Widget nextScreen;
     if (index == 1) {
-      nextScreen = const NiciunulDocumenteScreen(); // Removed parameters
+      nextScreen = const NiciunulDocumenteScreen();
     } else if (index == 2) {
-      nextScreen = const NiciunulIstoricScreen(); // Removed parameters
+      nextScreen = const NiciunulIstoricScreen();
     } else {
-      nextScreen = const NiciunulProfileScreen(); // Removed parameters
+      nextScreen = const NiciunulProfileScreen();
     }
 
     Navigator.pushReplacement(
