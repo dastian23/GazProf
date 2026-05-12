@@ -44,14 +44,6 @@ class GazProfApp extends StatelessWidget {
       themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
         body: const AuthWrapper(), // 👈 înlocuit LoginScreen cu AuthWrapper
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: theme.brandBlue,
-          onPressed: () => theme.toggleTheme(),
-          child: Icon(
-            theme.isDark ? Icons.light_mode : Icons.dark_mode,
-            color: Colors.white,
-          ),
-        ),
       ),
     );
   }
@@ -68,8 +60,6 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-
-         print('=== AUTH STATE: ${snapshot.connectionState} | user: ${snapshot.data?.email}');
          
         // 1. Se încarcă
         if (snapshot.connectionState == ConnectionState.waiting) {
