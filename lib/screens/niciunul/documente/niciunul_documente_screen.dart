@@ -5,7 +5,7 @@ import 'package:provider/provider.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
-import '../../../../core/user_provider.dart'; // Added UserProvider import
+import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
 import '../profile/niciunul_profile_screen.dart';
@@ -13,13 +13,14 @@ import '../istoric/niciunul_istoric_screen.dart';
 import '../home/niciunul_home_screen.dart';
 
 class NiciunulDocumenteScreen extends StatelessWidget {
-  // Removed userName and userStatus from the constructor
   const NiciunulDocumenteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
-    final userProvider = Provider.of<UserProvider>(context); // Get data from provider
+    final userProvider = Provider.of<UserProvider>(context);
+    final bottomSafePadding = MediaQuery.of(context).padding.bottom;
+
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -33,19 +34,19 @@ class NiciunulDocumenteScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // 1. TOP HEADER
+                // TOP HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme), // Used provider here
+                      _buildProfileCircle(userProvider.userName, theme),
                     ],
                   ),
                 ),
 
-                // 2. WELCOME BAR
+                //  WELCOME BAR
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -57,10 +58,10 @@ class NiciunulDocumenteScreen extends StatelessWidget {
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
                           children: [
-                            TextSpan(text: userProvider.userName), // Used provider here
+                            TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                              text: userProvider.userStatus, // Used provider here
+                              text: userProvider.userStatus,
                               style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
                             ),
                           ],
@@ -72,7 +73,7 @@ class NiciunulDocumenteScreen extends StatelessWidget {
                   ),
                 ),
 
-                // 3. CONȚINUT CENTRAL (ACCES RESTRICȚIONAT)
+                // CENTRAL CONTENT
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -111,8 +112,11 @@ class NiciunulDocumenteScreen extends StatelessWidget {
             ),
           ),
 
-          // 4. NAVBAR (Index 1 = Documente)
-          Positioned(bottom: 22, left: 18, right: 18, child: _buildCustomNavBar(context, theme, 1)),
+          // NAVBAR
+          Positioned(bottom: 5 + bottomSafePadding,
+              left: 18,
+              right: 18,
+              child: _buildCustomNavBar(context, theme, 1)),
         ],
       ),
     );

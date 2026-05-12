@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:another_flushbar/flushbar.dart';
+
+// --- SCREENS ---
 import 'otp_screen.dart';
+
+// --- SERVICES & PROVIDERS ---
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gazprof/services/auth_service.dart';
@@ -26,10 +31,12 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _handleSendOtp() async {
     final email = _emailController.text.trim();
 
-    if (email.isEmpty || !email.contains('@')) {
-      _showError("Te rugăm să introduci o adresă de e-mail validă.");
+    if (email.isEmpty){
+      _showError("Te rugăm să completezi toate câmpurile.");
       return;
     }
+
+
 
     setState(() => _isLoading = true);
 
@@ -44,12 +51,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           MaterialPageRoute(builder: (context) => OtpScreen(email: email)),
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Codul de verificare a fost trimis!"),
-            backgroundColor: Colors.green,
+        Flushbar(
+          messageText: const Text(
+            "Codul de verificare a fost trimis!",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
           ),
-        );
+          backgroundColor: Colors.green.shade600,
+          flushbarPosition: FlushbarPosition.TOP,
+          margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+          borderRadius: BorderRadius.circular(15),
+          duration: const Duration(seconds: 3),
+          animationDuration: const Duration(milliseconds: 400),
+          icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 24),
+        ).show(context);
+
       } else {
         _showError(error);
       }
@@ -57,9 +73,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.orange),
-    );
+    Flushbar(
+      messageText: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+      ),
+      backgroundColor: Colors.orange.shade800,
+      flushbarPosition: FlushbarPosition.TOP,
+      margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+      borderRadius: BorderRadius.circular(15),
+      duration: const Duration(seconds: 2),
+      animationDuration: const Duration(milliseconds: 400),
+      icon: const Icon(Icons.error_outline, color: Colors.white, size: 24),
+    ).show(context);
   }
 
   @override
@@ -69,7 +96,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
-      systemNavigationBarColor: theme.scaffoldBg, // Opțional: face și bara de jos să se potrivească
+      systemNavigationBarColor: theme.scaffoldBg,
     ));
 
     return Scaffold(

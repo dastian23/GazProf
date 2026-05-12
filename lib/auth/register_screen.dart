@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:another_flushbar/flushbar.dart';
+
+// --- SCREENS ---
 import 'success_screen.dart';
+
+// --- SERVICES & PROVIDERS ---
 import '../../../core/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:gazprof/services/auth_service.dart';
+
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -32,23 +38,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _handleSignUp() async {
-    if (_nameController.text.trim().isEmpty) {
-      _showError("Te rugăm să introduci numele complet.");
+    String name = _nameController.text.trim();
+    String phone = _phoneController.text.trim();
+    String email = _emailController.text.trim();
+    String password = _passwordController.text.trim();
+
+    if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+      _showError("Te rugăm să completezi toate câmpurile.");
       return;
     }
 
-    if (_phoneController.text.trim().length < 10) {
-      _showError("Numărul de telefon este invalid.");
+    if (!RegExp(r'^07\d{8}$').hasMatch(phone)) {
+      _showError("Număr de telefon invalid.\nTrebuie să înceapă cu 07 și să aibă 10 cifre.");
       return;
     }
 
-    if (!_emailController.text.contains('@')) {
-      _showError("Adresa de email nu este validă.");
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
+      _showError("Adresa de e-mail este invalidă.\nTe rugăm să folosești un format corect (ex: nume@domeniu.ro).");
       return;
     }
 
-    if (_passwordController.text.length < 8) {
-      _showError("Parola trebuie să aibă cel puțin 8 caractere.");
+    bool hasMinLength = password.length >= 8;
+    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    bool hasDigits = password.contains(RegExp(r'[0-9]'));
+
+    if (!hasMinLength || !hasUppercase || !hasDigits) {
+      _showError("Parola este prea slabă.\nTrebuie să aibă minim 8 caractere, o literă mare și o cifră.");
       return;
     }
 
@@ -79,9 +94,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.orange),
-    );
+    Flushbar(
+      messageText: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+      ),
+      backgroundColor: Colors.orange.shade800,
+      flushbarPosition: FlushbarPosition.TOP,
+      margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+      borderRadius: BorderRadius.circular(15),
+      duration: const Duration(seconds: 2),
+      animationDuration: const Duration(milliseconds: 400),
+      icon: const Icon(Icons.error_outline, color: Colors.white, size: 24),
+    ).show(context);
   }
 
   @override
