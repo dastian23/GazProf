@@ -6,6 +6,9 @@ class UserProvider extends ChangeNotifier {
   String _userName = "";
   String _userStatus = "";
   String _userEmail = "";
+  // map
+  String _navigationApp = "Google Maps";
+  String get navigationApp => _navigationApp;
 
   String get userName => _userName;
   String get userStatus => _userStatus;
@@ -16,6 +19,11 @@ class UserProvider extends ChangeNotifier {
     _userName = name;
     _userStatus = status;
     _userEmail = email;
+    notifyListeners();
+  }
+
+  void setNavigationApp(String app) {
+    _navigationApp = app;
     notifyListeners();
   }
 

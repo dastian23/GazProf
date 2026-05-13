@@ -81,7 +81,8 @@ class NiciunulProfileScreen extends StatelessWidget {
 
                         _buildSectionLabel('PREFERINȚE', theme),
                         _buildProfileCard(theme, [
-                          _buildTile('assets/harta.svg', 'Navigație implicită', 'Waze', theme, theme.iconMaps, theme.bgMaps),
+                          _buildTile('assets/harta.svg', 'Navigație implicită', userProvider.navigationApp, theme, theme.iconMaps, theme.bgMaps, onTap: () => _showNavigationPicker(context, theme, userProvider),
+                          ),
                           Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 55, endIndent: 15),
                           _buildThemeTile(theme),
                         ]),
@@ -298,6 +299,44 @@ class NiciunulProfileScreen extends StatelessWidget {
       ),
     );
   }
+  void _showNavigationPicker(BuildContext context, ThemeProvider theme, UserProvider userProvider) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: theme.cardFill, // Folosim culorile tale din temă
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text("Alege navigația implicită", 
+                  style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
+              const SizedBox(height: 20),
+              _buildOptionTile(context, "Google Maps", theme, userProvider),
+              _buildOptionTile(context, "Waze", theme, userProvider),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionTile(BuildContext context, String name, ThemeProvider theme, UserProvider provider) {
+    bool isSelected = provider.navigationApp == name;
+    return ListTile(
+      title: Text(name, style: TextStyle(color: theme.textPrimary)),
+      trailing: isSelected ? Icon(Icons.check_circle, color: theme.brandBlue) : null,
+      onTap: () {
+        provider.setNavigationApp(name);
+        Navigator.pop(context); // Închide meniul
+      },
+    );
+  }
+
 
   void _navigate(BuildContext context, int index) {
     if (index == 3) return;
