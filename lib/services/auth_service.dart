@@ -82,6 +82,7 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
+
       UserCredential userCredential = await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
 
@@ -163,9 +164,7 @@ class AuthService {
           DateTime.now().millisecondsSinceEpoch < doc.data()!['expiresAt']);
 
       if (isValid) {
-        // Trimite emailul de reset Firebase
         await _auth.sendPasswordResetEmail(email: email.trim());
-        // Sterge OTP-ul folosit
         await _db.collection('password_resets').doc(email.trim()).delete();
       }
 
