@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:gazprof/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -54,13 +55,17 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Provider.of<ThemeProvider>(context);
+
+    if (!theme.isLoaded) {
+      return Scaffold(backgroundColor: Colors.black);
+    }
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
          
         // 1. Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
-          final theme = Provider.of<ThemeProvider>(context, listen: false);
           return Scaffold(
             backgroundColor: theme.scaffoldBg,
           );
@@ -96,7 +101,23 @@ class RoleRouter extends StatelessWidget {
           return Scaffold(
             backgroundColor: theme.scaffoldBg,
             body: Center(
-              child: Image.asset('assets/app_icon.png', height: 100),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/flame.svg',
+                    width: 45, height: 65,
+                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
+                  ),
+                  const SizedBox(height: 8),
+                  Image.asset('assets/logo_gazprof.png', height: 20),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Gestionare livrări',
+                    style: TextStyle(color: theme.textGriFix, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           );
         }
