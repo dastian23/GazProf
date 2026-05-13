@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme_provider.dart';
 import 'success_reset_password.dart';
 import 'package:gazprof/services/auth_service.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 class PasswordSetScreen extends StatefulWidget {
   final String email;
@@ -22,32 +23,55 @@ class _PasswordSetScreenState extends State<PasswordSetScreen> {
   final _confirmPassController = TextEditingController();
 
   Future<void> _handleUpdate() async {
-    if (_passController.text.length < 8) {
-      _showError("Minim 8 caractere necesare.");
-      return;
-    }
-    if (_passController.text != _confirmPassController.text) {
-      _showError("Parolele nu coincid.");
-      return;
-    }
+  final password = _passController.text;
 
-    setState(() => _isLoading = true);
-
-    final error = await AuthService().updatePasswordManual(widget.email, _passController.text);
-
-    if (mounted) {
-      setState(() => _isLoading = false);
-      if (error == null) {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessResetPassword()));
-      } else {
-        _showError(error);
-      }
-    }
+  if (password.length < 8) {
+    _showError("Parola trebuie să aibă minim 8 caractere.");
+    return;
+  }
+  if (!password.contains(RegExp(r'[A-Z]'))) {
+    _showError("Parola trebuie să conțină cel puțin o literă mare.");
+    return;
+  }
+  if (!password.contains(RegExp(r'[0-9]'))) {
+    _showError("Parola trebuie să conțină cel puțin o cifră.");
+    return;
+  }
+  if (password != _confirmPassController.text) {
+    _showError("Parolele nu coincid.");
+    return;
   }
 
-  void _showError(String m) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(m), backgroundColor: Colors.orange));
+  setState(() => _isLoading = true);
+
+  final error = await AuthService().updatePasswordManual(widget.email, password);
+
+  if (mounted) {
+    setState(() => _isLoading = false);
+    if (error == null) {
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessResetPassword()));
+    } else {
+      _showError(error);
+    }
   }
+}
+
+  void _showError(String message) {
+  Flushbar(
+    messageText: Text(
+      message,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+    ),
+    backgroundColor: Colors.orange.shade800,
+    flushbarPosition: FlushbarPosition.TOP,
+    margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+    borderRadius: BorderRadius.circular(15),
+    duration: const Duration(seconds: 2),
+    animationDuration: const Duration(milliseconds: 400),
+    icon: const Icon(Icons.error_outline, color: Colors.white, size: 24),
+  ).show(context);
+}
 
   @override
   Widget build(BuildContext context) {

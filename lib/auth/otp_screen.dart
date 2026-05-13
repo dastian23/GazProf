@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- SCREENS ---
-import 'password_reset_info_screen.dart';
+import 'success_reset_password.dart';
 
 // --- SERVICES & PROVIDERS ---
 import '../../../core/theme_provider.dart';
@@ -52,7 +52,7 @@ class _OtpScreenState extends State<OtpScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => PasswordResetInfoScreen(email: widget.email),
+            builder: (context) => SuccessResetPassword(),
           ),
         );
       } else {

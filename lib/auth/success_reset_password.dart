@@ -129,7 +129,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
 
               // TEXT MESSAGE
               Text(
-                'Succes!',
+                'Verifică emailul!',
                 style: TextStyle(
                   color: theme.textPrimary,
                   fontSize: 20,
@@ -138,7 +138,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
               ),
               const SizedBox(height: 15),
               Text(
-                'Felicitări! Parola ta a fost modificată! Apasă pe continuă pentru a te autentifica.',
+                'Ți-am trimis un link de resetare a parolei. Verifică inbox-ul și urmează instrucțiunile.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: theme.textGriFix, fontSize: 14),
               ),

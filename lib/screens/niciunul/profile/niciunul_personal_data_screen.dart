@@ -79,6 +79,7 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
         Provider.of<UserProvider>(context, listen: false).setUserData(
           _nameController.text.trim(),
           Provider.of<UserProvider>(context, listen: false).userStatus, // Preserve existing status
+          Provider.of<UserProvider>(context, listen: false).userEmail // Preserve existing email
         );
       }
 

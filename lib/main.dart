@@ -111,7 +111,7 @@ class RoleRouter extends StatelessWidget {
         final String status = data['status'] ?? 'neatribuit';
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status);
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, data['email'] ?? '');
         });
 
         if (rol == 'niciunul') {

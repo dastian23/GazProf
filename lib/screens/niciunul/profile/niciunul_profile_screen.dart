@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gazprof/services/auth_service.dart';
 
@@ -68,7 +69,12 @@ class NiciunulProfileScreen extends StatelessWidget {
                             },
                           ),
                           Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 55, endIndent: 15),
-                          _buildTile('assets/password.svg', 'Schimbă parola', 'Actualizează securitatea', theme, theme.iconLock, theme.bgLock),
+                          _buildTile('assets/password.svg', 'Schimbă parola', 'Actualizează securitatea', theme, theme.iconLock, theme.bgLock, onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => ChangePasswordConfirmScreen(email: userProvider.userEmail)),
+                            );
+                          }),
                         ]),
 
                         const SizedBox(height: 5),

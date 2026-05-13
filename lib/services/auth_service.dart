@@ -158,8 +158,18 @@ class AuthService {
     try {
       var doc = await _db.collection('password_resets').doc(email.trim()).get();
       if (!doc.exists) return false;
-      return (doc.data()!['otp'] == enteredCode &&
+
+      bool isValid = (doc.data()!['otp'] == enteredCode &&
           DateTime.now().millisecondsSinceEpoch < doc.data()!['expiresAt']);
+
+      if (isValid) {
+        // Trimite emailul de reset Firebase
+        await _auth.sendPasswordResetEmail(email: email.trim());
+        // Sterge OTP-ul folosit
+        await _db.collection('password_resets').doc(email.trim()).delete();
+      }
+
+      return isValid;
     } catch (e) {
       return false;
     }
@@ -199,5 +209,9 @@ class AuthService {
     } catch (e) {
       print("Eroare la deconectare: $e");
     }
+  }
+
+  Future<void> sendPasswordResetEmailDirect(String email) async {
+    await _auth.sendPasswordResetEmail(email: email.trim());
   }
 }
