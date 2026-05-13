@@ -8,20 +8,18 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
-import '../documente/niciunul_documente_screen.dart';
-import '../istoric/niciunul_istoric_screen.dart';
-import '../profile/niciunul_profile_screen.dart';
+import '../home/sofer_home_screen.dart';
+import '../istoric/sofer_istoric_screen.dart';
+import '../profile/sofer_profile_screen.dart';
 
-
-class NiciunulHomeScreen extends StatelessWidget {
-  const NiciunulHomeScreen({super.key});
+class SoferDocumenteScreen extends StatelessWidget {
+  const SoferDocumenteScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final bottomSafePadding = MediaQuery.of(context).padding.bottom;
-
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -47,7 +45,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                //  WELCOME BAR
+                // WELCOME BAR
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
@@ -62,8 +60,8 @@ class NiciunulHomeScreen extends StatelessWidget {
                             TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                              text: userProvider.userStatus,
-                              style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                              text: userProvider.userStatus, 
+                              style: TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -74,83 +72,29 @@ class NiciunulHomeScreen extends StatelessWidget {
                   ),
                 ),
 
-                // CENTRAL CONTENT
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: Column(
-                      children: [
-                        const Spacer(flex: 3),
-
-                        Container(
-                          width: 80, height: 80,
-                          decoration: BoxDecoration(
-                            color: theme.isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF0F0F0),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: theme.isDark ? Colors.white10 : Colors.black12),
-                          ),
-                          child: Icon(Icons.lock_outline, size: 30, color: theme.textSecondary),
-                        ),
-                        const SizedBox(height: 20),
-
-                        Text(
-                          "Cont în așteptare",
-                          style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 8),
-
-                        Text(
-                          "Contul tău nu a primit încă un rol.\nAșteaptă ca administratorul să\nîți atribuie un rol pentru a\ncontinua",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(color: theme.textGriFix, fontSize: 13, height: 1.4),
-                        ),
-
-                        const Spacer(flex: 4),
-
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                          decoration: BoxDecoration(
-                            color: theme.cardFill,
-                            borderRadius: BorderRadius.circular(15),
-                            border: Border.all(color: theme.cardOutline, width: 1.0),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Ce se întâmplă acum ?",
-                                style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-                              ),
-                              const SizedBox(height: 12),
-                              _buildBulletPoint("Contul tău a fost creat cu succes", theme),
-                              const SizedBox(height: 8),
-                              _buildBulletPoint("Administratorul va fi notificat", theme),
-                              const SizedBox(height: 8),
-                              _buildBulletPoint("Vei primi acces după atribuirea rolului", theme),
-                            ],
-                          ),
-                        ),
-
-                        const Spacer(flex: 3),
-                        const SizedBox(height: 85),
-                      ],
-                    ),
-                  ),
+                // CENTRAL CONTENT (GOL)
+                const Expanded(
+                  child: SizedBox.expand(),
                 ),
+                
+                const SizedBox(height: 85), 
               ],
             ),
           ),
 
           // NAVBAR
-          Positioned(bottom: 5 + bottomSafePadding,
-              left: 18,
-              right: 18,
-              child: _buildCustomNavBar(context, theme, 0)),
+          Positioned(
+            bottom: 5 + bottomSafePadding,
+            left: 18,
+            right: 18,
+            child: _buildCustomNavBar(context, theme, 1),
+          ),
         ],
       ),
     );
   }
+
+  // --- UI HELPERS ---
 
   Widget _buildProfileCircle(String name, ThemeProvider theme) {
     String initials = "U";
@@ -165,27 +109,12 @@ class NiciunulHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBulletPoint(String text, ThemeProvider theme) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          margin: const EdgeInsets.only(top: 5, right: 10),
-          width: 6, height: 6,
-          decoration: const BoxDecoration(color: Color(0xFFFF6B00), shape: BoxShape.circle),
-        ),
-        Expanded(child: Text(text, style: TextStyle(color: theme.textPrimary, fontSize: 12, height: 1.3))),
-      ],
-    );
-  }
-
   Widget _buildCustomNavBar(BuildContext context, ThemeProvider theme, int selectedIndex) {
     double screenWidth = MediaQuery.of(context).size.width - 36;
     double tabWidth = screenWidth / 4;
     const double btnSize = 52.0;
     double btnLeft = (tabWidth * selectedIndex) + (tabWidth / 2) - (btnSize / 2);
     const double btnBottom = 12.0;
-
 
     List<Map<String, dynamic>> navItems = [
       {'path': 'assets/home.svg', 'inactiveSize': 24.0, 'activeSize': 22.0},
@@ -246,15 +175,15 @@ class NiciunulHomeScreen extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 0) return;
+    if (index == 1) return;
 
     Widget nextScreen;
-    if (index == 1) {
-      nextScreen = const NiciunulDocumenteScreen();
+    if (index == 0) {
+      nextScreen = const SoferHomeScreen();
     } else if (index == 2) {
-      nextScreen = const NiciunulIstoricScreen();
+      nextScreen = const SoferIstoricScreen();
     } else {
-      nextScreen = const NiciunulProfileScreen();
+      nextScreen = const SoferProfileScreen();
     }
 
     Navigator.pushReplacement(

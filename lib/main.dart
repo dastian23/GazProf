@@ -10,7 +10,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 // --- PROVIDERS ---
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
-
+import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
 
 void main() async {
@@ -137,6 +137,8 @@ class RoleRouter extends StatelessWidget {
 
         if (rol == 'niciunul') {
           return const NiciunulHomeScreen();
+        } else if (rol == 'sofer') {
+          return const SoferHomeScreen();
         } else {
           FirebaseAuth.instance.signOut();
           return const LoginScreen();
