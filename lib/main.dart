@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gazprof/auth/login_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:firebase_auth/firebase_auth.dart'; //
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// --- PROVIDERS ---
+
+// --- PROVIDERS & SERVICES ---
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
+import 'package:flutter/services.dart';
 
+// --- SCREENS ---
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
+import 'package:gazprof/auth/login_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,6 +87,7 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
+
 // RoleRouter — reads the role and redirect to the right screen
 class RoleRouter extends StatelessWidget {
   const RoleRouter({super.key});
@@ -98,6 +103,13 @@ class RoleRouter extends StatelessWidget {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
           final theme = Provider.of<ThemeProvider>(context, listen: false);
+
+          SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+            systemNavigationBarColor: theme.scaffoldBg,
+          ));
+
           return Scaffold(
             backgroundColor: theme.scaffoldBg,
             body: Center(
