@@ -78,7 +78,7 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
       if (mounted) {
         Provider.of<UserProvider>(context, listen: false).setUserData(
           _nameController.text.trim(),
-          Provider.of<UserProvider>(context, listen: false).userStatus, // Preserve existing status
+          Provider.of<UserProvider>(context, listen: false).userRole, // Preserve existing role
           Provider.of<UserProvider>(context, listen: false).userEmail // Preserve existing email
         );
       }

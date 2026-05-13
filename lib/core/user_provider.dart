@@ -4,20 +4,22 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 class UserProvider extends ChangeNotifier {
   String _userName = "";
-  String _userStatus = "";
+  //String _userStatus = "";
   String _userEmail = "";
+  String _userRole = "";
   // map
   String _navigationApp = "Google Maps";
   String get navigationApp => _navigationApp;
 
   String get userName => _userName;
-  String get userStatus => _userStatus;
+  //String get userStatus => _userStatus;
   String get userEmail => _userEmail;
+  String get userRole => _userRole;
 
   // Update data locally and notify all screens
-  void setUserData(String name, String status, String email) {
+  void setUserData(String name, String role, String email) {
     _userName = name;
-    _userStatus = status;
+    _userRole = role;
     _userEmail = email;
     notifyListeners();
   }
@@ -37,7 +39,7 @@ class UserProvider extends ChangeNotifier {
       DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists) {
         _userName = doc['nume'] ?? "";
-        _userStatus = doc['status'] ?? "";
+        _userRole = doc['rol'] ?? "";
         _userEmail = doc['email'] ?? "";
         notifyListeners();
       }

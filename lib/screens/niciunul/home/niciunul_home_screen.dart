@@ -62,7 +62,7 @@ class NiciunulHomeScreen extends StatelessWidget {
                             TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
-                              text: userProvider.userStatus,
+                              text: userProvider.userRole,
                               style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
                             ),
                           ],

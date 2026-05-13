@@ -53,14 +53,14 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        String rol = result['rol'];
+        String rol = result['rol'] ?? 'neatribuit';
         String nume = result['nume'];
-        String status = result['status'] ?? 'neatribuit';
+        //String status = result['status'] ?? 'neatribuit';
 
         // ROUTE TO APPROPRIATE SCREEN by ROLE
-        if (rol == 'niciunul') {
+        if (rol == 'neatribuit') {
           // 1. Saving the data globally in Provider
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
 
           // 2. Navigation
           Navigator.pushReplacement(
@@ -77,7 +77,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _showError("Ecranul Admin este în lucru!");
         } else {
           // Fallback
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
 
           Navigator.pushReplacement(
             context,
@@ -102,12 +102,12 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = false);
 
       if (result['success'] == true) {
-        String rol = result['rol'];
+        String rol = result['rol'] ?? 'neatribuit';
         String nume = result['nume'];
-        String status = result['status'] ?? 'neatribuit';
+        //String status = result['status'] ?? 'neatribuit';
 
-        if (rol == 'niciunul') {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, _emailController.text.trim());
+        if (rol == 'neatribuit') {
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),
@@ -119,7 +119,7 @@ class _LoginScreenState extends State<LoginScreen> {
         } else if (rol == 'admin') {
           _showError("Ecranul Admin este în lucru!");
         } else {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),

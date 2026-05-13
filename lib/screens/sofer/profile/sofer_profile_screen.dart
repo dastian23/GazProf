@@ -42,7 +42,7 @@ class SoferProfileScreen extends StatelessWidget {
             child: Column(
               children: [
                 // HEADER
-                _buildHeader(theme, userProvider.userName, userProvider.userStatus),
+                _buildHeader(theme, userProvider.userName, userProvider.userRole),
 
                 // PROFILE CONTENT
                 Expanded(
@@ -141,7 +141,7 @@ class SoferProfileScreen extends StatelessWidget {
 
   // --- UI HELPERS ---
 
-  Widget _buildHeader(ThemeProvider theme, String name, String status) {
+  Widget _buildHeader(ThemeProvider theme, String name, String role) {
     String initials = "U";
     if (name.isNotEmpty) {
       List<String> words = name.trim().split(RegExp(r'\s+'));
@@ -168,7 +168,7 @@ class SoferProfileScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(name, style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           Text(
-              status,
+              role,
               style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 12)
           ),
         ],

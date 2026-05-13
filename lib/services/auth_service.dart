@@ -27,9 +27,9 @@ class AuthService {
         'nume': name,
         'telefon': phone,
         'email': email,
-        'rol': 'niciunul',
+        'rol': 'neatribuit',
         'esteAprobat': false,
-        'status': 'neatribuit',
+        //'status': 'neatribuit',
         'data_creare': FieldValue.serverTimestamp(),
       });
       return null;
@@ -56,9 +56,9 @@ class AuthService {
       if (doc.exists) {
         return {
           'success': true,
-          'rol': doc['rol'] ?? 'niciunul',
+          'rol': doc['rol'] ?? 'neatribuit',
           'nume': doc['nume'] ?? 'Utilizator',
-          'status': doc['status'] ?? 'neatribuit',
+          //'status': doc['status'] ?? 'neatribuit',
         };
       } else {
         return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
@@ -92,25 +92,25 @@ class AuthService {
         if (doc.exists) {
           return {
             'success': true,
-            'rol': doc['rol'] ?? 'niciunul',
+            'rol': doc['rol'] ?? 'neatribuit',
             'nume': doc['nume'] ?? user.displayName ?? 'Utilizator Google',
-            'status': doc['status'] ?? 'neatribuit',
+            //'status': doc['status'] ?? 'neatribuit',
           };
         } else {
           await _db.collection('users').doc(user.uid).set({
             'nume': user.displayName ?? 'Utilizator Google',
             'email': user.email,
-            'rol': 'niciunul',
+            'rol': 'neatribuit',
             'esteAprobat': false,
-            'status': 'neatribuit',
+            //'status': 'neatribuit',
             'data_creare': FieldValue.serverTimestamp(),
           });
 
           return {
             'success': true,
-            'rol': 'niciunul',
+            'rol': 'neatribuit',
             'nume': user.displayName ?? 'Utilizator Google',
-            'status': 'neatribuit',
+            //'status': 'neatribuit',
           };
         }
       }
@@ -174,7 +174,7 @@ class AuthService {
     }
   }
 
-  // --- STEP 3: UPDATE THE PASSWORD ---
+  // --- STEP 3: UPDATE THE PASSWORD --- 
   Future<String?> updatePasswordManual(String email, String newPassword) async {
     try {
       // 1. Searching user's UID by email

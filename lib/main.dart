@@ -32,7 +32,7 @@ void main() async {
       ],
       child: const GazProfApp(),
     ),
-  );
+  ); 
 }
 
 class GazProfApp extends StatelessWidget {
@@ -139,15 +139,15 @@ class RoleRouter extends StatelessWidget {
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
-        final String rol = data['rol'] ?? '';
+        final String rol = data['rol'] ?? 'neatribuit';
         final String nume = data['nume'] ?? '';
-        final String status = data['status'] ?? 'neatribuit';
+        //final String status = data['status'] ?? 'neatribuit';
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, status, data['email'] ?? '');
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, data['email'] ?? '');
         });
 
-        if (rol == 'niciunul') {
+        if (rol == 'neatribuit') {
           return const NiciunulHomeScreen();
         } else if (rol == 'sofer') {
           return const SoferHomeScreen();
