@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -15,6 +16,7 @@ import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
 // --- SCREENS ---
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 
 
 void main() async {
@@ -151,6 +153,8 @@ class RoleRouter extends StatelessWidget {
           return const NiciunulHomeScreen();
         } else if (rol == 'sofer') {
           return const SoferHomeScreen();
+        }else if (rol == 'dispecer'){
+            return const DispecerHomeScreen();
         } else {
           FirebaseAuth.instance.signOut();
           return const LoginScreen();

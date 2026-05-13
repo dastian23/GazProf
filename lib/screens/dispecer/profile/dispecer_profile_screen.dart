@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gazprof/services/auth_service.dart';
@@ -13,14 +14,11 @@ import 'package:provider/provider.dart';
 
 
 // --- SCREENS ---
-import '../home/niciunul_home_screen.dart';
-import '../documente/niciunul_documente_screen.dart';
-import '../istoric/niciunul_istoric_screen.dart';
-import 'niciunul_personal_data_screen.dart';
+import 'package:gazprof/screens/dispecer/profile/dispecer_personal_data_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
 
-class NiciunulProfileScreen extends StatelessWidget {
-  const NiciunulProfileScreen({super.key});
+class DispecerProfileScreen extends StatelessWidget {
+  const DispecerProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +62,7 @@ class NiciunulProfileScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const NiciunulPersonalDataScreen()),
+                                MaterialPageRoute(builder: (context) => const DispecerPersonalDataScreen()),
                               );
                             },
                           ),
@@ -312,7 +310,7 @@ class NiciunulProfileScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Alege navigația implicită", 
+              Text("Alege navigația implicită",
                   style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
               const SizedBox(height: 20),
               _buildOptionTile(context, "Google Maps", theme, userProvider),
@@ -344,11 +342,11 @@ class NiciunulProfileScreen extends StatelessWidget {
     Widget nextScreen;
     // Removed constructor parameters for clean navigation
     if (index == 0) {
-      nextScreen = const NiciunulHomeScreen();
+      nextScreen = const DispecerHomeScreen();
     } else if (index == 1) {
-      nextScreen = const NiciunulDocumenteScreen();
+      nextScreen = const Center(child: Text("Ecran Documente"));
     } else if (index == 2) {
-      nextScreen = const NiciunulIstoricScreen();
+      nextScreen = const Center(child: Text("Ecran Istoric"));
     } else {
       return;
     }

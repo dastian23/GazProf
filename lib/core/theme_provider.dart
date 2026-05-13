@@ -52,6 +52,7 @@ class ThemeProvider extends ChangeNotifier {
   Color get textFieldIcon => _isDark ? Colors.white : Colors.black;
   Color get textCard => _isDark ? const Color(0xFF312F2F) : const Color(0xFFEEEEEE);
   Color get textCardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
+  Color get cardCreateCommand => _isDark ? const Color(0xFF151515) : Colors.white;
 
   // --- TEXT COLOR ---
   Color get textPrimary => _isDark ? Colors.white : Colors.black;

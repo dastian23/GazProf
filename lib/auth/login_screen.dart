@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:another_flushbar/flushbar.dart';
@@ -82,7 +83,15 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
         } else if (rol == 'dispecer') {
-          _showError("Ecranul Dispecer este în lucru!");
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+
+          // 2. Navigation
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const DispecerHomeScreen(),
+            ),
+          );
         } else if (rol == 'admin') {
           _showError("Ecranul Admin este în lucru!");
         } else {
@@ -129,7 +138,11 @@ class _LoginScreenState extends State<LoginScreen> {
               MaterialPageRoute(builder: (context) => const SoferHomeScreen()),
             );
         } else if (rol == 'dispecer') {
-          _showError("Ecranul Dispecer este în lucru!");
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DispecerHomeScreen()),
+          );
         } else if (rol == 'admin') {
           _showError("Ecranul Admin este în lucru!");
         } else {
