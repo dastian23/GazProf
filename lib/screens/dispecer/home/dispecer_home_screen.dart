@@ -33,6 +33,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   bool _isLoading = false;
   bool _isMentionsExpanded = false;
   String _selectedPayment = 'cash';
+  String _addressType = 'intern'; // 'intern' sau 'extern'
 
   List<ProductItem> products = [
     ProductItem("Butelie 10kg", 120, 0),
@@ -139,6 +140,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       await FirebaseFirestore.instance.collection('comenzi').add({
         'telefon_client': phone,
         'adresa_livrare': address,
+        'tip_adresa': _addressType, // ✅ Adăugat în baza de date
         'produse': selectedProducts.map((p) => {
           'nume': p.name,
           'pret_unitar': p.price,
@@ -160,6 +162,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         _phoneController.clear();
         _addressController.clear();
         _mentionsController.clear();
+        _addressType = 'intern';
         for (var p in products) { p.quantity = 0; }
       });
     } catch (e) {
@@ -190,7 +193,10 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme),
+                      GestureDetector(
+                        onTap: () => _navigate(context, 3),
+                        child: _buildProfileCircle(userProvider.userName, theme),
+                      ),
                     ],
                   ),
                 ),
@@ -235,6 +241,8 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                               _buildTextField(hint: 'Număr telefon client', icon: Icons.phone_outlined, controller: _phoneController, theme: theme, isPhone: true),
                               const SizedBox(height: 12),
                               _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                              const SizedBox(height: 15),
+                              _buildAddressTypeToggle(theme), // ✅ Aici am integrat noul selector
                             ],
                           ),
                         ),
@@ -397,6 +405,46 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),
       ),
+    );
+  }
+
+  Widget _buildAddressTypeToggle(ThemeProvider theme) {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _addressType = 'intern'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _addressType == 'intern' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _addressType == 'intern' ? theme.brandBlue : Colors.transparent),
+              ),
+              child: Center(
+                child: Text('Intern', style: TextStyle(color: _addressType == 'intern' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _addressType = 'extern'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _addressType == 'extern' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: _addressType == 'extern' ? theme.brandBlue : Colors.transparent),
+              ),
+              child: Center(
+                child: Text('Extern', style: TextStyle(color: _addressType == 'extern' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
