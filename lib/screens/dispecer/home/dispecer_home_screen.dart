@@ -150,7 +150,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         'total_comanda': _calculateTotal,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
-        'status': 'disponibila',
+        'status': 'In asteptare',
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'id_dispecer': FirebaseAuth.instance.currentUser?.uid,
