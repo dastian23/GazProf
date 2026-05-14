@@ -72,7 +72,7 @@ class ThemeProvider extends ChangeNotifier {
   // --- SHADOW BTN COLOR ---
   List<BoxShadow> get buttonShadow => [
     BoxShadow(
-      color: _isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black.withValues(alpha: 0.3),
+      color: _isDark ? Colors.white.withValues(alpha: 0.3) : Colors.black.withValues(alpha: 0.3),
       blurRadius: 10,
       offset: const Offset(0, 4),
     )
@@ -93,6 +93,16 @@ class ThemeProvider extends ChangeNotifier {
   Color get bgMaps => const Color(0xFFD1D1D1).withValues(alpha: 0.3);
   Color get iconLogout => const Color(0xFFFF0000);
   Color get bgLogout => const Color(0xFFFF0000).withValues(alpha: 0.3);
+
+  // --- STATUS COLORS ---
+  Color get statusTextInAsteptare => const Color(0xFFFF6B00);
+  Color get statusTextAnulata => const Color(0xFFFF0000);
+  Color get statusTextAlocata => const Color(0xFF0779B7);
+  Color get statusTextFinalizata => Colors.green;
+  Color get statusCardInAsteptare => const Color(0xFFFF6B00).withValues(alpha:0.2);
+  Color get statusCardAnulata => const Color(0xFFFF0000).withValues(alpha:0.2);
+  Color get statusCardAlocata => const Color(0xFF0779B7).withValues(alpha: 0.2);
+  Color get statusCardFinalizata => const Color(0xFF1B7A3F).withValues(alpha:0.2);
 
   // --- SHADOW LOGIC ---
   List<BoxShadow> get generalShadow => [

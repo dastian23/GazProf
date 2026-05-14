@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_documente_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,7 +34,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   bool _isLoading = false;
   bool _isMentionsExpanded = false;
   String _selectedPayment = 'cash';
-  String _addressType = 'intern'; // 'intern' sau 'extern'
+  String _addressType = 'intern';
 
   List<ProductItem> products = [
     ProductItem("Butelie 10kg", 120, 0),
@@ -140,7 +141,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       await FirebaseFirestore.instance.collection('comenzi').add({
         'telefon_client': phone,
         'adresa_livrare': address,
-        'tip_adresa': _addressType, // ✅ Adăugat în baza de date
+        'tip_adresa': _addressType,
         'produse': selectedProducts.map((p) => {
           'nume': p.name,
           'pret_unitar': p.price,
@@ -150,7 +151,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         'total_comanda': _calculateTotal,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
-        'status': 'disponibila',
+        'status': 'In asteptare',
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'id_dispecer': FirebaseAuth.instance.currentUser?.uid,
@@ -242,7 +243,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                               const SizedBox(height: 12),
                               _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
                               const SizedBox(height: 15),
-                              _buildAddressTypeToggle(theme), // ✅ Aici am integrat noul selector
+                              _buildAddressTypeToggle(theme),
                             ],
                           ),
                         ),
@@ -502,8 +503,20 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(color: const Color(0xFF1B7A3F).withValues(alpha: 0.03), borderRadius: BorderRadius.circular(8)),
-              child: SvgPicture.asset(iconPath, width: 22, colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : theme.brandBlue, BlendMode.srcIn)),
+              decoration: BoxDecoration(
+                color: value == 'card'
+                    ? theme.statusCardAlocata
+                    : theme.statusCardFinalizata,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: SvgPicture.asset(
+                  iconPath,
+                  width: 22,
+                  colorFilter: ColorFilter.mode(
+                      value == 'cash' ? Colors.green : theme.brandBlue,
+                      BlendMode.srcIn
+                  )
+              ),
             ),
             const SizedBox(width: 15),
             Expanded(
@@ -609,7 +622,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     Widget nextScreen;
 
     if (index == 1) {
-      nextScreen = const Center(child: Text("Ecran Documente"));
+      nextScreen = const DispecerDocumenteScreen();
     } else if (index == 2) {
       nextScreen = const Center(child: Text("Ecran Istoric"));
     } else if (index == 3) {
