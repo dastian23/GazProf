@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_documente_screen.dart';
 import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -344,7 +345,7 @@ class DispecerProfileScreen extends StatelessWidget {
     if (index == 0) {
       nextScreen = const DispecerHomeScreen();
     } else if (index == 1) {
-      nextScreen = const Center(child: Text("Ecran Documente"));
+      nextScreen = const DispecerDocumenteScreen();
     } else if (index == 2) {
       nextScreen = const Center(child: Text("Ecran Istoric"));
     } else {
