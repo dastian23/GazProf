@@ -104,6 +104,11 @@ class ThemeProvider extends ChangeNotifier {
   Color get statusCardAlocata => const Color(0xFF0779B7).withValues(alpha: 0.2);
   Color get statusCardFinalizata => const Color(0xFF1B7A3F).withValues(alpha:0.2);
 
+  // --- FILTERS BTNS & TEXT COLOR ---
+  Color get filterCardFill => const Color(0xFFD1D1D1);
+  Color get filterCardOutline => const Color(0xFF888888);
+  Color get filterText => const Color(0xFF888888);
+
   // --- SHADOW LOGIC ---
   List<BoxShadow> get generalShadow => [
     BoxShadow(

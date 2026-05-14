@@ -105,7 +105,7 @@ class DispecerDocumenteList extends StatelessWidget {
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
-                  color: theme.headerBg,
+                  color: theme.cardFill,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: theme.cardOutline, width: 1.0),
                 ),
@@ -229,7 +229,7 @@ class DispecerDocumenteList extends StatelessWidget {
     return Container(
       height: 75,
       decoration: BoxDecoration(
-        color: theme.headerBg,
+        color: theme.cardFill,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: theme.cardOutline, width: 1.0),
       ),

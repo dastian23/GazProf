@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gazprof/screens/dispecer/home/dispecer_documente_screen.dart';
+import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
+import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -624,7 +625,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     if (index == 1) {
       nextScreen = const DispecerDocumenteScreen();
     } else if (index == 2) {
-      nextScreen = const Center(child: Text("Ecran Istoric"));
+      nextScreen = const DispecerIstoricScreen();
     } else if (index == 3) {
       nextScreen = const DispecerProfileScreen();
     } else {

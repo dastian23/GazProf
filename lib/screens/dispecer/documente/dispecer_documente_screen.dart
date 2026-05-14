@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -125,7 +126,7 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
     if (index == 0) {
       nextScreen = const DispecerHomeScreen();
     } else if (index == 2) {
-      nextScreen = const Center(child: Text("Ecran Istoric"));
+      nextScreen = const DispecerIstoricScreen();
     } else if (index == 3) {
       nextScreen = const DispecerProfileScreen();
     } else {
