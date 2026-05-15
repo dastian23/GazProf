@@ -171,10 +171,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // --- TEXT FIELDS ---
               _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme, controller: _nameController),
               const SizedBox(height: 10),
-              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme, controller: _phoneController),
+
+              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme, controller: _phoneController, isPhone: true),
               const SizedBox(height: 10),
-              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController),
+
+              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController, isEmail: true),
               const SizedBox(height: 10),
+
               _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
 
               const SizedBox(height: 8),
@@ -224,10 +227,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildTextField({required String hint, required IconData icon, bool isPassword = false, required ThemeProvider theme, required TextEditingController controller}) {
+  Widget _buildTextField({
+    required String hint,
+    required IconData icon,
+    bool isPassword = false,
+    bool isPhone = false,
+    bool isEmail = false,
+    required ThemeProvider theme,
+    required TextEditingController controller
+  }) {
+    TextInputType inputType = TextInputType.text;
+    if (isPhone) inputType = TextInputType.phone;
+    if (isEmail) inputType = TextInputType.emailAddress;
+
     return TextField(
       controller: controller,
       obscureText: isPassword ? _isObscured : false,
+      keyboardType: inputType,
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,

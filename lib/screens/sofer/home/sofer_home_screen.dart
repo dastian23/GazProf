@@ -88,7 +88,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                                 fontWeight: FontWeight.normal,
                               ),
                             ),
-                             TextSpan(
+                            TextSpan(
                               text: userProvider.userRole,
                               style: TextStyle(
                                 color: Color(0xFFFF6B00),
@@ -173,44 +173,53 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
           }
         }
 
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStatCard(
-              disponibile.toString(),
-              "Disponibile",
-              const Color(0xFFFF6B00),
-              theme,
-            ),
-            _buildStatCard(
-              preluate.toString(),
-              "Preluate",
-              theme.brandBlue,
-              theme,
-            ),
-            _buildStatCard(
-              livrate.toString(),
-              "Livrate",
-              const Color(0xFF0C9E43),
-              theme,
-            ),
-          ],
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  disponibile.toString(),
+                  "Disponibile",
+                  const Color(0xFFFF6B00),
+                  theme,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  preluate.toString(),
+                  "Preluate",
+                  theme.brandBlue,
+                  theme,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildStatCard(
+                  livrate.toString(),
+                  "Livrate",
+                  const Color(0xFF0C9E43),
+                  theme,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 
   Widget _buildStatCard(
-    String val,
-    String label,
-    Color color,
-    ThemeProvider theme,
-  ) {
+      String val,
+      String label,
+      Color color,
+      ThemeProvider theme,
+      ) {
     return Container(
-      width: 105,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      height: 70,
       decoration: BoxDecoration(
-        color: theme.cardCreateCommand,
+        color: theme.cardFill,
         borderRadius: BorderRadius.circular(15),
         border: Border.all(
           color: theme.cardOutline,
@@ -218,20 +227,23 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
         ),
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             val,
             style: TextStyle(
               color: color,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
             label,
             style: TextStyle(
               color: theme.textSecondary,
-              fontSize: 11,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -314,10 +326,10 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
   }
 
   Widget _buildFilterTab(
-    String label,
-    String type,
-    ThemeProvider theme,
-  ) {
+      String label,
+      String type,
+      ThemeProvider theme,
+      ) {
     bool isSelected = _filterType == type;
 
     return GestureDetector(
@@ -335,8 +347,8 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
           color: isSelected
               ? theme.brandBlue
               : (theme.isDark
-                    ? Colors.white10
-                    : Colors.black.withOpacity(0.05)),
+              ? Colors.white10
+              : Colors.black.withValues(alpha: 0.05)),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -413,7 +425,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
     Timestamp? ts = data['data_creare'];
     DateTime date = ts?.toDate() ?? DateTime.now();
     String formattedTime = DateFormat('HH:mm').format(date);
-    
+
     List produse = data['produse'] ?? [];
     String mentiuni = data['mentiuni'] ?? "";
 
@@ -438,14 +450,14 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                     Text(
                       data['adresa_livrare'] ?? 'Adresă necunoscută',
                       style: TextStyle(
-                        color: theme.textPrimary, 
-                        fontWeight: FontWeight.bold, 
-                        fontSize: 14
+                          color: theme.textPrimary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14
                       ),
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      data['telefon_client'] ?? '-', 
+                      data['telefon_client'] ?? '-',
                       style: TextStyle(color: theme.textGriFix, fontSize: 11),
                     ),
                   ],
@@ -454,15 +466,15 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                 decoration: BoxDecoration(
-                  color: Color(0xFFFF6B00).withOpacity(0.1),
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Text(
                   "In asteptare",
                   style: TextStyle(
-                    color: Color(0xFFFF6B00), 
-                    fontSize: 11, 
-                    fontWeight: FontWeight.bold
+                      color: Color(0xFFFF6B00),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold
                   ),
                 ),
               ),
@@ -480,15 +492,15 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: theme.brandBlue.withOpacity(0.1),
+                        color: theme.brandBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         "${item['cantitate']}x",
                         style: TextStyle(
-                          color: theme.brandBlue, 
-                          fontWeight: FontWeight.bold, 
-                          fontSize: 11
+                            color: theme.brandBlue,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11
                         ),
                       ),
                     ),
@@ -515,11 +527,11 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: theme.isDark 
-                    ? Colors.white.withOpacity(0.05) 
-                    : Colors.orange.withOpacity(0.05),
+                color: theme.isDark
+                    ? Colors.white.withValues(alpha: 0.05)
+                    : Colors.orange.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,9 +542,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                     child: Text(
                       "Observații: $mentiuni",
                       style: TextStyle(
-                        color: theme.textPrimary, 
-                        fontSize: 12, 
-                        fontStyle: FontStyle.italic
+                          color: theme.textPrimary,
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic
                       ),
                     ),
                   ),
@@ -549,9 +561,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               Text(
                 "Azi $formattedTime",
                 style: TextStyle(
-                  color: theme.textPrimary, 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 12
+                    color: theme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12
                 ),
               ),
               RichText(
@@ -562,8 +574,8 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                     TextSpan(
                       text: "${data['total_comanda'] ?? 0} lei",
                       style: const TextStyle(
-                        color: Color(0xFFFF6B00), 
-                        fontWeight: FontWeight.bold
+                          color: Color(0xFFFF6B00),
+                          fontWeight: FontWeight.bold
                       ),
                     ),
                   ],
@@ -571,7 +583,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 15),
 
           SizedBox(
@@ -586,9 +598,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               child: Text(
                 "Preia comanda",
                 style: TextStyle(
-                  color: theme.textPrimary, 
-                  fontWeight: FontWeight.bold, 
-                  fontSize: 13
+                    color: theme.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13
                 ),
               ),
             ),
@@ -606,9 +618,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
           .update({
         'status': 'Alocata',
         'id_sofer':
-            FirebaseAuth.instance.currentUser?.uid,
+        FirebaseAuth.instance.currentUser?.uid,
         'data_preluare':
-            FieldValue.serverTimestamp(),
+        FieldValue.serverTimestamp(),
       });
     } catch (e) {
       debugPrint('Eroare alocare comandă: $e');
@@ -616,9 +628,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
   }
 
   Widget _buildProfileCircle(
-    String name,
-    ThemeProvider theme,
-  ) {
+      String name,
+      ThemeProvider theme,
+      ) {
     String initials = "U";
 
     if (name.trim().isNotEmpty) {
@@ -653,10 +665,10 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
 
   Widget _buildCustomNavBar(
-    BuildContext context,
-    ThemeProvider theme,
-    int selectedIndex,
-  ) {
+      BuildContext context,
+      ThemeProvider theme,
+      int selectedIndex,
+      ) {
     double screenWidth =
         MediaQuery.of(context).size.width - 36;
 
@@ -666,8 +678,8 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
     double btnLeft =
         (tabWidth * selectedIndex) +
-        (tabWidth / 2) -
-        (btnSize / 2);
+            (tabWidth / 2) -
+            (btnSize / 2);
 
     const double btnBottom = 12.0;
 
@@ -711,7 +723,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
               decoration: BoxDecoration(
                 color: theme.navBarBg,
                 borderRadius:
-                    BorderRadius.circular(24),
+                BorderRadius.circular(24),
               ),
               child: Row(
                 children: List.generate(4, (index) {
@@ -724,18 +736,18 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                   return Expanded(
                     child: GestureDetector(
                       behavior:
-                          HitTestBehavior.opaque,
+                      HitTestBehavior.opaque,
                       onTap: () =>
                           _navigate(context, index),
                       child: Center(
                         child: SvgPicture.asset(
                           navItems[index]['path'],
                           width: navItems[index]
-                              ['inactiveSize'],
+                          ['inactiveSize'],
                           height: navItems[index]
-                              ['inactiveSize'],
+                          ['inactiveSize'],
                           colorFilter:
-                              ColorFilter.mode(
+                          ColorFilter.mode(
                             theme.navIconUnselected,
                             BlendMode.srcIn,
                           ),
@@ -762,11 +774,11 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                 child: SvgPicture.asset(
                   navItems[selectedIndex]['path'],
                   width: navItems[selectedIndex]
-                      ['activeSize'],
+                  ['activeSize'],
                   height: navItems[selectedIndex]
-                      ['activeSize'],
+                  ['activeSize'],
                   colorFilter:
-                      const ColorFilter.mode(
+                  const ColorFilter.mode(
                     Colors.white,
                     BlendMode.srcIn,
                   ),
@@ -851,8 +863,8 @@ class _NavBarClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(
-    covariant CustomClipper<Path> oldClipper,
-  ) {
+      covariant CustomClipper<Path> oldClipper,
+      ) {
     return true;
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:another_flushbar/flushbar.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -38,6 +39,30 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
     super.dispose();
   }
 
+  // --- FLUSHBAR NOTIFICATIONS FEATURE ---
+  Future<void> _showFlushbar(String message, {bool isError = true}) async {
+    FocusScope.of(context).unfocus();
+
+    await Flushbar(
+      messageText: Text(
+        message,
+        textAlign: TextAlign.center,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+      ),
+      backgroundColor: isError ? Colors.orange.shade800 : Colors.green.shade600,
+      flushbarPosition: FlushbarPosition.TOP,
+      margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
+      borderRadius: BorderRadius.circular(15),
+      duration: const Duration(milliseconds: 1500),
+      animationDuration: const Duration(milliseconds: 400),
+      icon: Icon(
+          isError ? Icons.error_outline : Icons.check_circle_outline,
+          color: Colors.white,
+          size: 24
+      ),
+    ).show(context);
+  }
+
   Future<void> _fetchUserData() async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
@@ -53,13 +78,25 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
       }
     } catch (e) {
       setState(() => _isLoading = false);
-      _showSnackBar("Eroare la preluarea datelor.");
+      _showFlushbar("Eroare la preluarea datelor.");
     }
   }
 
+  // --- SAVING FEATURE
   Future<void> _saveData() async {
-    if (_nameController.text.trim().isEmpty || _phoneController.text.trim().isEmpty) {
-      _showSnackBar("Numele și telefonul sunt obligatorii.");
+    String name = _nameController.text.trim();
+    String phone = _phoneController.text.trim();
+    String email = _emailController.text.trim();
+
+    // 1. Verify empty fields
+    if (name.isEmpty || phone.isEmpty || email.isEmpty) {
+      await _showFlushbar("Te rugăm să completezi toate câmpurile.");
+      return;
+    }
+
+    // 2. Verify phone number
+    if (!RegExp(r'^07\d{8}$').hasMatch(phone)) {
+      await _showFlushbar("Număr de telefon invalid.\nTrebuie să înceapă cu 07 și să aibă 10 cifre.");
       return;
     }
 
@@ -68,41 +105,32 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
 
-      // 1. Update Firebase
+      // 3. Update data in FIrestore
       await FirebaseFirestore.instance.collection('users').doc(uid).update({
-        'nume': _nameController.text.trim(),
-        'telefon': _phoneController.text.trim(),
+        'nume': name,
+        'telefon': phone,
       });
 
-      // 2. Update global UserProvider immediately so all screens refresh
+      // 4. Update global UserProvider
       if (mounted) {
         Provider.of<UserProvider>(context, listen: false).setUserData(
-          _nameController.text.trim(),
-          Provider.of<UserProvider>(context, listen: false).userRole, // Preserve existing role
-          Provider.of<UserProvider>(context, listen: false).userEmail // Preserve existing email
+            name,
+            Provider.of<UserProvider>(context, listen: false).userRole,
+            email
         );
       }
 
-      _showSnackBar("Datele au fost salvate cu succes!", isError: false);
+      // 5. Success messaje and delay
+      await _showFlushbar("Datele au fost salvate cu succes!", isError: false);
 
       if (mounted) {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      _showSnackBar("Eroare la salvarea datelor.");
+      await _showFlushbar("Eroare la salvarea datelor.");
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-  }
-
-  void _showSnackBar(String message, {bool isError = true}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.orange : Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
   }
 
   @override
@@ -128,7 +156,7 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: theme.sectionLabel.withOpacity(0.3),
+            color: theme.sectionLabel.withValues(alpha: 0.3),
             height: 1.0,
           ),
         ),
@@ -175,7 +203,7 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
                       shape: BoxShape.circle,
                       boxShadow: [
                         BoxShadow(
-                          color: theme.brandBlue.withOpacity(0.4),
+                          color: theme.brandBlue.withValues(alpha: 0.4),
                           blurRadius: 35,
                           spreadRadius: 6,
                         ),
