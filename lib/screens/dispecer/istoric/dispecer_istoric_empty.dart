@@ -27,7 +27,7 @@ class DispecerIstoricEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            "Momentan nu există\nnicio comandă pe data\nrespectivă",
+            "Momentan nu există\nnicio comandă pe data\n sau pe filtrul respectivă",
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.textSecondary, fontSize: 14, height: 1.4),
           ),

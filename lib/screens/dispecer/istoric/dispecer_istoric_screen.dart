@@ -333,12 +333,9 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
                           // --- LIST OR EMPTY STATE
                           Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: filteredComenzi.isEmpty
-                                  ? const DispecerIstoricEmpty()
-                                  : DispecerIstoricList(comenzi: filteredComenzi),
-                            ),
+                            child: filteredComenzi.isEmpty
+                                ? const DispecerIstoricEmpty()
+                                : DispecerIstoricList(comenzi: filteredComenzi),
                           ),
                         ],
                       );

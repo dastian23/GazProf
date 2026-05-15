@@ -26,9 +26,11 @@ class DispecerDocumenteScreen extends StatefulWidget {
 
 class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
 
+  // -- MODIFY THIS TO TEST ---
   bool _esteInProgram() {
-    final oraCurenta = DateTime.now().hour;
-    return oraCurenta >= 6 && oraCurenta < 18;
+    //final oraCurenta = DateTime.now().hour;
+    //return oraCurenta >= 6 && oraCurenta < 18;
+    return true;
   }
 
   @override
@@ -41,6 +43,13 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
     ));
+
+    // --- DEFINING THE TIME RANGE FOR ORDERS  ---
+    final now = DateTime.now();
+    // Today at start 6,0,0
+    final startOfShift = DateTime(now.year, now.month, now.day, 0, 0, 0);
+    // Today at end 18, 0, 0
+    final endOfShift = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
@@ -67,11 +76,16 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
                   ),
                 ),
 
-                // --- DYNAMIC RANGE ---
+                // --- DYNAMIC RANGE  ---
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('comenzi')
+                    // 1. Filter to be >= today at hour 06:00
+                        .where('data_creare', isGreaterThanOrEqualTo: startOfShift)
+                    // 2. Filter to be < today at hour 18:00
+                        .where('data_creare', isLessThan: endOfShift)
+                    // 3. We order from the new to the oldest
                         .orderBy('data_creare', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {

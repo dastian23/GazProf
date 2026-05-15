@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 // --- THEME ---
 import '../../../../core/theme_provider.dart';
@@ -16,13 +17,13 @@ class DispecerIstoricList extends StatelessWidget {
 
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.only(top: 5, bottom: 120),
+      padding: const EdgeInsets.only(left: 20, right: 20, top: 15, bottom: 120),
       itemCount: comenzi.length,
       itemBuilder: (context, index) {
         final doc = comenzi[index];
         final data = doc.data() as Map<String, dynamic>;
 
-        // Fetching data
+        // fetching data
         final adresa = data['adresa_livrare'] ?? 'Adresă lipsă';
         final telefon = data['telefon_client'] ?? 'N/A';
         final total = data['total_comanda'] ?? 0;
@@ -30,28 +31,20 @@ class DispecerIstoricList extends StatelessWidget {
         final status = data['status'] ?? 'Finalizata';
         final idSofer = data['id_sofer'];
 
-        // Format products
-        String produseStr = '';
-        if (data['produse'] != null) {
-          final prodList = data['produse'] as List<dynamic>;
-          produseStr = prodList.map((p) => "${p['cantitate']}x ${p['nume']}").join(', ');
-        }
+        final mentiuni = data['mentiuni'] ?? '';
+        final produse = data['produse'] as List<dynamic>? ?? [];
 
-        // Format time
-        String timeStr = "Azi 14:30";
-        if (data['data_creare'] != null) {
-          final ts = data['data_creare'] as Timestamp;
-          final dt = ts.toDate();
-          final isToday = DateTime.now().day == dt.day && DateTime.now().month == dt.month && DateTime.now().year == dt.year;
+        // Format time & hour
+        Timestamp? ts = data['data_finalizare'] ?? data['data_creare'];
+        DateTime date = ts?.toDate() ?? DateTime.now();
+        String formattedTime = DateFormat('HH:mm').format(date);
+        String formattedDate = DateFormat('dd.MM.yyyy').format(date);
 
-          if (isToday) {
-            timeStr = "Azi ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
-          } else {
-            timeStr = "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
-          }
-        }
+        // Highlight with 'Azi'
+        bool isToday = date.day == DateTime.now().day && date.month == DateTime.now().month && date.year == DateTime.now().year;
+        String displayDate = isToday ? "Azi $formattedTime" : "$formattedDate - $formattedTime";
 
-        // Status colors
+        // Configure Status Colors
         Color statusTextColor;
         Color statusBgColor;
         String displayStatus = status;
@@ -67,31 +60,42 @@ class DispecerIstoricList extends StatelessWidget {
         }
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 15),
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             color: theme.cardFill,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: theme.cardOutline, width: 1.0),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ROW 1: Adresă, Șofer, Status
+              // --- 1. HEADER CARD ---
               Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Text(
-                      adresa,
-                      style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          adresa,
+                          style: TextStyle(
+                              color: theme.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          "${tipAdresa == 'extern' ? 'Extern' : 'Intern'}  •  $telefon",
+                          style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                        ),
+                      ],
                     ),
                   ),
-
-                  if (idSofer != null) _buildDriverInfo(idSofer, theme),
-
+                  const SizedBox(width: 10),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                     decoration: BoxDecoration(
@@ -100,44 +104,125 @@ class DispecerIstoricList extends StatelessWidget {
                     ),
                     child: Text(
                       displayStatus,
-                      style: TextStyle(color: statusTextColor, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          color: statusTextColor,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold
+                      ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 6),
 
-              // ROW 2: Details
-              Text(
-                "${tipAdresa == 'intern' ? 'Intern' : 'Extern'}  -  $telefon",
-                style: TextStyle(color: theme.textSecondary, fontSize: 12),
+              Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 25),
+
+              // --- 2. PRODUCT LIST ---
+              Column(
+                children: produse.map((item) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: theme.brandBlue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            "${item['cantitate']}x",
+                            style: TextStyle(
+                                color: theme.brandBlue,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            item['nume'] ?? 'Produs',
+                            style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          ),
+                        ),
+                        Text(
+                          "${item['subtotal']} lei",
+                          style: TextStyle(color: theme.textSecondary, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
-              const SizedBox(height: 12),
 
-              Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
-              const SizedBox(height: 12),
+              // --- 3. NOTES ---
+              if (mentiuni.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: theme.isDark
+                        ? Colors.white.withValues(alpha: 0.05)
+                        : Colors.orange.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Colors.orange.withValues(alpha: 0.2)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.info_outline, size: 14, color: Colors.orange),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "Observații: $mentiuni",
+                          style: TextStyle(
+                              color: theme.textPrimary,
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
 
-              // ROW 3: Hour, Product, Price
+              Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 25),
+
+              // --- 4. FOOTER  ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(timeStr, style: TextStyle(color: theme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
-                  const Text("  -  ", style: TextStyle(color: Colors.grey)),
-                  Expanded(
-                    child: Text(
-                      produseStr,
-                      style: TextStyle(color: theme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  Text(
+                    displayDate,
+                    style: TextStyle(
+                        color: theme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12
                     ),
                   ),
-                  const Text("  -  ", style: TextStyle(color: Colors.grey)),
-                  Text(
-                    "${total.toStringAsFixed(0)} lei",
-                    style: TextStyle(color: statusTextColor, fontSize: 14, fontWeight: FontWeight.bold),
+                  RichText(
+                    text: TextSpan(
+                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                      children: [
+                        const TextSpan(text: "Total: "),
+                        TextSpan(
+                          text: "${total.toStringAsFixed(0)} lei",
+                          style: TextStyle(
+                              color: statusTextColor,
+                              fontWeight: FontWeight.bold
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
+
+              // --- 5. INFO WHO COMPLETED OR NOT THE ORDER ---
+              if (idSofer != null)
+                _buildDriverInfo(idSofer, status, theme),
             ],
           ),
         );
@@ -145,8 +230,8 @@ class DispecerIstoricList extends StatelessWidget {
     );
   }
 
-  // --- FETCHING SOFER DATA
-  Widget _buildDriverInfo(String idSofer, ThemeProvider theme) {
+  // --- FETCHING SOFER DATA ---
+  Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(idSofer).get(),
       builder: (context, snapshot) {
@@ -171,17 +256,22 @@ class DispecerIstoricList extends StatelessWidget {
           }
         }
 
-        return Row(
-          children: [
-            CircleAvatar(
-              radius: 10,
-              backgroundColor: theme.brandBlue,
-              child: Text(initials, style: const TextStyle(fontSize: 8, color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-            const SizedBox(width: 4),
-            Text(displayName, style: TextStyle(color: theme.textSecondary, fontSize: 12, fontWeight: FontWeight.bold)),
-            const SizedBox(width: 8),
-          ],
+        String actionText = status == 'Finalizata' ? "Finalizată de" : "Anulată de";
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 15),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: theme.brandBlue,
+                child: Text(initials, style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(width: 8),
+              Text("$actionText: ", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+              Text(displayName, style: TextStyle(color: theme.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+            ],
+          ),
         );
       },
     );

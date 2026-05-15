@@ -87,8 +87,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         );
       } else {
+        String displayMessage = error;
 
-        _showError(error);
+        if (error.contains('email-already-in-use')) {
+          displayMessage = "Acest e-mail este deja asociat unui cont!\nTe rugăm să folosești altul sau să te conectezi.";
+        } else if (error.contains('network-request-failed')) {
+          displayMessage = "Eroare de rețea.\nVerifică conexiunea la internet și încearcă din nou.";
+        } else if (error.contains('invalid-email')) {
+          displayMessage = "Adresa de e-mail este invalidă.";
+        }
+
+        _showError(displayMessage);
       }
     }
   }
