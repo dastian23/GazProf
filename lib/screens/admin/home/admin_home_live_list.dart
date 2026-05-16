@@ -4,12 +4,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+// --- THEME ---
 import '../../../../core/theme_provider.dart';
 
-class SoferHomeList extends StatelessWidget {
+class AdminHomeLiveList extends StatelessWidget {
   final List<QueryDocumentSnapshot> comenzi;
 
-  const SoferHomeList({super.key, required this.comenzi});
+  const AdminHomeLiveList({super.key, required this.comenzi});
 
   Future<void> _takeOrder(String id) async {
     try {
@@ -30,6 +31,7 @@ class SoferHomeList extends StatelessWidget {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       itemCount: comenzi.length,
       itemBuilder: (context, index) {
         final doc = comenzi[index];
@@ -41,20 +43,47 @@ class SoferHomeList extends StatelessWidget {
 
         List produse = data['produse'] ?? [];
         String mentiuni = data['mentiuni'] ?? "";
+        String status = data['status'] ?? 'In asteptare';
+        String? idSofer = data['id_sofer'];
 
         final adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
         final telefon = data['telefon_client'] ?? '-';
+        final total = data['total_comanda'] ?? 0;
+
+        // --- DATE NOI EXTRASE ---
         String tipAdresa = data['tip_adresa'] ?? 'intern';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
+        String formatAdresa = tipAdresa.toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : 'Cash';
+
+        Color badgeColor;
+        Color textColor;
+        String displayStatus;
+
+        if (status == 'In asteptare') {
+          badgeColor = const Color(0xFFFF6B00).withValues(alpha: 0.1);
+          textColor = const Color(0xFFFF6B00);
+          displayStatus = "În așteptare";
+        } else if (status == 'Alocata') {
+          badgeColor = theme.brandBlue.withValues(alpha: 0.15);
+          textColor = theme.brandBlue;
+          displayStatus = "Alocată";
+        } else if (status == 'Finalizata') {
+          badgeColor = theme.statusCardFinalizata;
+          textColor = theme.statusTextFinalizata;
+          displayStatus = "Finalizată";
+        } else {
+          badgeColor = theme.statusCardAnulata;
+          textColor = theme.statusTextAnulata;
+          displayStatus = "Anulată";
+        }
 
         return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          margin: const EdgeInsets.only(bottom: 15),
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
-            color: theme.cardCreateCommand,
+            color: theme.cardFill,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: theme.cardOutline),
           ),
@@ -82,14 +111,8 @@ class SoferHomeList extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Text(
-                      "In asteptare",
-                      style: TextStyle(color: Color(0xFFFF6B00), fontSize: 11, fontWeight: FontWeight.bold),
-                    ),
+                    decoration: BoxDecoration(color: badgeColor, borderRadius: BorderRadius.circular(8)),
+                    child: Text(displayStatus, style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
@@ -104,19 +127,11 @@ class SoferHomeList extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: theme.brandBlue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            "${item['cantitate']}x",
-                            style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold, fontSize: 11),
-                          ),
+                          decoration: BoxDecoration(color: theme.brandBlue.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4)),
+                          child: Text("${item['cantitate']}x", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold, fontSize: 11)),
                         ),
                         const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(item['nume'] ?? 'Produs', style: TextStyle(color: theme.textPrimary, fontSize: 13)),
-                        ),
+                        Expanded(child: Text(item['nume'] ?? 'Produs', style: TextStyle(color: theme.textPrimary, fontSize: 13))),
                         Text("${item['subtotal']} lei", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
                       ],
                     ),
@@ -140,10 +155,7 @@ class SoferHomeList extends StatelessWidget {
                       const Icon(Icons.info_outline, size: 14, color: Colors.orange),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          "Observații: $mentiuni",
-                          style: TextStyle(color: theme.textPrimary, fontSize: 12, fontStyle: FontStyle.italic),
-                        ),
+                        child: Text("Observații: $mentiuni", style: TextStyle(color: theme.textPrimary, fontSize: 12, fontStyle: FontStyle.italic)),
                       ),
                     ],
                   ),
@@ -161,30 +173,76 @@ class SoferHomeList extends StatelessWidget {
                       style: TextStyle(color: theme.textPrimary, fontSize: 13),
                       children: [
                         const TextSpan(text: "Total: "),
-                        TextSpan(
-                          text: "${data['total_comanda'] ?? 0} lei",
-                          style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
-                        ),
+                        TextSpan(text: "$total lei", style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 15),
+              if (status != 'In asteptare' && idSofer != null)
+                _buildDriverInfo(idSofer, status, theme),
 
-              SizedBox(
-                width: double.infinity,
-                height: 40,
-                child: OutlinedButton(
-                  onPressed: () => _takeOrder(doc.id),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: theme.cardOutline),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              if (status == 'In asteptare') ...[
+                const SizedBox(height: 15),
+                SizedBox(
+                  width: double.infinity, height: 40,
+                  child: OutlinedButton(
+                    onPressed: () => _takeOrder(doc.id),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: theme.cardOutline),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    child: Text("Preia comanda", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                   ),
-                  child: Text("Preia comanda", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 13)),
                 ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(idSofer).get(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
+
+        final userData = snapshot.data!.data() as Map<String, dynamic>;
+        final String fullName = userData['nume'] ?? 'Necunoscut';
+
+        List<String> words = fullName.trim().split(RegExp(r'\s+'));
+        String initials = "U";
+        String displayName = fullName;
+
+        if (words.isNotEmpty) {
+          if (words.length > 1) {
+            initials = (words[0][0] + words[1][0]).toUpperCase();
+            displayName = "${words[0]} ${words[1][0].toUpperCase()}.";
+          } else {
+            initials = words[0][0].toUpperCase();
+            displayName = words[0];
+          }
+        }
+
+        String actionText = "Preluată de";
+        if (status == 'Finalizata') actionText = "Finalizată de";
+        if (status == 'Anulata') actionText = "Anulată de";
+
+        return Padding(
+          padding: const EdgeInsets.only(top: 15),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 12,
+                backgroundColor: theme.brandBlue,
+                child: Text(initials, style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
               ),
+              const SizedBox(width: 8),
+              Text("$actionText: ", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+              Text(displayName, style: TextStyle(color: theme.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
         );

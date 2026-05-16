@@ -15,6 +15,7 @@ import '../../../core/user_provider.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 import '../screens/niciunul/home/niciunul_home_screen.dart';
+import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -93,7 +94,16 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         } else if (rol == 'admin') {
-          _showError("Ecranul Admin este în lucru!");
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+
+          // 2. Navigation
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AdminHomeScreen(),
+            ),
+          );
+
         } else {
           // Fallback
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
@@ -144,7 +154,12 @@ class _LoginScreenState extends State<LoginScreen> {
             MaterialPageRoute(builder: (context) => const DispecerHomeScreen()),
           );
         } else if (rol == 'admin') {
-          _showError("Ecranul Admin este în lucru!");
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+          );
+
         } else {
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
           Navigator.pushReplacement(

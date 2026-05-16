@@ -29,7 +29,6 @@ class AuthService {
         'email': email,
         'rol': 'neatribuit',
         'esteAprobat': false,
-        //'status': 'neatribuit',
         'data_creare': FieldValue.serverTimestamp(),
       });
       return null;
@@ -58,7 +57,6 @@ class AuthService {
           'success': true,
           'rol': doc['rol'] ?? 'neatribuit',
           'nume': doc['nume'] ?? 'Utilizator',
-          //'status': doc['status'] ?? 'neatribuit',
         };
       } else {
         return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
@@ -82,7 +80,6 @@ class AuthService {
         idToken: googleAuth.idToken,
       );
 
-
       UserCredential userCredential = await _auth.signInWithCredential(credential);
       User? user = userCredential.user;
 
@@ -94,28 +91,20 @@ class AuthService {
             'success': true,
             'rol': doc['rol'] ?? 'neatribuit',
             'nume': doc['nume'] ?? user.displayName ?? 'Utilizator Google',
-            //'status': doc['status'] ?? 'neatribuit',
           };
         } else {
-          await _db.collection('users').doc(user.uid).set({
-            'nume': user.displayName ?? 'Utilizator Google',
-            'email': user.email,
-            'rol': 'neatribuit',
-            'esteAprobat': false,
-            //'status': 'neatribuit',
-            'data_creare': FieldValue.serverTimestamp(),
-          });
+          await user.delete();
+          await g_auth.GoogleSignIn().signOut();
 
           return {
-            'success': true,
-            'rol': 'neatribuit',
-            'nume': user.displayName ?? 'Utilizator Google',
-            //'status': 'neatribuit',
+            'success': false,
+            'error': 'Trebuie să te înregistrezi mai întâi ca să te poți loga.'
           };
         }
       }
       return {'success': false, 'error': 'Eroare necunoscută la conectare.'};
     } catch (e) {
+      await g_auth.GoogleSignIn().signOut();
       return {'success': false, 'error': 'Eroare la conectarea cu Google: ${e.toString()}'};
     }
   }
@@ -174,7 +163,7 @@ class AuthService {
     }
   }
 
-  // --- STEP 3: UPDATE THE PASSWORD --- 
+  // --- STEP 3: UPDATE THE PASSWORD ---
   Future<String?> updatePasswordManual(String email, String newPassword) async {
     try {
       // 1. Searching user's UID by email
@@ -203,7 +192,6 @@ class AuthService {
   Future<void> logOut() async {
     try {
       await _auth.signOut();
-
       await g_auth.GoogleSignIn().signOut();
     } catch (e) {
       print("Eroare la deconectare: $e");

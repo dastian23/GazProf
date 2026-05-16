@@ -3,7 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-// --- THEME ---
 import '../../../../core/theme_provider.dart';
 
 class DispecerDocumenteList extends StatelessWidget {
@@ -15,7 +14,6 @@ class DispecerDocumenteList extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
 
-    // CALCULATE THE COUNTERS
     int countDisponibile = comenzi.where((c) => c['status'] == 'In asteptare').length;
     int countPreluate = comenzi.where((c) => c['status'] == 'Alocata').length;
     int countLivrate = comenzi.where((c) => c['status'] == 'Finalizata').length;
@@ -41,7 +39,6 @@ class DispecerDocumenteList extends StatelessWidget {
 
         const SizedBox(height: 15),
 
-        // --- TEXT LIVE ORDERS ---
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
           child: Text(
@@ -50,7 +47,6 @@ class DispecerDocumenteList extends StatelessWidget {
           ),
         ),
 
-        // --- CARD LIST ---
         Expanded(
           child: ListView.builder(
             physics: const BouncingScrollPhysics(),
@@ -64,23 +60,21 @@ class DispecerDocumenteList extends StatelessWidget {
               final telefon = data['telefon_client'] ?? 'N/A';
               final total = data['total_comanda'] ?? 0;
               final tipAdresa = data['tip_adresa'] ?? 'intern';
+              final tipPlata = data['tip_plata'] ?? 'cash';
               final status = data['status'] ?? 'In asteptare';
               final idSofer = data['id_sofer'];
 
               final mentiuni = data['mentiuni'] ?? '';
               final produse = data['produse'] as List<dynamic>? ?? [];
 
-              // Formating time & hour
               Timestamp? ts = data['data_creare'];
               DateTime date = ts?.toDate() ?? DateTime.now();
               String formattedTime = DateFormat('HH:mm').format(date);
               String formattedDate = DateFormat('dd.MM.yyyy').format(date);
 
-              // Highlight with 'Azi'
               bool isToday = date.day == DateTime.now().day && date.month == DateTime.now().month && date.year == DateTime.now().year;
               String displayDate = isToday ? "Azi $formattedTime" : "$formattedDate - $formattedTime";
 
-              // Configure Status Colors
               Color statusTextColor;
               Color statusBgColor;
               String displayStatus = status;
@@ -103,6 +97,9 @@ class DispecerDocumenteList extends StatelessWidget {
                 displayStatus = "Anulată";
               }
 
+              String formatAdresa = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+              String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
+
               return Container(
                 margin: const EdgeInsets.only(bottom: 15),
                 padding: const EdgeInsets.all(15),
@@ -114,7 +111,6 @@ class DispecerDocumenteList extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // --- 1. HEADER CARD  ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +129,7 @@ class DispecerDocumenteList extends StatelessWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                                "${tipAdresa == 'extern' ? 'Extern' : 'Intern'}  •  $telefon",
+                                "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
                                 style: TextStyle(color: theme.textGriFix, fontSize: 11),
                               ),
                             ],
@@ -160,7 +156,6 @@ class DispecerDocumenteList extends StatelessWidget {
 
                     Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 25),
 
-                    // --- 2. PRODUCTS LIST ---
                     Column(
                       children: produse.map((item) {
                         return Padding(
@@ -199,7 +194,6 @@ class DispecerDocumenteList extends StatelessWidget {
                       }).toList(),
                     ),
 
-                    // --- 3. NOTES ---
                     if (mentiuni.isNotEmpty) ...[
                       const SizedBox(height: 10),
                       Container(
@@ -234,7 +228,6 @@ class DispecerDocumenteList extends StatelessWidget {
 
                     Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 25),
 
-                    // --- 4. FOOTER ---
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -264,7 +257,6 @@ class DispecerDocumenteList extends StatelessWidget {
                       ],
                     ),
 
-                    // --- 5. INFO  ---
                     if (status != 'In asteptare' && idSofer != null)
                       _buildDriverInfo(idSofer, status, theme),
                   ],
@@ -277,7 +269,6 @@ class DispecerDocumenteList extends StatelessWidget {
     );
   }
 
-  // --- WIDGET FOR FETCHING SOFER DATA ---
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance.collection('users').doc(idSofer).get(),
@@ -326,7 +317,6 @@ class DispecerDocumenteList extends StatelessWidget {
     );
   }
 
-  // --- HELPER METERS ---
   Widget _buildCounterBox(String label, int count, Color counterColor, ThemeProvider theme) {
     return Container(
       height: 75,

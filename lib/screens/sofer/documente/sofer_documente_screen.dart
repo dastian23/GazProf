@@ -246,7 +246,7 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
     );
   }
 
-  // --- SECȚIUNE FILTRE ---
+  // --- FILTER SECTION ---
   Widget _buildSectionHeader(ThemeProvider theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -254,7 +254,7 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "COMENZI PRELUATE (ALOCATE ȚIE)",
+            "COMENZI PRELUATE",
             style: TextStyle(color: theme.textGriFix, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.1),
           ),
           const SizedBox(height: 15),

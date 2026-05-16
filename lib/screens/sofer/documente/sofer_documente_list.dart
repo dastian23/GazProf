@@ -3,10 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-// --- THEME ---
 import '../../../../core/theme_provider.dart';
-
-// --- SCREENS ---
 import 'sofer_order_details_screen.dart';
 
 class SoferDocumenteList extends StatelessWidget {
@@ -36,6 +33,12 @@ class SoferDocumenteList extends StatelessWidget {
         String telefon = data['telefon_client'] ?? '-';
         double total = (data['total_comanda'] ?? 0).toDouble();
 
+        String tipAdresa = data['tip_adresa'] ?? 'intern';
+        String tipPlata = data['tip_plata'] ?? 'cash';
+
+        String formatAdresa = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
+
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
           padding: const EdgeInsets.all(15),
@@ -47,7 +50,6 @@ class SoferDocumenteList extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // --- 1. HEADER CARD ---
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +63,10 @@ class SoferDocumenteList extends StatelessWidget {
                           style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 3),
-                        Text(telefon, style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                        Text(
+                          "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                          style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                        ),
                       ],
                     ),
                   ),
@@ -81,7 +86,6 @@ class SoferDocumenteList extends StatelessWidget {
 
               const Divider(height: 25, color: Colors.black12),
 
-              // --- 2. PRODUCT LIST ---
               Column(
                 children: produse.map((item) {
                   return Padding(
@@ -102,7 +106,6 @@ class SoferDocumenteList extends StatelessWidget {
                 }).toList(),
               ),
 
-              // --- 3. NOTES ---
               if (mentiuni.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 Container(
@@ -128,7 +131,6 @@ class SoferDocumenteList extends StatelessWidget {
 
               const Divider(height: 20, color: Colors.black12),
 
-              // FOOTER (Timp & Total)
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -147,7 +149,6 @@ class SoferDocumenteList extends StatelessWidget {
 
               const SizedBox(height: 15),
 
-              // --- 4. BTN OPEN ORDER ---
               SizedBox(
                 width: double.infinity,
                 height: 42,
