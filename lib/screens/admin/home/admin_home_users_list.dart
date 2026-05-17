@@ -41,21 +41,21 @@ class AdminHomeUsersList extends StatelessWidget {
               initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : words[0][0].toUpperCase();
             }
 
-            Color rolBg = Colors.grey.withValues(alpha: 0.2);
-            Color rolText = Colors.grey;
+            Color rolBg;
+            Color rolText;
 
             if (rol.toLowerCase() == 'sofer') {
-              rolBg = theme.brandBlue.withValues(alpha: 0.15);
-              rolText = theme.brandBlue;
+              rolBg = theme.roleBgSofer;
+              rolText = theme.roleSofer;
             } else if (rol.toLowerCase() == 'dispecer') {
-              rolBg = const Color(0xFF0C9E43).withValues(alpha: 0.15);
-              rolText = const Color(0xFF0C9E43);
+              rolBg = theme.roleBgDispecer;
+              rolText = theme.roleDispecer;
             } else if (rol.toLowerCase() == 'admin' || rol.toLowerCase() == 'administrator') {
-              rolBg = const Color(0xFFFF6B00).withValues(alpha: 0.15);
-              rolText = const Color(0xFFFF6B00);
+              rolBg = theme.roleBgAdmin;
+              rolText = theme.roleAdmin;
             } else {
-              rolBg = Colors.red.withValues(alpha: 0.15);
-              rolText = Colors.red;
+              rolBg = theme.roleBgNeatribuit;
+              rolText = theme.roleNeatribuit;
             }
 
             return Container(

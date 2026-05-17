@@ -14,6 +14,9 @@ import 'admin_home_preluate_list.dart';
 import 'admin_home_live_list.dart';
 import 'admin_home_users_list.dart';
 import 'package:gazprof/screens/admin/documente/admin_documente_screen.dart';
+import 'package:gazprof/screens/admin/profile/admin_profile_screen.dart';
+import 'package:gazprof/screens/admin/profile/admin_gestionare_screen.dart';
+
 
 class AdminHomeScreen extends StatefulWidget {
   const AdminHomeScreen({super.key});
@@ -62,7 +65,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 22),
                       GestureDetector(
-                        onTap: () => _navigate(context, 3), // Duce la profil
+                        onTap: () => _navigate(context, 3),
                         child: _buildProfileCircle(userProvider.userName, theme),
                       ),
                     ],
@@ -209,11 +212,16 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         children: [
           Expanded(
             child: GestureDetector(
-              onTap: () => _navigate(context, 3),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const AdminGestionareScreen()),
+                );
+              },
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: theme.brandBlue.withValues(alpha: 0.15),
+                  color: theme.brandBlue.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: FittedBox(
@@ -240,7 +248,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
               child: Container(
                 height: 48,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFF6B00).withValues(alpha: 0.15),
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: FittedBox(
@@ -400,17 +408,29 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
     );
   }
 
+
   // --- NAVIGATE LOGIC ---
   void _navigate(BuildContext context, int index) {
     if (index == 0) return;
+
     Widget nextScreen;
-    if (index == 1) nextScreen = const AdminDocumenteScreen();
-    else if (index == 2) nextScreen = const AdminPlaceholderScreen(title: "Istoric");
-    else nextScreen = const AdminPlaceholderScreen(title: "Atribuie Roluri / Profil");
+    if (index == 1) {
+      nextScreen = const AdminDocumenteScreen();
+    } else if (index == 2) {
+      nextScreen = const AdminPlaceholderScreen(title: 'Istoric');
+    } else if (index == 3) {
+      nextScreen = const AdminProfileScreen();
+    } else {
+      return;
+    }
 
     Navigator.pushReplacement(
       context,
-      PageRouteBuilder(pageBuilder: (context, a1, a2) => nextScreen, transitionDuration: Duration.zero),
+      PageRouteBuilder(
+        pageBuilder: (context, animation1, animation2) => nextScreen,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
     );
   }
 }

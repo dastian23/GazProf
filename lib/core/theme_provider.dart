@@ -43,7 +43,7 @@ class ThemeProvider extends ChangeNotifier {
   Color get cardFill => _isDark ? const Color(0xFF312F2F) : Colors.white;
   Color get cardOutline => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
-  // --- SECTION LABELS (CONT, PREFERINȚE) ---
+  // --- SECTION LABELS  ---
   Color get sectionLabel => _isDark ? Colors.white : const Color(0xFFD1D1D1);
 
   // --- TEXTBOX COLORS  & CARDS ---
@@ -86,13 +86,17 @@ class ThemeProvider extends ChangeNotifier {
 
   // --- PROFILE ICONS COLORS ---
   Color get iconPerson => const Color(0xFFFF6B00);
-  Color get bgPerson => const Color(0xFFFF6B00).withValues(alpha: 0.2);
+  Color get bgPerson => const Color(0xFFFF6B00).withValues(alpha: 0.3);
   Color get iconLock => const Color(0xFF0779B7);
-  Color get bgLock => const Color(0xFF0779B7).withValues(alpha: 0.2);
+  Color get bgLock => const Color(0xFF0779B7).withValues(alpha: 0.3);
   Color get iconMaps => const Color(0xFF888888);
   Color get bgMaps => const Color(0xFFD1D1D1).withValues(alpha: 0.3);
   Color get iconLogout => const Color(0xFFFF0000);
   Color get bgLogout => const Color(0xFFFF0000).withValues(alpha: 0.3);
+  Color get iconUsers => const Color(0xFF6F00FF);
+  Color get bgUsers => const Color(0xFF6F00FF).withValues(alpha: 0.3);
+  Color get iconSettings => const Color(0xFF372300);
+  Color get bgSettings => const Color(0xFF372300).withValues(alpha: 0.3);
 
   // --- STATUS COLORS ---
   Color get statusTextInAsteptare => const Color(0xFFFF6B00);
@@ -103,6 +107,16 @@ class ThemeProvider extends ChangeNotifier {
   Color get statusCardAnulata => const Color(0xFFFF0000).withValues(alpha:0.2);
   Color get statusCardAlocata => const Color(0xFF0779B7).withValues(alpha: 0.2);
   Color get statusCardFinalizata => const Color(0xFF1B7A3F).withValues(alpha:0.2);
+
+  // --- ROLE COLORS ---
+  Color get roleBgSofer => const Color (0xFF0779B7).withValues(alpha: 0.3);
+  Color get roleSofer => const Color(0xFF0779B7);
+  Color get roleBgDispecer => Colors.green.withValues(alpha:0.3);
+  Color get roleDispecer => Colors.green;
+  Color get roleBgAdmin => const Color(0xFFFF6B00).withValues(alpha: 0.3);
+  Color get roleAdmin => const Color(0xFFFF6B00);
+  Color get roleBgNeatribuit => const Color(0xFFFF0000).withValues(alpha: 0.3);
+  Color get roleNeatribuit => const Color(0xFFFF0000);
 
   // --- FILTERS BTNS & TEXT COLOR ---
   Color get filterCardFill => const Color(0xFFD1D1D1);

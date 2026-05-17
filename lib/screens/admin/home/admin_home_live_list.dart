@@ -50,7 +50,6 @@ class AdminHomeLiveList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? '-';
         final total = data['total_comanda'] ?? 0;
 
-        // --- DATE NOI EXTRASE ---
         String tipAdresa = data['tip_adresa'] ?? 'intern';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
@@ -62,12 +61,12 @@ class AdminHomeLiveList extends StatelessWidget {
         String displayStatus;
 
         if (status == 'In asteptare') {
-          badgeColor = const Color(0xFFFF6B00).withValues(alpha: 0.1);
-          textColor = const Color(0xFFFF6B00);
+          badgeColor = theme.statusCardInAsteptare;
+          textColor = theme.statusTextInAsteptare;
           displayStatus = "În așteptare";
         } else if (status == 'Alocata') {
-          badgeColor = theme.brandBlue.withValues(alpha: 0.15);
-          textColor = theme.brandBlue;
+          badgeColor = theme.statusCardAlocata;
+          textColor = theme.statusTextAlocata;
           displayStatus = "Alocată";
         } else if (status == 'Finalizata') {
           badgeColor = theme.statusCardFinalizata;

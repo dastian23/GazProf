@@ -224,8 +224,8 @@ class AdminOrderDetailsScreen extends StatelessWidget {
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(color: theme.brandBlue.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-            child: Text("Alocată", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold, fontSize: 12)),
+            decoration: BoxDecoration(color: theme.statusCardAlocata, borderRadius: BorderRadius.circular(8)),
+            child: Text("Alocată", style: TextStyle(color: theme.statusTextAlocata, fontWeight: FontWeight.bold, fontSize: 12)),
           ),
           const SizedBox(height: 15),
           Text(orderData['adresa_livrare'] ?? 'Adresă lipsă', style: TextStyle(color: theme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),

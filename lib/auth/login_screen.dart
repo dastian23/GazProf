@@ -84,6 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
         } else if (rol == 'dispecer') {
+          // 1. Saving the data globally in Provider
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
 
           // 2. Navigation
@@ -94,6 +95,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           );
         } else if (rol == 'admin') {
+          // 1. Saving the data globally in Provider
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
 
           // 2. Navigation

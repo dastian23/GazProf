@@ -11,6 +11,8 @@ import '../../../../core/user_provider.dart';
 
 // --- SCREENS ---
 import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
+import 'package:gazprof/screens/admin/profile/admin_profile_screen.dart';
+
 
 class ProductItem {
   String name;
@@ -607,6 +609,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     );
   }
 
+  // --- NAVIGATE LOGIC ---
   void _navigate(BuildContext context, int index) {
     if (index == 1) return;
 
@@ -614,9 +617,9 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     if (index == 0) {
       nextScreen = const AdminHomeScreen();
     } else if (index == 2) {
-      nextScreen = const AdminPlaceholderScreen(title: "Istoric");
+      nextScreen = const AdminPlaceholderScreen(title: 'Istoric');
     } else if (index == 3) {
-      nextScreen = const AdminPlaceholderScreen(title: "Profil");
+      nextScreen = const AdminProfileScreen();
     } else {
       return;
     }
@@ -630,6 +633,13 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
       ),
     );
   }
+}
+
+class AdminPlaceholderScreen extends StatelessWidget {
+  final String title;
+  const AdminPlaceholderScreen({super.key, required this.title});
+  @override
+  Widget build(BuildContext context) => Scaffold(body: Center(child: Text(title)));
 }
 
 class _NavBarClipper extends CustomClipper<Path> {

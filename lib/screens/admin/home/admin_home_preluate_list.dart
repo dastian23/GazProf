@@ -71,8 +71,8 @@ class AdminHomePreluateList extends StatelessWidget {
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: theme.brandBlue.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
-                    child: Text("Alocată ție", style: TextStyle(color: theme.brandBlue, fontSize: 11, fontWeight: FontWeight.bold)),
+                    decoration: BoxDecoration(color: theme.statusCardAlocata.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(8)),
+                    child: Text("Alocată ție", style: TextStyle(color: theme.statusTextAlocata, fontSize: 11, fontWeight: FontWeight.bold)),
                   ),
                 ],
               ),
