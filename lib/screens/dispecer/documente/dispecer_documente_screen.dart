@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -12,6 +11,7 @@ import '../../../../core/user_provider.dart';
 // --- SCREENS ---
 import '../home/dispecer_home_screen.dart';
 import '../profile/dispecer_profile_screen.dart';
+import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 
 // --- INTERNAL COMPONENTS ---
 import 'dispecer_documente_empty.dart';

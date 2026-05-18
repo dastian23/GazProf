@@ -3,38 +3,40 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
-// --- SCREENS ---
-import '../home/sofer_home_screen.dart';
-import '../documente/sofer_documente_screen.dart';
-import '../profile/sofer_profile_screen.dart';
+// --- SCREENS FOR NAVBAR ---
+import '../home/admin_home_screen.dart';
+import '../documente/admin_documente_screen.dart';
+import '../profile/admin_profile_screen.dart';
 
-// --- COMPONENTS  ---
-import 'sofer_istoric_empty.dart';
-import 'sofer_istoric_list.dart';
+// --- COMPONENTS ---
+import 'admin_istoric_empty.dart';
+import 'admin_istoric_list.dart';
 
-class SoferIstoricScreen extends StatefulWidget {
-  const SoferIstoricScreen({super.key});
+class AdminIstoricScreen extends StatefulWidget {
+  const AdminIstoricScreen({super.key});
 
   @override
-  State<SoferIstoricScreen> createState() => _SoferIstoricScreenState();
+  State<AdminIstoricScreen> createState() => _AdminIstoricScreenState();
 }
 
-class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
+class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
   String _typeFilter = 'Toate';
 
-  // Current date & range
+  // Filtrare după utilizator specific
+  String? _selectedUserId;
+  String? _selectedUserName;
+  String? _selectedUserEmail;
+
   DateTimeRange _selectedDateRange = DateTimeRange(
     start: DateTime.now(),
     end: DateTime.now(),
   );
 
-  // --- MAIN BUTTON TEXT FORMATTER ---
   String _formatDateRange(DateTimeRange range) {
     final start = range.start;
     final end = range.end;
@@ -50,7 +52,167 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
     }
   }
 
-  // --- 1. FAST MENU ---
+  // --- USERS LIST ---
+  void _openUserFilterMenu(BuildContext context, ThemeProvider theme) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: theme.scaffoldBg,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25))),
+      builder: (BuildContext sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.5,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40, height: 5,
+                      decoration: BoxDecoration(
+                        color: theme.isDark ? Colors.white24 : Colors.black12,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      "Filtrează după utilizator",
+                      style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 15),
+
+                    ListTile(
+                      dense: true,
+                      leading: CircleAvatar(
+                        radius: 20,
+                        backgroundColor: theme.brandBlue.withValues(alpha: 0.15),
+                        child: Icon(Icons.people_alt_outlined, color: theme.brandBlue, size: 18),
+                      ),
+                      title: Text("Toți utilizatorii", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text("Afișează istoricul global al firmei", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+                      onTap: () {
+                        setState(() {
+                          _selectedUserId = null;
+                          _selectedUserName = null;
+                          _selectedUserEmail = null;
+                        });
+                        Navigator.pop(sheetContext);
+                      },
+                    ),
+                    const Divider(height: 20),
+
+                    Expanded(
+                      child: StreamBuilder<QuerySnapshot>(
+                        stream: FirebaseFirestore.instance.collection('users').snapshots(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return Center(child: CircularProgressIndicator(color: theme.brandBlue));
+                          }
+
+                          final users = snapshot.data!.docs;
+
+                          return ListView.builder(
+                            controller: scrollController,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: users.length,
+                            itemBuilder: (context, index) {
+                              final uDoc = users[index];
+                              final uData = uDoc.data() as Map<String, dynamic>;
+                              String nume = uData['nume'] ?? 'Fără nume';
+                              String email = uData['email'] ?? 'Fără email';
+                              String rol = uData['rol'] ?? 'Neatribuit';
+
+                              List<String> words = nume.trim().split(RegExp(r'\s+'));
+                              String initials = "U";
+                              if (words.isNotEmpty) {
+                                initials = words.length > 1 ? (words[0][0] + words[1][0]).toUpperCase() : words[0][0].toUpperCase();
+                              }
+
+                              Color rolBg;
+                              Color rolText;
+
+                              if (rol.toLowerCase() == 'sofer') {
+                                rolBg = theme.roleBgSofer;
+                                rolText = theme.roleSofer;
+                              } else if (rol.toLowerCase() == 'dispecer') {
+                                rolBg = theme.roleBgDispecer;
+                                rolText = theme.roleDispecer;
+                              } else if (rol.toLowerCase() == 'admin' || rol.toLowerCase() == 'administrator') {
+                                rolBg = theme.roleBgAdmin;
+                                rolText = theme.roleAdmin;
+                              } else {
+                                rolBg = theme.roleBgNeatribuit;
+                                rolText = theme.roleNeatribuit;
+                              }
+
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    _selectedUserId = uDoc.id;
+                                    _selectedUserName = nume;
+                                    _selectedUserEmail = email;
+                                  });
+                                  Navigator.pop(sheetContext);
+                                },
+                                child: Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: theme.cardFill,
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(
+                                      color: _selectedUserId == uDoc.id ? theme.brandBlue : theme.cardOutline,
+                                      width: _selectedUserId == uDoc.id ? 1.5 : 1.0,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      CircleAvatar(
+                                        radius: 20,
+                                        backgroundColor: rolBg,
+                                        child: Text(initials, style: TextStyle(color: rolText, fontSize: 13, fontWeight: FontWeight.bold)),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(nume, style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                            const SizedBox(height: 2),
+                                            Text(email, style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(color: rolBg, borderRadius: BorderRadius.circular(10)),
+                                        child: Text(rol, style: TextStyle(color: rolText, fontSize: 11, fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // --- FAST DATE MENU ---
   void _openDateMenu(BuildContext context, ThemeProvider theme) {
     showModalBottomSheet(
       context: context,
@@ -69,35 +231,24 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                   const SizedBox(height: 20),
                   Text("Selectează perioada", style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 20),
-
-                  // Option 1: Custom Calendar
                   _buildMenuButton(Icons.date_range_rounded, "Alege din Calendar", "Zile mai multe, mai multe luni sau ani", true, () {
                     Navigator.pop(bottomSheetContext);
                     _openNativeCalendar(context, theme);
                   }, theme),
-
                   const SizedBox(height: 10),
                   Divider(color: theme.isDark ? Colors.white10 : Colors.black12),
                   const SizedBox(height: 10),
-
-                  // Option 2: Today
                   _buildMenuButton(Icons.today_rounded, "Astăzi", "Doar comenzile de azi", false, () {
                     setState(() => _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now()));
                     Navigator.pop(bottomSheetContext);
                   }, theme),
-
                   const SizedBox(height: 10),
-
-                  // Option 3: Last Month
                   _buildMenuButton(Icons.calendar_view_month_rounded, "Luna curentă", "Toate comenzile din această lună", false, () {
                     final now = DateTime.now();
                     setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, now.month, 1), end: DateTime(now.year, now.month + 1, 0)));
                     Navigator.pop(bottomSheetContext);
                   }, theme),
-
                   const SizedBox(height: 10),
-
-                  // Option 4: Last Year
                   _buildMenuButton(Icons.calendar_month_rounded, "Anul curent", "Toate comenzile de anul acesta", false, () {
                     final now = DateTime.now();
                     setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, 1, 1), end: DateTime(now.year, 12, 31)));
@@ -113,7 +264,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
     );
   }
 
-  // --- 2. THE NATIVE CALENDAR ---
+  // --- 2. THE NATIVE CALENDAR  ---
   Future<void> _openNativeCalendar(BuildContext context, ThemeProvider theme) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,
@@ -133,8 +284,14 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
               surface: theme.scaffoldBg,
               onSurface: Colors.white,
             ),
-            appBarTheme: const AppBarTheme(
-              systemOverlayStyle: SystemUiOverlayStyle.light,
+            appBarTheme: AppBarTheme(
+              backgroundColor: theme.scaffoldBg,
+              elevation: 0,
+              systemOverlayStyle: const SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.light,
+                statusBarBrightness: Brightness.dark,
+              ),
             ),
           )
               : ThemeData.light().copyWith(
@@ -145,7 +302,13 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
               onSurface: Colors.black,
             ),
             appBarTheme: const AppBarTheme(
-              systemOverlayStyle: SystemUiOverlayStyle.dark,
+              backgroundColor: Colors.white,
+              elevation: 0,
+              systemOverlayStyle: SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: Brightness.dark,
+                statusBarBrightness: Brightness.light,
+              ),
             ),
           ),
           child: child!,
@@ -158,7 +321,6 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
     }
   }
 
-  // --- HELPER MENU BUTTON ---
   Widget _buildMenuButton(IconData icon, String title, String subtitle, bool isPrimary, VoidCallback onTap, ThemeProvider theme) {
     return InkWell(
       onTap: onTap,
@@ -196,8 +358,6 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
     final userProvider = Provider.of<UserProvider>(context);
     final bottomSafePadding = MediaQuery.of(context).padding.bottom;
 
-    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
@@ -217,7 +377,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        "Istoric comenzi",
+                        "Istoric global",
                         style: TextStyle(color: theme.textPrimary, fontSize: 22, fontWeight: FontWeight.w900, letterSpacing: -0.5),
                       ),
                       GestureDetector(
@@ -228,12 +388,11 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                   ),
                 ),
 
-                // --- FIREBASE DINAMIC SPACE ---
+                // --- DYNAMIC ZONE ---
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('comenzi')
-                        .where('id_sofer', isEqualTo: currentUserId)
                         .where('status', whereIn: ['Finalizata', 'Anulata'])
                         .orderBy('data_creare', descending: true)
                         .snapshots(),
@@ -247,24 +406,38 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                       final filteredComenzi = allIstoric.where((doc) {
                         final data = doc.data() as Map<String, dynamic>;
 
+                        // 1. Filter date
                         final ts = data['data_creare'] as Timestamp?;
-                        if (ts == null) return false;
+                        if (ts == null) { return false; }
                         final dt = ts.toDate();
 
                         DateTime startBound = DateTime(_selectedDateRange.start.year, _selectedDateRange.start.month, _selectedDateRange.start.day, 0, 0, 0);
                         DateTime endBound = DateTime(_selectedDateRange.end.year, _selectedDateRange.end.month, _selectedDateRange.end.day, 23, 59, 59);
 
-                        if (dt.isBefore(startBound) || dt.isAfter(endBound)) return false;
+                        if (dt.isBefore(startBound) || dt.isAfter(endBound)) { return false; }
 
+                        // 2. Filter Intern / Extern
                         if (_typeFilter != 'Toate') {
                           final tip = data['tip_adresa'] ?? 'intern';
-                          if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
+                          if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) { return false; }
+                        }
+
+                        // 3. Advanced filter based on selected user
+                        if (_selectedUserId != null) {
+                          final idSofer = data['id_sofer'];
+                          final creatDe = data['creat_de']?.toString().toLowerCase();
+                          final userEmailLower = _selectedUserEmail?.toLowerCase();
+
+                          bool matchesDriver = idSofer == _selectedUserId;
+                          bool matchesCreator = (creatDe == _selectedUserId || (userEmailLower != null && creatDe == userEmailLower));
+
+                          if (!matchesDriver && !matchesCreator) { return false; }
                         }
 
                         return true;
                       }).toList();
 
-                      // CALC STATS
+                      // --- STATS CALC ---
                       int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == 'Anulata').length;
                       int countCreate = filteredComenzi.length;
                       double sumIncasati = 0;
@@ -277,7 +450,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
 
                       return Column(
                         children: [
-                          // --- STATS ---
+                          // --- STATS BOXES ---
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
@@ -286,13 +459,61 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                                 const SizedBox(width: 8),
                                 Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
                                 const SizedBox(width: 8),
-                                Expanded(child: _buildStatBox(countCreate.toString(), "Create", theme.brandBlue, theme)),
+                                Expanded(child: _buildStatBox(countCreate.toString(), "Total comenzi", theme.brandBlue, theme)),
                               ],
                             ),
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 12),
 
-                          // --- FILTER INTERN/EXTERN ---
+                          // --- FILTER ON A SPECIFIC USER ---
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: GestureDetector(
+                              onTap: () => _openUserFilterMenu(context, theme),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                decoration: BoxDecoration(
+                                  color: theme.cardFill,
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: _selectedUserId != null ? theme.brandBlue : theme.cardOutline),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.person_search_outlined, color: _selectedUserId != null ? theme.brandBlue : theme.textSecondary, size: 18),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Text(
+                                        _selectedUserId != null ? "Utilizator: $_selectedUserName" : "Filtrează după utilizator (Toți)",
+                                        style: TextStyle(
+                                          color: _selectedUserId != null ? theme.brandBlue : theme.textPrimary,
+                                          fontSize: 13,
+                                          fontWeight: _selectedUserId != null ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    if (_selectedUserId != null)
+                                      GestureDetector(
+                                        onTap: () {
+                                          setState(() {
+                                            _selectedUserId = null;
+                                            _selectedUserName = null;
+                                            _selectedUserEmail = null;
+                                          });
+                                        },
+                                        child: const Icon(Icons.cancel, size: 18, color: Colors.grey),
+                                      )
+                                    else
+                                      Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 18),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // --- FILTER TOGGLE ---
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: Row(
@@ -306,11 +527,11 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                             ),
                           ),
 
-                          // --- OPEN CALENDAR MENU BUTTON ---
+                          // --- BUTTON DATE ---
                           GestureDetector(
                             onTap: () => _openDateMenu(context, theme),
                             child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
                               decoration: BoxDecoration(
                                 color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
@@ -325,7 +546,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                                       const SizedBox(width: 10),
                                       Text(
                                         _formatDateRange(_selectedDateRange),
-                                        style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+                                        style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -335,11 +556,11 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                             ),
                           ),
 
-                          // --- LIST OR EMPTY STATE
+                          // --- LIST OR EMPTY ---
                           Expanded(
                             child: filteredComenzi.isEmpty
-                                ? const SoferIstoricEmpty()
-                                : SoferIstoricList(comenzi: filteredComenzi),
+                                ? const AdminIstoricEmpty()
+                                : AdminIstoricList(comenzi: filteredComenzi),
                           ),
                         ],
                       );
@@ -361,7 +582,6 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
     );
   }
 
-  // --- HELPERS UI ---
   Widget _buildFilterToggle(String text, bool isActive, VoidCallback onTap, ThemeProvider theme) {
     return GestureDetector(
       onTap: onTap,
@@ -375,11 +595,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
         child: Center(
           child: Text(
             text,
-            style: TextStyle(
-              color: isActive ? theme.textPrimary : theme.filterText,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(color: isActive ? theme.textPrimary : theme.filterText, fontSize: 13, fontWeight: FontWeight.bold),
           ),
         ),
       ),
@@ -397,7 +613,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: TextStyle(color: valueColor, fontSize: 18, fontWeight: FontWeight.w900)),
+          Text(value, style: TextStyle(color: valueColor, fontSize: 16, fontWeight: FontWeight.w900)),
           const SizedBox(height: 2),
           Text(label, style: TextStyle(color: theme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
         ],
@@ -419,12 +635,12 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 2) return;
+    if (index == 2) { return; }
     Widget nextScreen;
-    if (index == 0) nextScreen = const SoferHomeScreen();
-    else if (index == 1) nextScreen = const SoferDocumenteScreen();
-    else if (index == 3) nextScreen = const SoferProfileScreen();
-    else return;
+    if (index == 0) { nextScreen = const AdminHomeScreen(); }
+    else if (index == 1) { nextScreen = const AdminDocumenteScreen(); }
+    else if (index == 3) { nextScreen = const AdminProfileScreen(); }
+    else { return; }
 
     Navigator.pushReplacement(
       context,
@@ -458,7 +674,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
               decoration: BoxDecoration(color: theme.navBarBg, borderRadius: BorderRadius.circular(24)),
               child: Row(
                 children: List.generate(4, (index) {
-                  if (index == selectedIndex) return const Expanded(child: SizedBox());
+                  if (index == selectedIndex) { return const Expanded(child: SizedBox()); }
                   return Expanded(
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,

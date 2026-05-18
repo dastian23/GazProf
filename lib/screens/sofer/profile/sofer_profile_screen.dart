@@ -89,7 +89,7 @@ class SoferProfileScreen extends StatelessWidget {
 
                         const SizedBox(height: 10),
 
-                        // DECONECTARE
+                        // DISCONNECT
                         _buildProfileCard(theme, [
                           ListTile(
                             dense: true,
@@ -140,7 +140,6 @@ class SoferProfileScreen extends StatelessWidget {
   }
 
   // --- UI HELPERS ---
-
   Widget _buildHeader(ThemeProvider theme, String name, String role) {
     String initials = "U";
     if (name.isNotEmpty) {
@@ -169,7 +168,7 @@ class SoferProfileScreen extends StatelessWidget {
           Text(name, style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           Text(
               role,
-              style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 12)
+              style: TextStyle(color: theme.roleSofer, fontSize: 12)
           ),
         ],
       ),

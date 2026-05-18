@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:another_flushbar/flushbar.dart';
@@ -671,7 +672,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     if (index == 0) {
       nextScreen = const AdminHomeScreen();
     } else if (index == 2) {
-      nextScreen = const AdminPlaceholderScreen(title: 'Istoric');
+      nextScreen = const AdminIstoricScreen();
     } else if (index == 3) {
       nextScreen = const AdminProfileScreen();
     } else {

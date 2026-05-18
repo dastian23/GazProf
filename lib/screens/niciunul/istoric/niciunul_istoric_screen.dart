@@ -41,7 +41,10 @@ class NiciunulIstoricScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme),
+                      GestureDetector(
+                        onTap: () => _navigate(context, 3),
+                        child: _buildProfileCircle(userProvider.userName, theme),
+                      ),
                     ],
                   ),
                 ),
@@ -62,7 +65,7 @@ class NiciunulIstoricScreen extends StatelessWidget {
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                               text: userProvider.userRole,
-                              style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                              style: TextStyle(color: theme.roleNeatribuit, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

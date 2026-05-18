@@ -24,7 +24,6 @@ class SoferHomeEmpty extends StatelessWidget {
             SvgPicture.asset(
               'assets/delivery.svg',
               width: 90,
-              // Albastrul cerut
               colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
             ),
             const SizedBox(height: 25),

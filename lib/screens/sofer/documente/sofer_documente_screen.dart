@@ -74,32 +74,19 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Image.asset('assets/logo_gazprof.png', height: 22),
-                      _buildProfileCircle(userProvider.userName, theme),
-                    ],
-                  ),
-                ),
-
-                // --- WELCOME BAR ---
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Bun venit,", style: TextStyle(color: theme.textGriFix, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
-                          children: [
-                            TextSpan(text: userProvider.userName),
-                            const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
-                            TextSpan(text: userProvider.userRole, style: const TextStyle(color: Color(0xFFFF6B00))),
-                          ],
+                      Text(
+                        "Comenzi preluate",
+                        style: TextStyle(
+                          color: theme.textPrimary,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 15),
-                      Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
+                      GestureDetector(
+                        onTap: () => _navigate(context, 3),
+                        child: _buildProfileCircle(userProvider.userName, theme),
+                      ),
                     ],
                   ),
                 ),
@@ -110,7 +97,6 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
                     physics: const BouncingScrollPhysics(),
                     child: Column(
                       children: [
-                        const SizedBox(height: 20),
                         _buildRealStatsRow(theme),
                         const SizedBox(height: 25),
 
@@ -176,9 +162,15 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
 
         if (docs.isEmpty) {
           String tipComanda = _filterType == 'intern' ? 'Intern' : 'Extern';
-          return SoferDocumenteEmpty(
-            titlu: "Ești la zi!",
-            mesaj: "Nu ai nicio comandă $tipComanda alocată ție în așteptare.\nMergi la panoul principal pentru a prelua comenzi noi.",
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 60),
+              SoferDocumenteEmpty(
+                titlu: "Ești la zi!",
+                mesaj: "Nu ai nicio comandă $tipComanda alocată ție în așteptare.\nMergi la panoul principal pentru a prelua comenzi noi.",
+              ),
+            ],
           );
         }
 

@@ -144,7 +144,6 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
       _showMessage("Telefonul și adresa sunt obligatorii."); return;
     }
 
-    // Validare opțională pentru numărul de telefon
     if (!RegExp(r'^07\d{8}$').hasMatch(_phoneController.text.trim())) {
       _showMessage("Număr de telefon invalid.");
       return;
@@ -286,7 +285,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
               ])),
               const SizedBox(height: 20),
 
-              // --- ZONA MENȚIUNI (Design nou) ---
+              // --- NOTES ZONE ---
               GestureDetector(
                 onTap: () => setState(() => _isMentionsExpanded = !_isMentionsExpanded),
                 child: _buildCardContainer(
