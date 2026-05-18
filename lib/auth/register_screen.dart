@@ -131,106 +131,137 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 45),
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              // --- LOGO & FLAME ---
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  Container(
-                    width: 25, height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: theme.brandBlue.withValues(alpha: 0.4),
-                          blurRadius: 35, spreadRadius: 6,
-                        ),
-                      ],
-                    ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            return SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 45),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        children: [
+                          const SizedBox(height: 25),
+                          // LOGO & FLAME
+                          Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              Container(
+                                width: 25, height: 40,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: theme.brandBlue.withValues(alpha: 0.4),
+                                      blurRadius: 35, spreadRadius: 6,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SvgPicture.asset(
+                                'assets/flame.svg',
+                                width: 45, height: 65,
+                                fit: BoxFit.contain,
+                                colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 5),
+                          Image.asset('assets/logo_gazprof.png', height: 20),
+                          Text('Gestionare livrări', style: TextStyle(color: theme.textGriFix, fontSize: 12)),
+
+                          const SizedBox(height: 35),
+
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('Crează un cont nou', style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                                const SizedBox(height: 4),
+                                Text('Completează datele de mai jos.', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // --- FORM ---
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme, controller: _nameController),
+                          const SizedBox(height: 12),
+
+                          _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme, controller: _phoneController, isPhone: true),
+                          const SizedBox(height: 12),
+
+                          _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController, isEmail: true),
+                          const SizedBox(height: 12),
+
+                          _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
+
+                          const SizedBox(height: 8),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text('Minim 8 caractere, o literă mare și o cifră', style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      // --- BTN & FOOTER ---
+                      Column(
+                        children: [
+                          Container(
+                            width: 180, height: 45,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(30),
+                              border: Border.all(color: theme.buttonOutline, width: 1.5),
+                              boxShadow: theme.buttonShadow,
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _handleSignUp,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.brandBlue,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                                  : Text('Înregistrează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+
+                          const SizedBox(height: 20),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text('Ai deja cont? ', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
+                                GestureDetector(
+                                  onTap: () => Navigator.pop(context),
+                                  child: Text('Conectează-te', style: TextStyle(color: theme.links, fontWeight: FontWeight.bold, fontSize: 13)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 25),
+                        ],
+                      ),
+                    ],
                   ),
-                  SvgPicture.asset(
-                    'assets/flame.svg',
-                    width: 45, height: 65,
-                    fit: BoxFit.contain,
-                    colorFilter: ColorFilter.mode(theme.brandBlue, BlendMode.srcIn),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 5),
-              Image.asset('assets/logo_gazprof.png', height: 20),
-              Text('Gestionare livrări', style: TextStyle(color: theme.textGriFix, fontSize: 12)),
-              const Spacer(flex: 1),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Crează un cont nou', style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text('Completează datele de mai jos.', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
-                  ],
                 ),
               ),
-              const SizedBox(height: 15),
-
-              // --- TEXT FIELDS ---
-              _buildTextField(hint: 'Nume complet', icon: Icons.person_outline, theme: theme, controller: _nameController),
-              const SizedBox(height: 10),
-
-              _buildTextField(hint: 'Număr de telefon', icon: Icons.phone_outlined, theme: theme, controller: _phoneController, isPhone: true),
-              const SizedBox(height: 10),
-
-              _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController, isEmail: true),
-              const SizedBox(height: 10),
-
-              _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
-
-              const SizedBox(height: 8),
-              Text('Minim 8 caractere, o litere mare și o cifră', style: TextStyle(color: theme.textGriFix, fontSize: 11)),
-              const Spacer(flex: 1),
-
-              // --- BUTTON ---
-              Container(
-                width: 180, height: 45,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: theme.buttonOutline, width: 1.5),
-                  boxShadow: theme.buttonShadow,
-                ),
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleSignUp,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: theme.brandBlue,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('Înregistrează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
-                ),
-              ),
-
-              const SizedBox(height: 19),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('Ai deja cont? ', style: TextStyle(color: theme.textGriFix, fontSize: 13)),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Text('Conectează-te', style: TextStyle(color: theme.links, fontWeight: FontWeight.bold, fontSize: 13)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-            ],
-          ),
+            );
+          },
         ),
       ),
     );
