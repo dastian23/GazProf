@@ -5,6 +5,7 @@
   import 'package:cloud_firestore/cloud_firestore.dart';
   import 'package:shared_preferences/shared_preferences.dart';
   import 'package:provider/provider.dart';
+  import 'package:gazprof/screens/admin/profile/admin_product_setting_screen.dart';
 
   // --- THEME & PROVIDERS ---
   import '../../../../core/theme_provider.dart';
@@ -116,6 +117,21 @@
                                  Navigator.push(
                                     context,
                                     MaterialPageRoute(builder : (context) => const AdminGestionareScreen()),
+                                  );
+                                }
+                            ),
+                            Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 55, endIndent: 15),
+                            _buildTile(
+                                'assets/settings.svg',
+                                'Setări produse',
+                                'Modifică prețuri sau adaugă produse noi',
+                                theme,
+                                theme.brandBlue,
+                                theme.brandBlue.withValues(alpha: 0.1),
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder : (context) => const AdminProductSettingScreen()),
                                   );
                                 }
                             ),

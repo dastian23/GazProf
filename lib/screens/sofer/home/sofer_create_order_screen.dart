@@ -27,18 +27,18 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   String _selectedPayment = 'cash';
   String _addressType = 'intern';
 
-  List<ProductItem> products = [
-    ProductItem("Butelie 10kg", 120, 0),
-    ProductItem("Butelie 11kg", 115, 0),
-    ProductItem("Butelie 11kg filet", 115, 0),
-    ProductItem("Butelie 35kg", 400, 0),
-    ProductItem("Ambalaj", 250, 0),
-    ProductItem("Ceas butelie", 40, 0),
-  ];
+  List<ProductItem> products = []; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLiveProducts(); 
+  }
 
   @override
   void dispose() {
@@ -48,7 +48,55 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
     super.dispose();
   }
 
-  double get _calculateTotal => products.fold(0, (sum, item) => sum + (item.price * item.quantity));
+  double get _calculateTotal => products.fold(0, (total, item) => total + (item.price * item.quantity));
+
+  Future<void> _loadLiveProducts() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('produse')
+          .orderBy('pozitie')
+          .get();
+      
+      if (snapshot.docs.isEmpty) {
+        final defaultProducts = [
+          {"nume": "Butelie 10kg", "pret": 120.0},
+          {"nume": "Butelie 11kg", "pret": 115.0},
+          {"nume": "Butelie 11kg filet", "pret": 115.0},
+          {"nume": "Butelie 35kg", "pret": 400.0},
+          {"nume": "Ambalaj", "pret": 250.0},
+          {"nume": "Ceas butelie", "pret": 40.0},
+        ];
+        
+        for (int i = 0; i < defaultProducts.length; i++) {
+          await FirebaseFirestore.instance.collection('produse').add({
+            'nume': defaultProducts[i]['nume'],
+            'pret': defaultProducts[i]['pret'],
+            'pozitie': i,
+          });
+        }
+        return _loadLiveProducts(); 
+      }
+
+      if (mounted) {
+        setState(() {
+          products = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return ProductItem(
+              data['nume'] ?? 'Produs',
+              (data['pret'] ?? 0.0).toDouble(),
+              0,
+            );
+          }).toList();
+          _isProductsLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Eroare la încărcarea nomenclatorului de produse în ecran Șofer: $e");
+      if (mounted) {
+        setState(() => _isProductsLoading = false);
+      }
+    }
+  }
 
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
     final TextEditingController priceEditController = TextEditingController(text: item.price.toStringAsFixed(0));
@@ -117,12 +165,10 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         'total_comanda': _calculateTotal,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
-
-        // --- MODIFICAREA ESTE AICI ---
-        'status': 'Finalizata', // Șoferul o predă pe loc, deci comanda este direct finalizată
+        'status': 'Finalizata', 
         'id_sofer': FirebaseAuth.instance.currentUser?.uid,
         'data_creare': FieldValue.serverTimestamp(),
-        'data_finalizare': FieldValue.serverTimestamp(), // Am adăugat data finalizării pentru ecranul de Istoric
+        'data_finalizare': FieldValue.serverTimestamp(), 
         'creat_de': 'sofer',
       });
 
@@ -165,7 +211,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         automaticallyImplyLeading: false,
         bottom: PreferredSize(
             preferredSize: const Size.fromHeight(1.0),
-            child: Container(color: theme.sectionLabel.withOpacity(0.3), height: 1.0)
+            child: Container(color: theme.sectionLabel.withValues(alpha: 0.3), height: 1.0)
         ),
         title: Row(
           children: [
@@ -205,16 +251,31 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
               const SizedBox(height: 20),
 
               _buildSectionTitle("TIP BUTELIE", theme),
-              _buildCardContainer(theme, Column(children: [
-                ...products.map((p) => _buildProductRow(p, theme)),
-                const SizedBox(height: 8),
-                Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
-                const SizedBox(height: 15),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                  Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
-                ]),
-              ])),
+              _buildCardContainer(
+                theme,
+                _isProductsLoading
+                    ? const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(20),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          ...products.map((p) => _buildProductRow(p, theme)),
+                          const SizedBox(height: 8),
+                          Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
+                          const SizedBox(height: 15),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+                              Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ],
+                      ),
+              ),
               const SizedBox(height: 20),
 
               _buildSectionTitle("TIP PLATĂ", theme),
@@ -269,15 +330,15 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
               ),
               const SizedBox(height: 30),
 
-              // --- BUTON SALVEAZĂ (Design nou) ---
               Container(
-                width: double.infinity, height: 50,
+                width: double.infinity, 
+                height: 50,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _createOrder,
+                  onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
                     shape: RoundedRectangleBorder(
@@ -298,7 +359,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
     );
   }
 
-  // --- HELPERS (Identici cu Dispecerul) ---
+  // --- HELPERS ---
 
   Widget _buildSectionTitle(String title, ThemeProvider theme) {
     return Padding(
@@ -435,18 +496,13 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: value == 'card'
-                    ? theme.statusCardAlocata
-                    : theme.statusCardFinalizata,
+                color: value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SvgPicture.asset(
                   iconPath,
                   width: 22,
-                  colorFilter: ColorFilter.mode(
-                      value == 'cash' ? Colors.green : theme.brandBlue,
-                      BlendMode.srcIn
-                  )
+                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : theme.brandBlue, BlendMode.srcIn)
               ),
             ),
             const SizedBox(width: 15),

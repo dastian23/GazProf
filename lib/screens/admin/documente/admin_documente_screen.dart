@@ -13,7 +13,6 @@ import '../../../../core/user_provider.dart';
 import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
 import 'package:gazprof/screens/admin/profile/admin_profile_screen.dart';
 
-
 class ProductItem {
   String name;
   double price;
@@ -34,18 +33,18 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   String _selectedPayment = 'cash';
   String _addressType = 'intern';
 
-  List<ProductItem> products = [
-    ProductItem("Butelie 10kg", 120, 0),
-    ProductItem("Butelie 11kg", 115, 0),
-    ProductItem("Butelie 11kg filet", 115, 0),
-    ProductItem("Butelie 35kg", 400, 0),
-    ProductItem("Ambalaj", 250, 0),
-    ProductItem("Ceas butelie", 40, 0),
-  ];
+  List<ProductItem> products = []; 
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLiveProducts(); 
+  }
 
   @override
   void dispose() {
@@ -55,14 +54,63 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     super.dispose();
   }
 
+  // ✅ REPARAT: Adăugat înapoi getter-ul pentru calculul totalului comenzii
   double get _calculateTotal {
     return products.fold(0, (val, item) => val + (item.price * item.quantity));
+  }
+
+  Future<void> _loadLiveProducts() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('produse')
+          .orderBy('pozitie')
+          .get();
+      
+      if (snapshot.docs.isEmpty) {
+        final defaultProducts = [
+          {"nume": "Butelie 10kg", "pret": 120.0},
+          {"nume": "Butelie 11kg", "pret": 115.0},
+          {"nume": "Butelie 11kg filet", "pret": 115.0},
+          {"nume": "Butelie 35kg", "pret": 400.0},
+          {"nume": "Ambalaj", "pret": 250.0},
+          {"nume": "Ceas butelie", "pret": 40.0},
+        ];
+        
+        for (int i = 0; i < defaultProducts.length; i++) {
+          await FirebaseFirestore.instance.collection('produse').add({
+            'nume': defaultProducts[i]['nume'],
+            'pret': defaultProducts[i]['pret'],
+            'pozitie': i,
+          });
+        }
+        return _loadLiveProducts(); 
+      }
+
+      if (mounted) {
+        setState(() {
+          products = snapshot.docs.map((doc) {
+            final data = doc.data();
+            return ProductItem(
+              data['nume'] ?? 'Produs',
+              (data['pret'] ?? 0.0).toDouble(),
+              0,
+            );
+          }).toList();
+          _isProductsLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Eroare la încărcarea produselor din Firebase: $e");
+      if (mounted) {
+        setState(() => _isProductsLoading = false);
+      }
+    }
   }
 
   // --- EDIT PRICE LOGIC ---
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
     final TextEditingController priceEditController =
-    TextEditingController(text: item.price.toStringAsFixed(0));
+        TextEditingController(text: item.price.toStringAsFixed(0));
 
     showDialog(
       context: context,
@@ -185,7 +233,6 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
     final bottomSafePadding = MediaQuery.of(context).padding.bottom;
-
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
@@ -245,21 +292,28 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                         _buildSectionTitle("TIP BUTELIE", theme),
                         _buildCardContainer(
                           theme,
-                          Column(
-                            children: [
-                              ...products.map((p) => _buildProductRow(p, theme)),
-                              const SizedBox(height: 8),
-                              Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
-                              const SizedBox(height: 15),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                                  Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                            ],
-                          ),
+                          _isProductsLoading
+                              ? const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              : Column(
+                                  children: [
+                                    ...products.map((p) => _buildProductRow(p, theme)),
+                                    const SizedBox(height: 8),
+                                    Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
+                                    const SizedBox(height: 15),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+                                        Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
                         ),
                         const SizedBox(height: 20),
 
@@ -327,7 +381,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                             boxShadow: theme.buttonShadow,
                           ),
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _createOrder,
+                            onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
                               shape: RoundedRectangleBorder(
