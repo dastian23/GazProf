@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -12,6 +11,13 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 import '../profile/dispecer_profile_screen.dart';
 import '../../../services/fcm_service.dart';
+
+// --- SCREENS ---
+import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
+import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
+
+// --- COMPONENTS ---
+import 'dispecer_home_empty.dart';
 
 // Defining the products
 class ProductItem {
@@ -55,13 +61,35 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     super.dispose();
   }
 
+  // --- GETTERS FOR CURRENT SHIFT
+  // The real value will be 6,0,0 - now we use 0,0,0 to test
+  DateTime get _startOfShift {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, 0, 0, 0);
+  }
+
+  // The real value will be 18,0,0 - now we use 23, 59, 59 to test
+  DateTime get _endOfShift {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day, 23, 59, 59);
+  }
+
+  bool _esteInProgram() {
+    // Uncomment this to have the real logic and delete that return
+    // final now = DateTime.now();
+    // return now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
+
+    // Delete this
+    return true;
+  }
+
   Future<void> _loadLiveProducts() async {
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('produse')
           .orderBy('pozitie')
           .get();
-      
+
       if (snapshot.docs.isEmpty) {
         final defaultProducts = [
           {"nume": "Butelie 10kg", "pret": 120.0},
@@ -71,7 +99,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
           {"nume": "Ambalaj", "pret": 250.0},
           {"nume": "Ceas butelie", "pret": 40.0},
         ];
-        
+
         for (int i = 0; i < defaultProducts.length; i++) {
           await FirebaseFirestore.instance.collection('produse').add({
             'nume': defaultProducts[i]['nume'],
@@ -156,7 +184,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       flushbarPosition: FlushbarPosition.TOP,
       margin: const EdgeInsets.only(top: 15, left: 20, right: 20),
       borderRadius: BorderRadius.circular(15),
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 2),
       animationDuration: const Duration(milliseconds: 400),
       icon: Icon(
           isError ? Icons.error_outline : Icons.check_circle_outline,
@@ -237,196 +265,208 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     final bottomSafePadding = MediaQuery.of(context).padding.bottom;
     final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
-    return Scaffold(
-      resizeToAvoidBottomInset: true,
-      backgroundColor: theme.scaffoldBg,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Image.asset('assets/logo_gazprof.png', height: 20),
-                      GestureDetector(
-                        onTap: () => _navigate(context, 3),
-                        child: _buildProfileCircle(userProvider.userName, theme),
-                      ),
-                    ],
-                  ),
-                ),
+    final bool inProgram = _esteInProgram();
 
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text("Bun venit,", style: TextStyle(color: theme.textGriFix, fontSize: 13)),
-                      const SizedBox(height: 4),
-                      RichText(
-                        text: TextSpan(
-                          style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
-                          children: [
-                            TextSpan(text: userProvider.userName),
-                            const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
-                            TextSpan(
-                              text: userProvider.userRole,
-                              style: const TextStyle(color: Color(0xFF0C9E43), fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 15),
-                      Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
-                    ],
-                  ),
-                ),
-
-                Expanded(
-                  child: SingleChildScrollView(
-                    physics: const BouncingScrollPhysics(),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
+      ),
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        backgroundColor: theme.scaffoldBg,
+        body: Stack(
+          children: [
+            SafeArea(
+              child: Column(
+                children: [
+                  Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                    child: Column(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSectionTitle("DATE CLIENT", theme),
-                        _buildCardContainer(
-                          theme,
-                          Column(
-                            children: [
-                              _buildTextField(hint: 'Număr telefon client', icon: Icons.phone_outlined, controller: _phoneController, theme: theme, isPhone: true),
-                              const SizedBox(height: 12),
-                              _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
-                              const SizedBox(height: 15),
-                              _buildAddressTypeToggle(theme),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildSectionTitle("TIP BUTELIE", theme),
-                        _buildCardContainer(
-                          theme,
-                          _isProductsLoading
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(20),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
-                              : Column(
-                                  children: [
-                                    ...products.map((p) => _buildProductRow(p, theme)),
-                                    const SizedBox(height: 8),
-                                    Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
-                                    const SizedBox(height: 15),
-                                    Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                                        Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                        ),
-                        const SizedBox(height: 20),
-
-                        _buildSectionTitle("TIP PLATĂ", theme),
-                        _buildCardContainer(
-                          theme,
-                          Column(
-                            children: [
-                              _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
-                              Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                              _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-
+                        Image.asset('assets/logo_gazprof.png', height: 20),
                         GestureDetector(
-                          onTap: () => setState(() => _isMentionsExpanded = !_isMentionsExpanded),
-                          child: _buildCardContainer(
-                            theme,
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    SvgPicture.asset('assets/message.svg', width: 20, colorFilter: ColorFilter.mode(theme.textPrimary, BlendMode.srcIn)),
-                                    const SizedBox(width: 10),
-                                    Text("Mențiuni", style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
-                                    const SizedBox(width: 10),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(color: theme.isDark ? Colors.white12 : Colors.black12, borderRadius: BorderRadius.circular(10)),
-                                      child: Text("opțional", style: TextStyle(color: theme.textSecondary, fontSize: 10)),
-                                    ),
-                                    const Spacer(),
-                                    Icon(_isMentionsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: theme.textSecondary),
-                                  ],
-                                ),
-                                if (_isMentionsExpanded) ...[
-                                  const SizedBox(height: 15),
-                                  TextField(
-                                    controller: _mentionsController,
-                                    maxLines: 3,
-                                    style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                                    decoration: InputDecoration(
-                                      hintText: 'Adaugă instrucțiuni...',
-                                      hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
-                                      filled: true,
-                                      fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-                                    ),
-                                  ),
-                                ]
-                              ],
-                            ),
-                          ),
+                          onTap: () => _navigate(context, 3),
+                          child: _buildProfileCircle(userProvider.userName, theme),
                         ),
-                        const SizedBox(height: 30),
-
-                        Container(
-                          width: double.infinity, height: 50,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: theme.buttonShadow,
-                          ),
-                          child: ElevatedButton(
-                            onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15),
-                                side: BorderSide(color: theme.cardOutline, width: 1.0),
-                              ),
-                            ),
-                            child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
-                                : Text('Crează comandă', style: TextStyle(color: theme.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
-                          ),
-                        ),
-
-                        const SizedBox(height: 90),
                       ],
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
 
-          if (!isKeyboardOpen)
-            Positioned(
-              bottom: 5 + bottomSafePadding,
-              left: 18, right: 18,
-              child: _buildCustomNavBar(context, theme, 0),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Bun venit,", style: TextStyle(color: theme.textGriFix, fontSize: 13)),
+                        const SizedBox(height: 4),
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
+                            children: [
+                              TextSpan(text: userProvider.userName),
+                              const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
+                              TextSpan(
+                                text: userProvider.userRole,
+                                style: const TextStyle(color: Color(0xFF1A7A38), fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 15),
+                        Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
+                      ],
+                    ),
+                  ),
+
+                  // --- DYNAMIC ZONE ---
+                  Expanded(
+                    child: !inProgram
+                        ? const DispecerHomeEmpty()
+                        : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+                      child: Column(
+                        children: [
+                          _buildSectionTitle("DATE CLIENT", theme),
+                          _buildCardContainer(
+                            theme,
+                            Column(
+                              children: [
+                                _buildTextField(hint: 'Număr telefon client', icon: Icons.phone_outlined, controller: _phoneController, theme: theme, isPhone: true),
+                                const SizedBox(height: 12),
+                                _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                                const SizedBox(height: 15),
+                                _buildAddressTypeToggle(theme),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildSectionTitle("TIP BUTELIE", theme),
+                          _buildCardContainer(
+                            theme,
+                            _isProductsLoading
+                                ? const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                                : Column(
+                              children: [
+                                ...products.map((p) => _buildProductRow(p, theme)),
+                                const SizedBox(height: 8),
+                                Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1),
+                                const SizedBox(height: 15),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+                                    Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildSectionTitle("TIP PLATĂ", theme),
+                          _buildCardContainer(
+                            theme,
+                            Column(
+                              children: [
+                                _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
+                                Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
+                                _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          GestureDetector(
+                            onTap: () => setState(() => _isMentionsExpanded = !_isMentionsExpanded),
+                            child: _buildCardContainer(
+                              theme,
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      SvgPicture.asset('assets/message.svg', width: 20, colorFilter: ColorFilter.mode(theme.textPrimary, BlendMode.srcIn)),
+                                      const SizedBox(width: 10),
+                                      Text("Mențiuni", style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                                      const SizedBox(width: 10),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(color: theme.isDark ? Colors.white12 : Colors.black12, borderRadius: BorderRadius.circular(10)),
+                                        child: Text("opțional", style: TextStyle(color: theme.textSecondary, fontSize: 10)),
+                                      ),
+                                      const Spacer(),
+                                      Icon(_isMentionsExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down, color: theme.textSecondary),
+                                    ],
+                                  ),
+                                  if (_isMentionsExpanded) ...[
+                                    const SizedBox(height: 15),
+                                    TextField(
+                                      controller: _mentionsController,
+                                      maxLines: 3,
+                                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                                      decoration: InputDecoration(
+                                        hintText: 'Adaugă instrucțiuni...',
+                                        hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+                                        filled: true,
+                                        fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+                                      ),
+                                    ),
+                                  ]
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 30),
+
+                          Container(
+                            width: double.infinity, height: 50,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(15),
+                              boxShadow: theme.buttonShadow,
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15),
+                                  side: BorderSide(color: theme.cardOutline, width: 1.0),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const CircularProgressIndicator(color: Colors.white)
+                                  : Text('Crează comandă', style: TextStyle(color: theme.textPrimary, fontSize: 16, fontWeight: FontWeight.bold)),
+                            ),
+                          ),
+
+                          const SizedBox(height: 90),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-        ],
+
+            if (!isKeyboardOpen)
+              Positioned(
+                bottom: 5 + bottomSafePadding,
+                left: 18, right: 18,
+                child: _buildCustomNavBar(context, theme, 0),
+              ),
+          ],
+        ),
       ),
     );
   }

@@ -34,14 +34,17 @@ class NiciunulDocumenteScreen extends StatelessWidget {
           SafeArea(
             child: Column(
               children: [
-                // TOP HEADER
+                // HEADER
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 20),
-                      _buildProfileCircle(userProvider.userName, theme),
+                      GestureDetector(
+                        onTap: () => _navigate(context, 3),
+                        child: _buildProfileCircle(userProvider.userName, theme),
+                      ),
                     ],
                   ),
                 ),
@@ -62,7 +65,7 @@ class NiciunulDocumenteScreen extends StatelessWidget {
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
                             TextSpan(
                               text: userProvider.userRole,
-                              style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                              style: TextStyle(color: theme.roleNeatribuit, fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -202,15 +205,15 @@ class NiciunulDocumenteScreen extends StatelessWidget {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 1) return; // Suntem pe Documente
+    if (index == 1) return;
 
     Widget nextScreen;
     if (index == 0) {
-      nextScreen = const NiciunulHomeScreen(); // Removed parameters
+      nextScreen = const NiciunulHomeScreen();
     } else if (index == 2) {
-      nextScreen = const NiciunulIstoricScreen(); // Removed parameters
+      nextScreen = const NiciunulIstoricScreen();
     } else {
-      nextScreen = const NiciunulProfileScreen(); // Removed parameters
+      nextScreen = const NiciunulProfileScreen();
     }
 
     Navigator.pushReplacement(

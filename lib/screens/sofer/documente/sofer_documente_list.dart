@@ -3,7 +3,10 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+// --- PROVIDERS ---
 import '../../../../core/theme_provider.dart';
+
+// --- SCREENS ---
 import 'sofer_order_details_screen.dart';
 
 class SoferDocumenteList extends StatelessWidget {

@@ -2,10 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
-import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
-import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:gazprof/services/auth_service.dart';
 
@@ -18,6 +14,11 @@ import 'package:provider/provider.dart';
 // --- SCREENS ---
 import 'package:gazprof/screens/dispecer/profile/dispecer_personal_data_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
+import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
+import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
+import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
+import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
+
 
 class DispecerProfileScreen extends StatelessWidget {
   const DispecerProfileScreen({super.key});
@@ -89,7 +90,7 @@ class DispecerProfileScreen extends StatelessWidget {
 
                         const SizedBox(height: 10),
 
-                        // DECONECTARE
+                        // LOGOUT
                         _buildProfileCard(theme, [
                           ListTile(
                             dense: true,
@@ -169,7 +170,7 @@ class DispecerProfileScreen extends StatelessWidget {
           Text(name, style: TextStyle(color: theme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
           Text(
               role.isNotEmpty ? role[0].toUpperCase() + role.substring(1) : '',
-              style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 12)
+              style: TextStyle(color: Color(0xFF1A7A38), fontSize: 12)
           ),
         ],
       ),

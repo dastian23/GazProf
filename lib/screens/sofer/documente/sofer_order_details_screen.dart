@@ -57,7 +57,6 @@ class SoferOrderDetailsScreen extends StatelessWidget {
     if (context.mounted) Navigator.pop(context);
   }
 
-  // ✅ Pop-up stilizat doar pentru anulare
   Future<bool> _showCancelDialog(BuildContext context, ThemeProvider theme) async {
     return await showDialog(
       context: context,
@@ -86,7 +85,6 @@ class SoferOrderDetailsScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Icon cerc rosu
                 Container(
                   width: 64,
                   height: 64,
@@ -106,7 +104,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 18),
 
-                // Titlu
+                // Title
                 Text(
                   "Anulezi comanda?",
                   style: TextStyle(
@@ -117,7 +115,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Subtitlu
+                // Subtitle
                 Text(
                   "Această acțiune nu poate fi anulată. Comanda va fi marcată ca anulată și va dispărea din lista activă.",
                   textAlign: TextAlign.center,
@@ -129,7 +127,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
 
-                // Info comanda
+                // Info order
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -164,10 +162,10 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Butoane
+                // --- BTNS ---
                 Row(
                   children: [
-                    // Buton inapoi
+                    // Btn back
                     Expanded(
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context, false),
@@ -199,7 +197,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
 
-                    // Buton anuleaza
+                    // Btn Cancel
                     Expanded(
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context, true),
@@ -515,7 +513,6 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   Widget _buildActionButtons(BuildContext context, ThemeProvider theme) {
     return Column(
       children: [
-        // ✅ Finalizare - fara pop-up, direct
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -539,7 +536,6 @@ class SoferOrderDetailsScreen extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        // ✅ Anulare - cu pop-up stilizat
         SizedBox(
           width: double.infinity,
           height: 52,

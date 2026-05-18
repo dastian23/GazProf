@@ -112,7 +112,7 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
     );
   }
 
-  // --- 2. THE NATIVE CALENDAR (VISUALLY FIXED) ---
+  // --- 2. THE NATIVE CALENDAR  ---
   Future<void> _openNativeCalendar(BuildContext context, ThemeProvider theme) async {
     final DateTimeRange? picked = await showDateRangePicker(
       context: context,

@@ -3,6 +3,7 @@
   import 'package:flutter/services.dart';
   import 'package:flutter_svg/flutter_svg.dart';
   import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
   import 'package:shared_preferences/shared_preferences.dart';
   import 'package:provider/provider.dart';
   import 'package:gazprof/screens/admin/profile/admin_product_setting_screen.dart';
@@ -492,7 +493,7 @@
       } else if (index == 1) {
         nextScreen = const AdminDocumenteScreen();
       } else if (index == 2) {
-        nextScreen = const Scaffold(body: Center(child: Text("Istoric")));
+        nextScreen = const AdminIstoricScreen();
       } else {
         return;
       }

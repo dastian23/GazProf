@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:provider/provider.dart';
 
 // --- THEME ---
@@ -15,10 +16,14 @@ class DispecerIstoricEmpty extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(
-            Icons.access_time_rounded,
-            size: 75,
-            color: Color(0xFF1B7A3F),
+          SvgPicture.asset(
+            'assets/time.svg',
+            width: 75,
+            height: 75,
+            colorFilter: const ColorFilter.mode(
+              Color(0xFF1A7A38),
+              BlendMode.srcIn,
+            ),
           ),
           const SizedBox(height: 20),
           Text(

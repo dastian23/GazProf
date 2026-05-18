@@ -19,7 +19,7 @@ class DispecerDocumenteEmpty extends StatelessWidget {
           SvgPicture.asset(
             'assets/delivery.svg',
             width: 90,
-            colorFilter: const ColorFilter.mode(Color(0xFF1A7A38), BlendMode.srcIn),
+            colorFilter: ColorFilter.mode(Color(0xFF1A7A38), BlendMode.srcIn),
           ),
           const SizedBox(height: 25),
           Text(

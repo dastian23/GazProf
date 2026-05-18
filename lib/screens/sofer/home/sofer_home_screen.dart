@@ -69,14 +69,17 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
           SafeArea(
             child: Column(
               children: [
-                // --- HEADER & LOGO ---
+                // --- HEADER  ---
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Image.asset('assets/logo_gazprof.png', height: 22),
-                      _buildProfileCircle(userProvider.userName, theme),
+                      GestureDetector(
+                        onTap: () => _navigate(context, 3),
+                        child: _buildProfileCircle(userProvider.userName, theme),
+                      ),
                     ],
                   ),
                 ),
@@ -95,7 +98,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                           children: [
                             TextSpan(text: userProvider.userName),
                             const TextSpan(text: " - ", style: TextStyle(fontWeight: FontWeight.normal)),
-                            TextSpan(text: userProvider.userRole, style: const TextStyle(color: Color(0xFFFF6B00))),
+                            TextSpan(text: userProvider.userRole, style: TextStyle(color: theme.roleSofer)),
                           ],
                         ),
                       ),
