@@ -307,18 +307,23 @@ class NiciunulProfileScreen extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Alege navigația implicită", 
-                  style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16)),
-              const SizedBox(height: 20),
-              _buildOptionTile(context, "Google Maps", theme, userProvider),
-              _buildOptionTile(context, "Waze", theme, userProvider),
-              const SizedBox(height: 10),
-            ],
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  "Alege navigația implicită", 
+                  style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const SizedBox(height: 20),
+                _buildOptionTile(context, "Google Maps", theme, userProvider),
+                _buildOptionTile(context, "Waze", theme, userProvider),
+                const SizedBox(height: 10),
+              ],
+            ),
           ),
         );
       },

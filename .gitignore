@@ -120,3 +120,4 @@ app.*.symbols
 
 # Secret environments
 .env
+lib/firebase_options.dart
