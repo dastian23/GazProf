@@ -43,6 +43,11 @@ class AuthService {
     required String password,
   }) async {
     try {
+      var userCheck = await _db.collection('users').where('email', isEqualTo: email.trim()).get();
+      if (userCheck.docs.isEmpty) {
+        return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
+      }
+
       // 1. Authentication
       UserCredential res = await _auth.signInWithEmailAndPassword(
         email: email.trim(),
@@ -57,8 +62,10 @@ class AuthService {
           'success': true,
           'rol': doc['rol'] ?? 'neatribuit',
           'nume': doc['nume'] ?? 'Utilizator',
+          'email': doc['email'] ?? email.trim(),
         };
       } else {
+        await _auth.signOut();
         return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
       }
     } catch (e) {
@@ -72,6 +79,17 @@ class AuthService {
       final g_auth.GoogleSignInAccount? googleUser = await g_auth.GoogleSignIn().signIn();
       if (googleUser == null) {
         return {'success': false, 'error': 'Conectarea a fost anulată.'};
+      }
+
+      final String userEmail = googleUser.email;
+
+      var userCheck = await _db.collection('users').where('email', isEqualTo: userEmail).get();
+      if (userCheck.docs.isEmpty) {
+        await g_auth.GoogleSignIn().signOut();
+        return {
+          'success': false,
+          'error': 'Trebuie să te înregistrezi mai întâi ca să te poți loga.'
+        };
       }
 
       final g_auth.GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -91,14 +109,14 @@ class AuthService {
             'success': true,
             'rol': doc['rol'] ?? 'neatribuit',
             'nume': doc['nume'] ?? user.displayName ?? 'Utilizator Google',
+            'email': doc['email'] ?? userEmail,
           };
         } else {
           await user.delete();
           await g_auth.GoogleSignIn().signOut();
-
           return {
             'success': false,
-            'error': 'Trebuie să te înregistrezi mai întâi ca să te poți loga.'
+            'error': 'Datele utilizatorului nu au fost găsite.'
           };
         }
       }
@@ -110,7 +128,6 @@ class AuthService {
   }
 
   // --- FORGOT PASSWORD ---
-  // --- STEP 1: SENDING OTP CODE ---
   Future<String?> sendOtpCode(String email) async {
     try {
       final normalizedEmail = email.trim();
@@ -125,7 +142,6 @@ class AuthService {
         'expiresAt': DateTime.now().add(const Duration(minutes: 10)).millisecondsSinceEpoch,
       });
 
-      // Load keys securely from .env file
       final response = await http.post(
         Uri.parse('https://api.emailjs.com/api/v1.0/email/send'),
         headers: {'Content-Type': 'application/json', 'Origin': 'http://localhost'},
@@ -143,7 +159,6 @@ class AuthService {
     }
   }
 
-  // --- STEP 2: VALIDATE OTP CODE ---
   Future<bool> verifyOtp(String email, String enteredCode) async {
     try {
       var doc = await _db.collection('password_resets').doc(email.trim()).get();
@@ -163,23 +178,19 @@ class AuthService {
     }
   }
 
-  // --- STEP 3: UPDATE THE PASSWORD ---
   Future<String?> updatePasswordManual(String email, String newPassword) async {
     try {
-      // 1. Searching user's UID by email
       var userQuery = await _db.collection('users').where('email', isEqualTo: email.trim()).get();
 
       if (userQuery.docs.isNotEmpty) {
         String uid = userQuery.docs.first.id;
 
-        // 2. Update the password in the firestore document
         await _db.collection('users').doc(uid).update({
           'parola_resetata': true,
           'ultima_actualizare_parola': FieldValue.serverTimestamp(),
         });
 
         await _auth.sendPasswordResetEmail(email: email.trim());
-
         return null;
       }
       return "Utilizatorul nu a fost găsit.";
@@ -188,7 +199,6 @@ class AuthService {
     }
   }
 
-  // --- LOGOUT ---
   Future<void> logOut() async {
     try {
       await _auth.signOut();

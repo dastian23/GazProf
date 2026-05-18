@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  // --- GOOGLE LOGIN LOGIC ---
+// --- GOOGLE LOGIN LOGIC ---
   Future<void> _handleGoogleLogin() async {
     setState(() => _isLoading = true);
 
@@ -135,35 +135,35 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result['success'] == true) {
         String rol = result['rol'] ?? 'neatribuit';
         String nume = result['nume'];
-        //String status = result['status'] ?? 'neatribuit';
+        String userEmail = result['email'] ?? '';
 
         if (rol == 'neatribuit') {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, userEmail);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),
           );
         } else if (rol == 'sofer') {
-            Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const SoferHomeScreen()),
-            );
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, userEmail);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const SoferHomeScreen()),
+          );
         } else if (rol == 'dispecer') {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, userEmail);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const DispecerHomeScreen()),
           );
         } else if (rol == 'admin') {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, userEmail);
           Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
+            context,
+            MaterialPageRoute(builder: (context) => const AdminHomeScreen()),
           );
 
         } else {
-          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, userEmail);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()),

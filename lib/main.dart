@@ -11,11 +11,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
 import 'package:flutter/services.dart';
-import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
+
 // --- SCREENS ---
-import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
+import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
+import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
 import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
+import 'package:gazprof/screens/admin/home/admin_home_screen.dart'; // <--- AM ADĂUGAT IMPORTUL
 
 
 void main() async {
@@ -33,7 +35,7 @@ void main() async {
       ],
       child: const GazProfApp(),
     ),
-  ); 
+  );
 }
 
 class GazProfApp extends StatelessWidget {
@@ -68,7 +70,7 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-         
+
         // 1. Loading
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Scaffold(
@@ -88,17 +90,22 @@ class AuthWrapper extends StatelessWidget {
   }
 }
 
-
 // RoleRouter — reads the role and redirect to the right screen
 class RoleRouter extends StatelessWidget {
   const RoleRouter({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const LoginScreen();
+    }
+
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
           .collection('users')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
+          .doc(user.uid)
           .get(),
       builder: (context, snapshot) {
 
@@ -135,14 +142,16 @@ class RoleRouter extends StatelessWidget {
           );
         }
 
-        if (!snapshot.hasData || !snapshot.data!.exists) {
+        if (snapshot.hasError || !snapshot.hasData || !snapshot.data!.exists) {
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            await FirebaseAuth.instance.signOut();
+          });
           return const LoginScreen();
         }
 
         final data = snapshot.data!.data() as Map<String, dynamic>;
-        final String rol = data['rol'] ?? 'neatribuit';
+        final String rol = data['rol']?.toString().toLowerCase() ?? 'neatribuit';
         final String nume = data['nume'] ?? '';
-        //final String status = data['status'] ?? 'neatribuit';
 
         WidgetsBinding.instance.addPostFrameCallback((_) {
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, data['email'] ?? '');
@@ -152,10 +161,14 @@ class RoleRouter extends StatelessWidget {
           return const NiciunulHomeScreen();
         } else if (rol == 'sofer') {
           return const SoferHomeScreen();
-        }else if (rol == 'dispecer'){
-            return const DispecerHomeScreen();
+        } else if (rol == 'dispecer') {
+          return const DispecerHomeScreen();
+        } else if (rol == 'admin' || rol == 'administrator') {
+          return const AdminHomeScreen();
         } else {
-          FirebaseAuth.instance.signOut();
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            await FirebaseAuth.instance.signOut();
+          });
           return const LoginScreen();
         }
       },
