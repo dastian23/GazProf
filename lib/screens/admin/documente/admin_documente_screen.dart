@@ -697,13 +697,6 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   }
 }
 
-class AdminPlaceholderScreen extends StatelessWidget {
-  final String title;
-  const AdminPlaceholderScreen({super.key, required this.title});
-  @override
-  Widget build(BuildContext context) => Scaffold(body: Center(child: Text(title)));
-}
-
 class _NavBarClipper extends CustomClipper<Path> {
   final double buttonLeft;
   final double buttonBottom;
