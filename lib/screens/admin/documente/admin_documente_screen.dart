@@ -8,6 +8,7 @@ import 'package:another_flushbar/flushbar.dart';
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
+import '../../../services/fcm_service.dart';
 
 // --- SCREENS ---
 import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
@@ -188,7 +189,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseFirestore.instance.collection('comenzi').add({
+      final orderData = {
         'telefon_client': phone,
         'adresa_livrare': address,
         'tip_adresa': _addressType,
@@ -207,7 +208,13 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'creat_de': 'admin',
-      });
+      };
+
+      final docRef = await FirebaseFirestore.instance
+          .collection('comenzi')
+          .add(orderData);
+
+      FcmService().sendNewOrderNotification(docRef.id, orderData);
 
       _showMessage("Comandă creată și trimisă în așteptare!", isError: false);
 

@@ -11,6 +11,7 @@ import 'package:another_flushbar/flushbar.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 import '../profile/dispecer_profile_screen.dart';
+import '../../../services/fcm_service.dart';
 
 // Defining the products
 class ProductItem {
@@ -187,7 +188,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseFirestore.instance.collection('comenzi').add({
+      final orderData = {
         'telefon_client': phone,
         'adresa_livrare': address,
         'tip_adresa': _addressType,
@@ -204,7 +205,13 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'id_dispecer': FirebaseAuth.instance.currentUser?.uid,
-      });
+      };
+
+      final docRef = await FirebaseFirestore.instance
+          .collection('comenzi')
+          .add(orderData);
+
+      FcmService().sendNewOrderNotification(docRef.id, orderData);
 
       _showMessage("Comandă creată!", isError: false);
 

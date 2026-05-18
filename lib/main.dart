@@ -10,6 +10,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 // --- PROVIDERS & SERVICES ---
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
+import 'package:gazprof/services/notification_service.dart';
+import 'package:gazprof/services/fcm_service.dart';
 import 'package:flutter/services.dart';
 
 // --- SCREENS ---
@@ -17,7 +19,7 @@ import 'package:gazprof/auth/login_screen.dart';
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
 import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
 import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
-import 'package:gazprof/screens/admin/home/admin_home_screen.dart'; // <--- AM ADĂUGAT IMPORTUL
+import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
 
 
 void main() async {
@@ -26,6 +28,28 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Inițializăm serviciile de notificări
+  await NotificationService().initialize();
+  await FcmService().initialize();
+
+  FirebaseAuth.instance.authStateChanges().listen((user) async {
+    if (user == null) {
+      NotificationService().stopOrderListener();
+      return;
+    }
+
+    try {
+      await NotificationService().saveFcmTokenIfNeeded();
+      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      if (doc.exists) {
+        final role = doc['rol']?.toString().toLowerCase() ?? '';
+        if (role == 'sofer') {
+          NotificationService().startOrderListener();
+        }
+      }
+    } catch (_) {}
+  });
 
   runApp(
     MultiProvider(
@@ -48,6 +72,7 @@ class GazProfApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'GazProf',
+      navigatorKey: navigatorKey,
       themeMode: theme.isDark ? ThemeMode.dark : ThemeMode.light,
       home: Scaffold(
         body: const AuthWrapper(),
