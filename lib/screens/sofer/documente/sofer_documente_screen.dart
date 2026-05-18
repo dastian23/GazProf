@@ -10,6 +10,7 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- SCREENS & COMPONENTS ---
+import 'package:gazprof/widgets/nav_bar_clipper.dart';
 import '../home/sofer_home_screen.dart';
 import '../istoric/sofer_istoric_screen.dart';
 import '../profile/sofer_profile_screen.dart';
@@ -311,7 +312,7 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
         alignment: Alignment.bottomCenter,
         children: [
           ClipPath(
-            clipper: _NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
+            clipper: NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
             child: Container(
               height: 56,
               decoration: BoxDecoration(color: theme.navBarBg, borderRadius: BorderRadius.circular(24)),
@@ -370,25 +371,3 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
   }
 }
 
-class _NavBarClipper extends CustomClipper<Path> {
-  final double buttonLeft, buttonBottom, buttonSize, margin;
-
-  _NavBarClipper(
-      {required this.buttonLeft, required this.buttonBottom, required this.buttonSize, required this.margin});
-
-  @override
-  Path getClip(Size size) {
-    Path basePath = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-          Rect.fromLTWH(0, 0, size.width, size.height),
-          const Radius.circular(24)));
-    Path cutoutPath = Path()
-      ..addOval(Rect.fromCircle(center: Offset(buttonLeft + buttonSize / 2,
-          size.height - (buttonBottom + buttonSize / 2)),
-          radius: buttonSize / 2 + margin));
-    return Path.combine(PathOperation.difference, basePath, cutoutPath);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
-}

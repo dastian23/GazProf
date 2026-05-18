@@ -15,6 +15,9 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
   // --- SERVICES ---
   import 'package:gazprof/services/auth_service.dart';
 
+  // --- WIDGETS ---
+  import 'package:gazprof/widgets/nav_bar_clipper.dart';
+
   // --- SCREENS ---
   import 'package:gazprof/auth/login_screen.dart';
   import '../home/admin_home_screen.dart';
@@ -439,7 +442,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
           alignment: Alignment.bottomCenter,
           children: [
             ClipPath(
-              clipper: _NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
+              clipper: NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
               child: Container(
                 height: 56,
                 decoration: BoxDecoration(color: theme.navBarBg, borderRadius: BorderRadius.circular(24)),
@@ -509,19 +512,3 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
     }
   }
 
-  class _NavBarClipper extends CustomClipper<Path> {
-    final double buttonLeft, buttonBottom, buttonSize, margin;
-    _NavBarClipper({required this.buttonLeft, required this.buttonBottom, required this.buttonSize, required this.margin});
-
-    @override
-    Path getClip(Size size) {
-      Path barPath = Path()..addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, size.width, size.height), const Radius.circular(24)));
-      double centerX = buttonLeft + (buttonSize / 2);
-      double centerY = size.height - (buttonBottom + (buttonSize / 2));
-      Path holePath = Path()..addOval(Rect.fromCircle(center: Offset(centerX, centerY), radius: (buttonSize / 2) + margin));
-      return Path.combine(PathOperation.difference, barPath, holePath);
-    }
-
-    @override
-    bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
-  }

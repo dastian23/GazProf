@@ -11,8 +11,11 @@ import '../../../../core/user_provider.dart';
 import 'package:provider/provider.dart';
 
 
-// --- SCREENS ---
-import 'package:gazprof/screens/dispecer/profile/dispecer_personal_data_screen.dart';
+  // --- WIDGETS ---
+  import 'package:gazprof/widgets/nav_bar_clipper.dart';
+
+  // --- SCREENS ---
+  import 'package:gazprof/screens/dispecer/profile/dispecer_personal_data_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
 import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
 import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
@@ -256,7 +259,7 @@ class DispecerProfileScreen extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         children: [
           ClipPath(
-            clipper: _NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
+            clipper: NavBarClipper(buttonLeft: btnLeft, buttonBottom: btnBottom, buttonSize: btnSize, margin: 4.0),
             child: Container(
               height: 56,
               decoration: BoxDecoration(color: theme.navBarBg, borderRadius: BorderRadius.circular(24)),
@@ -369,23 +372,3 @@ class DispecerProfileScreen extends StatelessWidget {
   }
 }
 
-class _NavBarClipper extends CustomClipper<Path> {
-  final double buttonLeft;
-  final double buttonBottom;
-  final double buttonSize;
-  final double margin;
-
-  _NavBarClipper({required this.buttonLeft, required this.buttonBottom, required this.buttonSize, required this.margin});
-
-  @override
-  Path getClip(Size size) {
-    Path barPath = Path()..addRRect(RRect.fromRectAndRadius(Rect.fromLTWH(0, 0, size.width, size.height), const Radius.circular(24)));
-    double centerX = buttonLeft + (buttonSize / 2);
-    double centerY = size.height - (buttonBottom + (buttonSize / 2));
-    Path holePath = Path()..addOval(Rect.fromCircle(center: Offset(centerX, centerY), radius: (buttonSize / 2) + margin));
-    return Path.combine(PathOperation.difference, barPath, holePath);
-  }
-
-  @override
-  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => true;
-}

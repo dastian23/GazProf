@@ -5,15 +5,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
 
+// --- MODELS ---
+import 'package:gazprof/models/product_item.dart';
+
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
-
-class ProductItem {
-  String name;
-  double price;
-  int quantity;
-  ProductItem(this.name, this.price, this.quantity);
-}
 
 class SoferCreateOrderScreen extends StatefulWidget {
   const SoferCreateOrderScreen({super.key});
