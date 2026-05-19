@@ -7,10 +7,24 @@ import 'package:provider/provider.dart';
 // --- THEME ---
 import '../../../../core/theme_provider.dart';
 
+final Map<String, String> driverNameCache = {};
+
+Future<void> preloadDriverNames(Iterable<String?> ids) async {
+  final missing = ids.whereType<String>().where((id) => !driverNameCache.containsKey(id)).toList();
+  if (missing.isEmpty) return;
+  await Future.wait(missing.map((id) async {
+    try {
+      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      if (doc.exists) driverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
+    } catch (_) {}
+  }));
+}
+
 class AdminHomeLiveList extends StatelessWidget {
   final List<QueryDocumentSnapshot> comenzi;
+  final Map<String, String> driverNames;
 
-  const AdminHomeLiveList({super.key, required this.comenzi});
+  const AdminHomeLiveList({super.key, required this.comenzi, this.driverNames = const {}});
 
   Future<void> _takeOrder(String id) async {
     try {
@@ -204,48 +218,40 @@ class AdminHomeLiveList extends StatelessWidget {
   }
 
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
-    return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(idSofer).get(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
+    final String fullName = driverNames[idSofer] ?? 'Necunoscut';
 
-        final userData = snapshot.data!.data() as Map<String, dynamic>;
-        final String fullName = userData['nume'] ?? 'Necunoscut';
+    List<String> words = fullName.trim().split(RegExp(r'\s+'));
+    String initials = "U";
+    String displayName = fullName;
 
-        List<String> words = fullName.trim().split(RegExp(r'\s+'));
-        String initials = "U";
-        String displayName = fullName;
+    if (words.isNotEmpty) {
+      if (words.length > 1) {
+        initials = (words[0][0] + words[1][0]).toUpperCase();
+        displayName = "${words[0]} ${words[1][0].toUpperCase()}.";
+      } else {
+        initials = words[0][0].toUpperCase();
+        displayName = words[0];
+      }
+    }
 
-        if (words.isNotEmpty) {
-          if (words.length > 1) {
-            initials = (words[0][0] + words[1][0]).toUpperCase();
-            displayName = "${words[0]} ${words[1][0].toUpperCase()}.";
-          } else {
-            initials = words[0][0].toUpperCase();
-            displayName = words[0];
-          }
-        }
+    String actionText = "Preluată de";
+    if (status == 'Finalizata') actionText = "Finalizată de";
+    if (status == 'Anulata') actionText = "Anulată de";
 
-        String actionText = "Preluată de";
-        if (status == 'Finalizata') actionText = "Finalizată de";
-        if (status == 'Anulata') actionText = "Anulată de";
-
-        return Padding(
-          padding: const EdgeInsets.only(top: 15),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: theme.brandBlue,
-                child: Text(initials, style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
-              ),
-              const SizedBox(width: 8),
-              Text("$actionText: ", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
-              Text(displayName, style: TextStyle(color: theme.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
+    return Padding(
+      padding: const EdgeInsets.only(top: 15),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: theme.brandBlue,
+            child: Text(initials, style: const TextStyle(fontSize: 9, color: Colors.white, fontWeight: FontWeight.bold)),
           ),
-        );
-      },
+          const SizedBox(width: 8),
+          Text("$actionText: ", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+          Text(displayName, style: TextStyle(color: theme.textPrimary, fontSize: 12, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 }

@@ -13,7 +13,7 @@ class AdminHomeUsersList extends StatelessWidget {
     final theme = Provider.of<ThemeProvider>(context);
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').snapshots(),
+      stream: FirebaseFirestore.instance.collection('users').limit(100).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Padding(

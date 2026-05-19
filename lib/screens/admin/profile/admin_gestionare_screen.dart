@@ -54,7 +54,7 @@ class AdminGestionareScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').orderBy('data_creare', descending: true).snapshots(),
+        stream: FirebaseFirestore.instance.collection('users').orderBy('data_creare', descending: true).limit(200).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator(color: theme.brandBlue));
@@ -76,38 +76,36 @@ class AdminGestionareScreen extends StatelessWidget {
             return rol != 'neatribuit' && rol.isNotEmpty;
           }).toList();
 
-          return SingleChildScrollView(
+          final items = <dynamic>[];
+          if (unassignedUsers.isNotEmpty) {
+            items.add('FĂRĂ ROL ATRIBUIT');
+            items.addAll(unassignedUsers);
+          }
+          if (activeUsers.isNotEmpty) {
+            items.add('UTILIZATORI ACTIVI');
+            items.addAll(activeUsers);
+          }
+
+          return ListView.builder(
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (unassignedUsers.isNotEmpty) ...[
-                  _buildSectionTitle("FĂRĂ ROL ATRIBUIT", theme),
-                  ...unassignedUsers.map((doc) => _buildUserTile(context, doc, theme, isUnassigned: true)),
-                  const SizedBox(height: 20),
-                ],
-
-                if (activeUsers.isNotEmpty) ...[
-                  _buildSectionTitle("UTILIZATORI ACTIVI", theme),
-                  ...activeUsers.map((doc) => _buildUserTile(context, doc, theme, isUnassigned: false)),
-                ],
-
-                const SizedBox(height: 40),
-              ],
-            ),
+            itemCount: items.length + 1,
+            itemBuilder: (context, index) {
+              if (index == items.length) return const SizedBox(height: 40);
+              final item = items[index];
+              if (item is String) return Padding(
+                padding: EdgeInsets.only(left: 5, bottom: 10, top: index == 0 ? 0 : 20),
+                child: Text(
+                  item,
+                  style: TextStyle(color: theme.textGriFix, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.2),
+                ),
+              );
+              final doc = item as QueryDocumentSnapshot;
+              final isUnassigned = unassignedUsers.contains(doc);
+              return _buildUserTile(context, doc, theme, isUnassigned: isUnassigned);
+            },
           );
         },
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title, ThemeProvider theme) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 5, bottom: 10),
-      child: Text(
-        title,
-        style: TextStyle(color: theme.textGriFix, fontSize: 13, fontWeight: FontWeight.w900, letterSpacing: 1.2),
       ),
     );
   }
