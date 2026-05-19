@@ -101,6 +101,7 @@ flutter:
     - assets/settings.svg
     - assets/users.svg
     - .env
+    - shorebird.yaml
 
   # To add assets to your application, add an assets section, like this:
   # assets:
