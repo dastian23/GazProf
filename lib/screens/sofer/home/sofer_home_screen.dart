@@ -29,25 +29,19 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
   String _filterType = 'intern';
 
   // --- GETTERS FOR CURRENT SHIFT
-  // The real value will be 6,0,0 - now we use 0,0,0 to test
   DateTime get _startOfShift {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 0, 0, 0);
+    return DateTime(now.year, now.month, now.day, 7, 0, 0);
   }
 
-  // The real value will be 18,0,0 - now we use 23, 59, 59 to test
   DateTime get _endOfShift {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
   }
 
   bool _esteInProgram() {
-    // Uncomment this to have the real logic and delete that return
-    // final now = DateTime.now();
-    // return now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
-
-    // Delete this
-    return true;
+    final now = DateTime.now();
+    return now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
   }
 
   @override
@@ -157,7 +151,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
     if (!inProgram) {
       return const SoferHomeEmpty(
         titlu: "În afara programului",
-        mesaj: "Te afli în afara programului de lucru\n(06:00 - 18:00).\nPreluarea și crearea comenzilor sunt dezactivate.",
+        mesaj: "Te afli în afara programului de lucru\n(07:00 - 24:00).\nPreluarea și crearea comenzilor sunt dezactivate.",
       );
     }
 

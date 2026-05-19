@@ -31,9 +31,10 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
 
   // -- MODIFY THIS TO TEST ---
   bool _esteInProgram() {
-    //final oraCurenta = DateTime.now().hour;
-    //return oraCurenta >= 6 && oraCurenta < 18;
-    return true;
+    final now = DateTime.now();
+    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    return now.isAfter(startOfShift) && now.isBefore(endOfShift);
   }
 
   @override
@@ -47,10 +48,8 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
 
     // --- DEFINING THE TIME RANGE FOR ORDERS  ---
     final now = DateTime.now();
-    // Today at start 6,0,0
-    final startOfShift = DateTime(now.year, now.month, now.day, 0, 0, 0);
-    // Today at end 18, 0, 0
-    final endOfShift = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
@@ -82,9 +81,9 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
                         .collection('comenzi')
-                    // 1. Filter to be >= today at hour 06:00
+                    // 1. Filter to be >= today at hour 07:00
                         .where('data_creare', isGreaterThanOrEqualTo: startOfShift)
-                    // 2. Filter to be < today at hour 18:00
+                    // 2. Filter to be < tomorrow at hour 01:00
                         .where('data_creare', isLessThan: endOfShift)
                     // 3. We order from the new to the oldest
                         .orderBy('data_creare', descending: true)

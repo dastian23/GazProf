@@ -80,8 +80,8 @@ class NotificationService {
     _orderSubscription?.cancel();
 
     final now = DateTime.now();
-    final startOfShift = DateTime(now.year, now.month, now.day, 0, 0, 0);
-    final endOfShift = DateTime(now.year, now.month, now.day, 23, 59, 59);
+    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
 
     _orderSubscription = FirebaseFirestore.instance
         .collection('comenzi')

@@ -33,7 +33,7 @@ class DispecerHomeEmpty extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "Dispeceratul este închis momentan.\nNu poți înregistra comenzi noi în afara programului de lucru.",
+              "Dispeceratul este închis momentan.\nNu poți înregistra comenzi noi în afara programului de lucru\n(07:00 - 24:00).",
               textAlign: TextAlign.center,
               style: TextStyle(color: theme.textSecondary, fontSize: 13, height: 1.4),
             ),

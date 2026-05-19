@@ -28,7 +28,7 @@ class DispecerDocumenteEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            "Nu există nicio \n comandă pentru tura de azi.\n Asigură-te că te afli în timpul \n turei curente\n(06:00 - 18:00).",
+            "Nu există nicio \n comandă pentru tura de azi.\n Asigură-te că te afli în timpul \n turei curente\n(07:00 - 24:00).",
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.textSecondary, fontSize: 14, height: 1.4),
           ),

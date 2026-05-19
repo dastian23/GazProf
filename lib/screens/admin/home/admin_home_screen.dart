@@ -32,17 +32,15 @@ class AdminHomeScreen extends StatefulWidget {
 }
 
 class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  // --- GETTERS FOR CURRENT SHIF
-  // The real value will be 6,0,0 - now we use 0,0,0 to test
+  // --- GETTERS FOR CURRENT SHIFT
   DateTime get _startOfShift {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 0, 0, 0);
+    return DateTime(now.year, now.month, now.day, 7, 0, 0);
   }
 
-  // The real value will be 18,0,0 - now we use 23, 59, 59 to test
   DateTime get _endOfShift {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 23, 59, 59);
+    return DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
   }
 
   @override
