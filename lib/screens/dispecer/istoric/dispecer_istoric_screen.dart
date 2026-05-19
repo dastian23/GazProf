@@ -253,8 +253,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
                         if (dt.isBefore(startBound) || dt.isAfter(endBound)) return false;
 
-                        if (_typeFilter != 'Toate') {
-                          final tip = data['tip_adresa'] ?? 'intern';
+                          if (_typeFilter != 'Toate') {
+                          final tip = data['tip_adresa'] ?? 'oras';
                           if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
                         }
 
@@ -296,9 +296,9 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                               children: [
                                 Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
                                 const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Intern', _typeFilter == 'Intern', () => setState(() => _typeFilter = 'Intern'), theme)),
+                                Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
                                 const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Extern', _typeFilter == 'Extern', () => setState(() => _typeFilter = 'Extern'), theme)),
+                                Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
                               ],
                             ),
                           ),

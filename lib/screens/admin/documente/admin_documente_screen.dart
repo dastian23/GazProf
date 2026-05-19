@@ -38,7 +38,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   String _selectedPayment = 'cash';
-  String _addressType = 'intern';
+  String _addressType = 'oras';
 
   List<ProductItem> products = []; 
 
@@ -223,7 +223,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         _phoneController.clear();
         _addressController.clear();
         _mentionsController.clear();
-        _addressType = 'intern';
+        _addressType = 'oras';
         _isMentionsExpanded = false;
         for (var p in products) {
           p.quantity = 0;
@@ -471,16 +471,16 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'intern'),
+            onTap: () => setState(() => _addressType = 'oras'),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'intern' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == 'oras' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'intern' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == 'oras' ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Intern', style: TextStyle(color: _addressType == 'intern' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Oraș', style: TextStyle(color: _addressType == 'oras' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -488,16 +488,16 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'extern'),
+            onTap: () => setState(() => _addressType = 'rute'),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'extern' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == 'rute' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'extern' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == 'rute' ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Extern', style: TextStyle(color: _addressType == 'extern' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Rute', style: TextStyle(color: _addressType == 'rute' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),

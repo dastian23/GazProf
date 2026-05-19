@@ -44,10 +44,10 @@ class SoferHomeList extends StatelessWidget {
 
         final adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
         final telefon = data['telefon_client'] ?? '-';
-        String tipAdresa = data['tip_adresa'] ?? 'intern';
+        String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
 
         return Container(

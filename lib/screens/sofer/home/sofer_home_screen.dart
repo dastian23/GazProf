@@ -26,7 +26,7 @@ class SoferHomeScreen extends StatefulWidget {
 }
 
 class _SoferHomeScreenState extends State<SoferHomeScreen> {
-  String _filterType = 'intern';
+  String _filterType = 'oras';
 
   // --- GETTERS FOR CURRENT SHIFT
   DateTime get _startOfShift {
@@ -180,7 +180,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
         if (docs.isEmpty) {
           // Dynamic message
-          String tipComanda = _filterType == 'intern' ? 'Intern' : 'Extern';
+          String tipComanda = _filterType == 'oras' ? 'Oraș' : 'Rute';
 
           return SoferHomeEmpty(
             titlu: "Ești online",
@@ -288,9 +288,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
           const SizedBox(height: 15),
           Row(
             children: [
-              _buildFilterTab("Intern", "intern", theme),
+              _buildFilterTab("Oraș", "oras", theme),
               const SizedBox(width: 10),
-              _buildFilterTab("Extern", "extern", theme),
+              _buildFilterTab("Rute", "rute", theme),
             ],
           ),
           const SizedBox(height: 10),

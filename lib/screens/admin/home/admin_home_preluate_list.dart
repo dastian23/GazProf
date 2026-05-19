@@ -35,10 +35,10 @@ class AdminHomePreluateList extends StatelessWidget {
         String telefon = data['telefon_client'] ?? '-';
         double total = (data['total_comanda'] ?? 0).toDouble();
 
-        String tipAdresa = data['tip_adresa'] ?? 'intern';
+        String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
-        String formatAdresa = tipAdresa.toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : 'Cash';
 
         return Container(

@@ -58,14 +58,14 @@ class FcmService {
       final total = orderData['total_comanda'] ?? 0;
       final produse = orderData['produse'] ?? [];
       final tipPlata = orderData['tip_plata'] ?? 'cash';
-      final tipAdresa = orderData['tip_adresa'] ?? 'intern';
+      final tipAdresa = orderData['tip_adresa'] ?? 'oras';
 
       final produseLines = (produse as List)
           .map((p) => '${p['cantitate']}x ${p['nume']}')
           .toList();
 
       final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
-      final tipAdresaLabel = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+      final tipAdresaLabel = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
 
       final bodyLines = <String>[
         adresa,

@@ -64,10 +64,10 @@ class AdminHomeLiveList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? '-';
         final total = data['total_comanda'] ?? 0;
 
-        String tipAdresa = data['tip_adresa'] ?? 'intern';
+        String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
-        String formatAdresa = tipAdresa.toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : 'Cash';
 
         Color badgeColor;

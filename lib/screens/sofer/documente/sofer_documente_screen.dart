@@ -25,7 +25,7 @@ class SoferDocumenteScreen extends StatefulWidget {
 }
 
 class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
-  String _filterType = 'intern';
+  String _filterType = 'oras';
 
   // --- GETTERS FOR CURRENT SHIFT
   DateTime get _startOfShift {
@@ -156,7 +156,7 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
         final docs = snapshot.data!.docs;
 
         if (docs.isEmpty) {
-          String tipComanda = _filterType == 'intern' ? 'Intern' : 'Extern';
+          String tipComanda = _filterType == 'oras' ? 'Oraș' : 'Rute';
           return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -247,9 +247,9 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> {
           const SizedBox(height: 15),
           Row(
             children: [
-              _buildFilterTab("Intern", "intern", theme),
+              _buildFilterTab("Oraș", "oras", theme),
               const SizedBox(width: 10),
-              _buildFilterTab("Extern", "extern", theme),
+              _buildFilterTab("Rute", "rute", theme),
             ],
           ),
           const SizedBox(height: 10),

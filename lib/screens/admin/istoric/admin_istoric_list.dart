@@ -39,7 +39,7 @@ class AdminIstoricList extends StatelessWidget {
         final adresa = data['adresa_livrare'] ?? 'Adresă lipsă';
         final telefon = data['telefon_client'] ?? 'N/A';
         final total = data['total_comanda'] ?? 0;
-        final tipAdresa = data['tip_adresa'] ?? 'intern';
+        final tipAdresa = data['tip_adresa'] ?? 'oras';
         final tipPlata = data['tip_plata'] ?? 'cash';
         final status = data['status'] ?? 'Finalizata';
         final idSofer = data['id_sofer'];
@@ -69,7 +69,7 @@ class AdminIstoricList extends StatelessWidget {
           displayStatus = "Anulată";
         }
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'extern' ? 'Extern' : 'Intern';
+        String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
 
         return Container(
