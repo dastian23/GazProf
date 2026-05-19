@@ -61,6 +61,8 @@ class AdminHomeLiveList extends StatelessWidget {
         String? idSofer = data['id_sofer'];
 
         final adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
+        final blocAp = data['bloc_apartament'] ?? '';
+        final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? '-';
         final total = data['total_comanda'] ?? 0;
 
@@ -111,7 +113,7 @@ class AdminHomeLiveList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          adresa,
+                          adresaFull,
                           style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 3),

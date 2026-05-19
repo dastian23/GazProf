@@ -43,6 +43,8 @@ class SoferHomeList extends StatelessWidget {
         String mentiuni = data['mentiuni'] ?? "";
 
         final adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
+        final blocAp = data['bloc_apartament'] ?? '';
+        final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? '-';
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
@@ -69,7 +71,7 @@ class SoferHomeList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          adresa,
+                          adresaFull,
                           style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 3),

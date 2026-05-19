@@ -37,6 +37,8 @@ class AdminIstoricList extends StatelessWidget {
         final data = doc.data() as Map<String, dynamic>;
 
         final adresa = data['adresa_livrare'] ?? 'Adresă lipsă';
+        final blocAp = data['bloc_apartament'] ?? '';
+        final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? 'N/A';
         final total = data['total_comanda'] ?? 0;
         final tipAdresa = data['tip_adresa'] ?? 'oras';
@@ -92,7 +94,7 @@ class AdminIstoricList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          adresa,
+                          adresaFull,
                           style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14),
                         ),
                         const SizedBox(height: 3),

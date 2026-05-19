@@ -32,6 +32,8 @@ class AdminHomePreluateList extends StatelessWidget {
         List produse = data['produse'] ?? [];
         String mentiuni = data['mentiuni'] ?? "";
         String adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
+        String blocAp = data['bloc_apartament'] ?? '';
+        String adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         String telefon = data['telefon_client'] ?? '-';
         double total = (data['total_comanda'] ?? 0).toDouble();
 
@@ -60,7 +62,7 @@ class AdminHomePreluateList extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(adresa, style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
+                        Text(adresaFull, style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
                         const SizedBox(height: 3),
                         Text(
                             "$formatAdresa  •  $telefon  •  Plată: $formatPlata",

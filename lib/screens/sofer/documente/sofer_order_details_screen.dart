@@ -146,16 +146,20 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          orderData['adresa_livrare'] ?? '-',
-                          style: TextStyle(
-                            color: theme.textPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        child: Builder(builder: (context) {
+                          final blocAp = orderData['bloc_apartament'] ?? '';
+                          final adresaFull = blocAp.isNotEmpty ? '${orderData['adresa_livrare']}, $blocAp' : '${orderData['adresa_livrare'] ?? '-'}';
+                          return Text(
+                            adresaFull,
+                            style: TextStyle(
+                              color: theme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          );
+                        }),
                       ),
                     ],
                   ),
@@ -347,6 +351,11 @@ class SoferOrderDetailsScreen extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+          if ((orderData['bloc_apartament'] ?? '') != '')
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(orderData['bloc_apartament'], style: TextStyle(color: theme.textSecondary, fontSize: 16)),
+            ),
           const SizedBox(height: 6),
           Text(
             "Contact: ${orderData['telefon_client'] ?? '-'}",

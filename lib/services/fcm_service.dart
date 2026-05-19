@@ -55,6 +55,8 @@ class FcmService {
       if (tokens.isEmpty) return;
 
       final adresa = orderData['adresa_livrare'] ?? 'Adresă necunoscută';
+      final blocAp = orderData['bloc_apartament'] ?? '';
+      final adresaCompleta = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
       final total = orderData['total_comanda'] ?? 0;
       final produse = orderData['produse'] ?? [];
       final tipPlata = orderData['tip_plata'] ?? 'cash';
@@ -68,7 +70,7 @@ class FcmService {
       final tipAdresaLabel = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
 
       final bodyLines = <String>[
-        adresa,
+        adresaCompleta,
         ...produseLines,
         '$tipPlataLabel — $tipAdresaLabel',
       ];

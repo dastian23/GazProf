@@ -32,6 +32,7 @@ class AdminDocumenteScreen extends StatefulWidget {
 class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _addressLine2Controller = TextEditingController();
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
@@ -52,6 +53,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   void dispose() {
     _phoneController.dispose();
     _addressController.dispose();
+    _addressLine2Controller.dispose();
     _mentionsController.dispose();
     super.dispose();
   }
@@ -193,6 +195,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
       final orderData = {
         'telefon_client': phone,
         'adresa_livrare': address,
+        'bloc_apartament': _addressLine2Controller.text.trim(),
         'tip_adresa': _addressType,
         'produse': selectedProducts.map((p) => {
           'nume': p.name,
@@ -222,6 +225,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
       setState(() {
         _phoneController.clear();
         _addressController.clear();
+        _addressLine2Controller.clear();
         _mentionsController.clear();
         _addressType = 'oras';
         _isMentionsExpanded = false;
@@ -288,7 +292,9 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                             children: [
                               _buildTextField(hint: 'Număr telefon client', icon: Icons.phone_outlined, controller: _phoneController, theme: theme, isPhone: true),
                               const SizedBox(height: 12),
-                              _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                              _buildTextField(hint: 'Strada', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                              const SizedBox(height: 12),
+                              _buildTextField(hint: 'Bloc, Apartament (opțional)', icon: Icons.home_outlined, controller: _addressLine2Controller, theme: theme),
                               const SizedBox(height: 15),
                               _buildAddressTypeToggle(theme),
                             ],

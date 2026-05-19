@@ -20,6 +20,7 @@ class SoferCreateOrderScreen extends StatefulWidget {
 class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _addressLine2Controller = TextEditingController();
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
@@ -40,6 +41,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   void dispose() {
     _phoneController.dispose();
     _addressController.dispose();
+    _addressLine2Controller.dispose();
     _mentionsController.dispose();
     super.dispose();
   }
@@ -124,6 +126,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   void _resetForm() {
     _phoneController.clear();
     _addressController.clear();
+    _addressLine2Controller.clear();
     _mentionsController.clear();
     setState(() {
       _selectedPayment = 'cash';
@@ -155,6 +158,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
       await FirebaseFirestore.instance.collection('comenzi').add({
         'telefon_client': _phoneController.text.trim(),
         'adresa_livrare': _addressController.text.trim(),
+        'bloc_apartament': _addressLine2Controller.text.trim(),
         'tip_adresa': _addressType,
         'produse': selectedProducts.map((p) => {'nume': p.name, 'pret_unitar': p.price, 'cantitate': p.quantity, 'subtotal': p.price * p.quantity}).toList(),
         'total_comanda': _calculateTotal,
@@ -239,7 +243,9 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
               _buildCardContainer(theme, Column(children: [
                 _buildTextField(hint: 'Număr telefon client', icon: Icons.phone_outlined, controller: _phoneController, theme: theme, isPhone: true),
                 const SizedBox(height: 12),
-                _buildTextField(hint: 'Adresă de livrare', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                _buildTextField(hint: 'Strada', icon: Icons.location_on_outlined, controller: _addressController, theme: theme),
+                const SizedBox(height: 12),
+                _buildTextField(hint: 'Bloc, Apartament (opțional)', icon: Icons.home_outlined, controller: _addressLine2Controller, theme: theme),
                 const SizedBox(height: 15),
                 _buildAddressTypeToggle(theme),
               ])),
