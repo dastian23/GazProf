@@ -11,12 +11,13 @@ import '../../../../../core/user_provider.dart';
 class AdminOrderDetailsScreen extends StatelessWidget {
   final String orderId;
   final Map<String, dynamic> orderData;
+  final ValueNotifier<String> paymentTypeNotifier;
 
-  const AdminOrderDetailsScreen({
+  AdminOrderDetailsScreen({
     super.key,
     required this.orderId,
     required this.orderData,
-  });
+  }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? 'cash');
 
   Future<void> _openNavigation(UserProvider userProvider) async {
     final address = Uri.encodeComponent('${orderData['adresa_livrare']}');
@@ -58,6 +59,211 @@ class AdminOrderDetailsScreen extends StatelessWidget {
       'data_finalizare': FieldValue.serverTimestamp(),
     });
     if (context.mounted) Navigator.pop(context);
+  }
+
+  Future<void> _updatePaymentType(BuildContext context, String tipPlata) async {
+    await FirebaseFirestore.instance
+        .collection('comenzi')
+        .doc(orderId)
+        .update({'tip_plata': tipPlata});
+  }
+
+  Future<void> _showPaymentTypeDialog(BuildContext context, ThemeProvider theme, String current) async {
+    final result = await showDialog<String>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (dialogContext) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardCreateCommand,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: theme.cardOutline, width: 1),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64, height: 64,
+                  decoration: BoxDecoration(
+                    color: theme.brandBlue.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: theme.brandBlue.withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: const Icon(Icons.swap_horiz, color: Color(0xFF0779B7), size: 32),
+                ),
+                const SizedBox(height: 18),
+                Text("Schimbă tipul de plată", style: TextStyle(color: theme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 20),
+                _paymentOption(dialogContext, theme, 'cash', 'Cash', Icons.money, Colors.green, current),
+                const SizedBox(height: 12),
+                _paymentOption(dialogContext, theme, 'card', 'Card', Icons.credit_card, theme.brandBlue, current),
+                const SizedBox(height: 8),
+                GestureDetector(
+                  onTap: () => Navigator.pop(dialogContext),
+                  child: Container(
+                    width: double.infinity, height: 48,
+                    decoration: BoxDecoration(
+                      color: theme.isDark ? Colors.white.withValues(alpha: 0.07) : Colors.black.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: theme.isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                    ),
+                    child: Center(child: Text("Înapoi", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14))),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    if (result != null && context.mounted) {
+      await _updatePaymentType(context, result);
+      paymentTypeNotifier.value = result;
+    }
+  }
+
+  Widget _paymentOption(BuildContext context, ThemeProvider theme, String value, String label, IconData icon, Color color, String current) {
+    final isSelected = current.toLowerCase() == value;
+    return GestureDetector(
+      onTap: () => Navigator.pop(context, value),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : (theme.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.03)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isSelected ? color.withValues(alpha: 0.3) : (theme.isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06))),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(width: 12),
+            Expanded(child: Text(label, style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.w600))),
+            if (isSelected)
+              Icon(Icons.check_circle, color: color, size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _unassignOrder(BuildContext context) async {
+    await FirebaseFirestore.instance
+        .collection('comenzi')
+        .doc(orderId)
+        .update({
+      'status': 'In asteptare',
+      'id_sofer': FieldValue.delete(),
+    });
+    if (context.mounted) Navigator.pop(context);
+  }
+
+  Future<bool> _showUnassignDialog(BuildContext context, ThemeProvider theme) async {
+    return await showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.cardCreateCommand,
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFF6B00).withValues(alpha: 0.3), width: 1),
+            boxShadow: [BoxShadow(color: const Color(0xFFFF6B00).withValues(alpha: 0.1), blurRadius: 20, spreadRadius: 2)],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64, height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF6B00).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFF6B00).withValues(alpha: 0.3), width: 1.5),
+                  ),
+                  child: const Icon(Icons.unfold_more_outlined, color: Color(0xFFFF6B00), size: 32),
+                ),
+                const SizedBox(height: 18),
+                Text("Retragi alocarea?", style: TextStyle(color: theme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
+                Text(
+                  "Comanda va reveni la statusul 'În așteptare' și va fi disponibilă pentru alți șoferi.",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.textSecondary, fontSize: 13, height: 1.5),
+                ),
+                const SizedBox(height: 10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: theme.isDark ? Colors.white.withValues(alpha: 0.05) : Colors.black.withValues(alpha: 0.04),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.location_on_outlined, size: 16, color: theme.textSecondary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Builder(builder: (context) {
+                          final blocAp = orderData['bloc_apartament'] ?? '';
+                          final adresaFull = blocAp.isNotEmpty ? '${orderData['adresa_livrare']}, $blocAp' : '${orderData['adresa_livrare'] ?? '-'}';
+                          return Text(
+                            adresaFull,
+                            style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
+                            maxLines: 2, overflow: TextOverflow.ellipsis,
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context, false),
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: theme.isDark ? Colors.white.withValues(alpha: 0.07) : Colors.black.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: theme.isDark ? Colors.white.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.08)),
+                          ),
+                          child: Center(child: Text("Înapoi", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.w600, fontSize: 14))),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context, true),
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFF6B00),
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [BoxShadow(color: const Color(0xFFFF6B00).withValues(alpha: 0.35), blurRadius: 10, offset: const Offset(0, 4))],
+                          ),
+                          child: const Center(child: Text("Da, retrage", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14))),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ) ?? false;
   }
 
   Future<bool> _showCancelDialog(BuildContext context, ThemeProvider theme) async {
@@ -194,7 +400,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMainCard(theme),
+              _buildMainCard(context, theme),
               const SizedBox(height: 25),
               _buildNavigationRow(userProvider, theme),
               const SizedBox(height: 30),
@@ -211,7 +417,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildMainCard(ThemeProvider theme) {
+  Widget _buildMainCard(BuildContext context, ThemeProvider theme) {
     List produse = orderData['produse'] ?? [];
     String mentiuni = orderData['mentiuni'] ?? "";
 
@@ -240,6 +446,8 @@ class AdminOrderDetailsScreen extends StatelessWidget {
             ),
           const SizedBox(height: 6),
           Text("Contact: ${orderData['telefon_client'] ?? '-'}", style: TextStyle(color: theme.textGriFix, fontSize: 14)),
+          const SizedBox(height: 6),
+          _buildPaymentRow(context, theme),
           const Divider(height: 35, color: Colors.black12),
           Column(
             children: produse.map((item) {
@@ -293,6 +501,28 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildPaymentRow(BuildContext context, ThemeProvider theme) {
+    return ValueListenableBuilder<String>(
+      valueListenable: paymentTypeNotifier,
+      builder: (context, tipPlata, _) {
+        final isCard = tipPlata.toLowerCase() == 'card';
+        return GestureDetector(
+          onTap: () => _showPaymentTypeDialog(context, theme, tipPlata),
+          child: Row(
+            children: [
+              Icon(isCard ? Icons.credit_card : Icons.money, size: 16, color: isCard ? theme.brandBlue : Colors.green),
+              const SizedBox(width: 6),
+              Text("Plată: ", style: TextStyle(color: theme.textGriFix, fontSize: 14)),
+              Text(isCard ? 'Card' : 'Cash', style: TextStyle(color: isCard ? theme.brandBlue : Colors.green, fontWeight: FontWeight.bold, fontSize: 14)),
+              const SizedBox(width: 4),
+              Icon(Icons.edit, size: 14, color: theme.textGriFix),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildNavigationRow(UserProvider up, ThemeProvider theme) {
     return Row(
       children: [
@@ -339,6 +569,18 @@ class AdminOrderDetailsScreen extends StatelessWidget {
             onPressed: () => _updateStatus(context, 'Finalizata'),
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0C9E43), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
             child: const Text("Finalizează livrarea", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity, height: 52,
+          child: OutlinedButton(
+            onPressed: () async {
+              bool confirm = await _showUnassignDialog(context, theme);
+              if (confirm && context.mounted) _unassignOrder(context);
+            },
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: Color(0xFFFF6B00)), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15))),
+            child: const Text("Retrage alocarea", style: TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
           ),
         ),
         const SizedBox(height: 12),
