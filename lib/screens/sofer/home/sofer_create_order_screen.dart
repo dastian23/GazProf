@@ -143,7 +143,8 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
       _showMessage("Telefonul și adresa sunt obligatorii."); return;
     }
 
-    if (!RegExp(r'^07\d{8}$').hasMatch(_phoneController.text.trim())) {
+    final phone = _phoneController.text.trim();
+    if (!RegExp(r'^(?:\+?[1-9]\d{3,14}|07\d{8}|03\d{8}|02\d{8})$').hasMatch(phone)) {
       _showMessage("Număr de telefon invalid.");
       return;
     }

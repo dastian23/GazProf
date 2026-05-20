@@ -197,7 +197,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       _showMessage("Telefonul și adresa sunt obligatorii.");
       return;
     }
-    if (!RegExp(r'^07\d{8}$').hasMatch(phone)) {
+    if (!RegExp(r'^(?:\+?[1-9]\d{3,14}|07\d{8}|03\d{8}|02\d{8})$').hasMatch(phone)) {
       _showMessage("Număr de telefon invalid.");
       return;
     }
