@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 // --- THEME & PROVIDERS ---
 import '../../../../../core/theme_provider.dart';
 import '../../../../../core/user_provider.dart';
+import '../../../../../services/fcm_service.dart';
 
 class AdminOrderDetailsScreen extends StatelessWidget {
   final String orderId;
@@ -159,6 +160,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
       'status': 'In asteptare',
       'id_sofer': FieldValue.delete(),
     });
+    FcmService().sendNewOrderNotification(orderId, orderData);
     if (context.mounted) Navigator.pop(context);
   }
 
