@@ -22,6 +22,17 @@ class AdminOrderDetailsScreen extends StatelessWidget {
   }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? 'cash'),
        cardFidelitateNotifier = ValueNotifier<bool>(orderData['card_fidelitate'] == true);
 
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
+
   Future<void> _openNavigation(UserProvider userProvider) async {
     final address = Uri.encodeComponent('${orderData['adresa_livrare']}');
     Uri uri;
@@ -506,7 +517,8 @@ class AdminOrderDetailsScreen extends StatelessWidget {
             valueListenable: cardFidelitateNotifier,
             builder: (context, cardFidelitate, _) {
               final double totalOriginal = (orderData['total_comanda'] ?? 0).toDouble();
-              final double totalDisplay = cardFidelitate ? totalOriginal - 5 : totalOriginal;
+              final double discount = cardFidelitate ? _cardDiscount(orderData) : 0;
+              final double totalDisplay = totalOriginal - discount;
               return Column(
                 children: [
                   Row(
@@ -516,7 +528,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (cardFidelitate)
+                          if (discount > 0)
                             Text("${totalOriginal.toStringAsFixed(0)} lei", style: TextStyle(color: theme.textSecondary, fontSize: 14, decoration: TextDecoration.lineThrough)),
                           Text("${totalDisplay.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 20, fontWeight: FontWeight.bold)),
                         ],
@@ -532,7 +544,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
                         Icon(cardFidelitate ? Icons.check_circle : Icons.card_giftcard, size: 16, color: cardFidelitate ? Colors.green : theme.textGriFix),
                         const SizedBox(width: 6),
                         Text(
-                          cardFidelitate ? "Card fidelitate activ ( -5 lei )" : "Adaugă card fidelitate",
+                          cardFidelitate ? "Card fidelitate activ" : "Adaugă card fidelitate",
                           style: TextStyle(
                             color: cardFidelitate ? Colors.green : theme.brandBlue,
                             fontSize: 13,

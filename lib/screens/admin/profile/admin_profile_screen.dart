@@ -168,7 +168,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
                           ]),
 
                           Text(
-                            "Versiune 1.0.1.3",
+                            "Versiune 1.0.1.4",
                             style: TextStyle(color: theme.textSecondary, fontSize: 10),
                           ),
                           const SizedBox(height: 100),

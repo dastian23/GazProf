@@ -26,6 +26,17 @@ class AdminHomeLiveList extends StatelessWidget {
 
   const AdminHomeLiveList({super.key, required this.comenzi, this.driverNames = const {}});
 
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
+
   Future<void> _takeOrder(String id) async {
     try {
       await FirebaseFirestore.instance.collection('comenzi').doc(id).update({
@@ -66,7 +77,8 @@ class AdminHomeLiveList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? '-';
         final total = (data['total_comanda'] ?? 0).toDouble();
         final cardFidelitate = data['card_fidelitate'] == true;
-        final totalDisplay = cardFidelitate ? total - 5 : total;
+        final discount = cardFidelitate ? _cardDiscount(data) : 0;
+        final totalDisplay = total - discount;
 
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
@@ -189,7 +201,7 @@ class AdminHomeLiveList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (cardFidelitate)
-                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text("Card -${discount.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
                       RichText(
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 13),

@@ -13,14 +13,25 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   final String orderId;
   final Map<String, dynamic> orderData;
   final ValueNotifier<String> paymentTypeNotifier;
-  final ValueNotifier<bool> cardFidelitateNotifier;
+  final bool _cardFidelitate;
 
   SoferOrderDetailsScreen({
     super.key,
     required this.orderId,
     required this.orderData,
   }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? 'cash'),
-       cardFidelitateNotifier = ValueNotifier<bool>(orderData['card_fidelitate'] == true);
+       _cardFidelitate = orderData['card_fidelitate'] == true;
+
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
 
   Future<void> _openNavigation(UserProvider userProvider) async {
     final address = Uri.encodeComponent('${orderData['adresa_livrare']}');
@@ -124,15 +135,6 @@ class SoferOrderDetailsScreen extends StatelessWidget {
       await _updatePaymentType(context, result);
       paymentTypeNotifier.value = result;
     }
-  }
-
-  Future<void> _toggleCardFidelitate(BuildContext context) async {
-    final newValue = !cardFidelitateNotifier.value;
-    await FirebaseFirestore.instance
-        .collection('comenzi')
-        .doc(orderId)
-        .update({'card_fidelitate': newValue});
-    cardFidelitateNotifier.value = newValue;
   }
 
   Widget _paymentOption(BuildContext context, ThemeProvider theme, String value, String label, IconData icon, Color color, String current) {
@@ -728,50 +730,45 @@ class SoferOrderDetailsScreen extends StatelessWidget {
             ),
           ],
           const Divider(height: 35, color: Colors.black12),
-          ValueListenableBuilder<bool>(
-            valueListenable: cardFidelitateNotifier,
-            builder: (context, cardFidelitate, _) {
-              final double totalOriginal = (orderData['total_comanda'] ?? 0).toDouble();
-              final double totalDisplay = cardFidelitate ? totalOriginal - 5 : totalOriginal;
-              return Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text("Total de plată", style: TextStyle(color: theme.textSecondary, fontSize: 14, fontWeight: FontWeight.w500)),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          if (cardFidelitate)
-                            Text("${totalOriginal.toStringAsFixed(0)} lei", style: TextStyle(color: theme.textSecondary, fontSize: 14, decoration: TextDecoration.lineThrough)),
-                          Text("${totalDisplay.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 20, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  GestureDetector(
-                    onTap: () => _toggleCardFidelitate(context),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+          () {
+            final double totalOriginal = (orderData['total_comanda'] ?? 0).toDouble();
+            final double discount = _cardFidelitate ? _cardDiscount(orderData) : 0;
+            final double totalDisplay = totalOriginal - discount;
+            return Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Total de plată", style: TextStyle(color: theme.textSecondary, fontSize: 14, fontWeight: FontWeight.w500)),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Icon(cardFidelitate ? Icons.check_circle : Icons.card_giftcard, size: 16, color: cardFidelitate ? Colors.green : theme.textGriFix),
-                        const SizedBox(width: 6),
-                        Text(
-                          cardFidelitate ? "Card fidelitate activ ( -5 lei )" : "Adaugă card fidelitate",
-                          style: TextStyle(
-                            color: cardFidelitate ? Colors.green : theme.brandBlue,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        if (discount > 0)
+                          Text("${totalOriginal.toStringAsFixed(0)} lei", style: TextStyle(color: theme.textSecondary, fontSize: 14, decoration: TextDecoration.lineThrough)),
+                        Text("${totalDisplay.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 20, fontWeight: FontWeight.bold)),
                       ],
                     ),
-                  ),
-                ],
-              );
-            },
-          ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Icon(_cardFidelitate ? Icons.check_circle : Icons.card_giftcard, size: 16, color: _cardFidelitate ? Colors.green : theme.textGriFix),
+                    const SizedBox(width: 6),
+                    Text(
+                      _cardFidelitate ? "Card fidelitate activ" : "Fără card fidelitate",
+                      style: TextStyle(
+                        color: _cardFidelitate ? Colors.green : theme.textGriFix,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          }(),
         ],
       ),
     );

@@ -262,6 +262,16 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                       }).toList();
 
                       // CALC STATS
+                      double _cardDiscountFromData(Map data) {
+                        final produse = data['produse'] as List? ?? [];
+                        double count = 0;
+                        for (var p in produse) {
+                          if (p['nume'].toString().startsWith('Butelie')) {
+                            count += (p['cantitate'] ?? 0).toDouble();
+                          }
+                        }
+                        return count * 5;
+                      }
                       int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == 'Anulata').length;
                       int countCreate = filteredComenzi.length;
                       double sumIncasati = 0;
@@ -269,7 +279,9 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                         final data = doc.data() as Map;
                         if (data['status'] == 'Finalizata') {
                           double total = (data['total_comanda'] ?? 0).toDouble();
-                          if (data['card_fidelitate'] == true) total -= 5;
+                          if (data['card_fidelitate'] == true) {
+                            total -= _cardDiscountFromData(data);
+                          }
                           sumIncasati += total;
                         }
                       }

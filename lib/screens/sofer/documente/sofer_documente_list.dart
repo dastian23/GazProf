@@ -14,6 +14,17 @@ class SoferDocumenteList extends StatelessWidget {
 
   const SoferDocumenteList({super.key, required this.comenzi});
 
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
@@ -41,7 +52,8 @@ class SoferDocumenteList extends StatelessWidget {
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
         bool cardFidelitate = data['card_fidelitate'] == true;
-        double totalDisplay = cardFidelitate ? total - 5 : total;
+        double discount = cardFidelitate ? _cardDiscount(data) : 0;
+        double totalDisplay = total - discount;
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
@@ -146,7 +158,7 @@ class SoferDocumenteList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (cardFidelitate)
-                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text("Card -${discount.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
                       RichText(
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 13),

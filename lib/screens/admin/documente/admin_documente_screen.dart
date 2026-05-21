@@ -59,9 +59,15 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     super.dispose();
   }
 
-  // ✅ REPARAT: Adăugat înapoi getter-ul pentru calculul totalului comenzii
   double get _calculateTotal {
     return products.fold(0, (val, item) => val + (item.price * item.quantity));
+  }
+
+  double get _discountAmount {
+    if (!_cardFidelitate) return 0;
+    return products
+        .where((p) => p.name.startsWith('Butelie'))
+        .fold(0, (sum, p) => sum + p.quantity) * 5;
   }
 
   Future<void> _loadLiveProducts() async {
@@ -331,7 +337,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                                             if (_cardFidelitate)
                                               Text("${_calculateTotal.toStringAsFixed(0)} lei",
                                                 style: TextStyle(color: theme.textSecondary, fontSize: 12, decoration: TextDecoration.lineThrough)),
-                                            Text("${(_calculateTotal - (_cardFidelitate ? 5 : 0)).toStringAsFixed(0)} lei",
+                                            Text("${(_calculateTotal - _discountAmount).toStringAsFixed(0)} lei",
                                               style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
                                           ],
                                         ),

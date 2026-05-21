@@ -131,6 +131,13 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     return products.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
+  double get _discountAmount {
+    if (!_cardFidelitate) return 0;
+    return products
+        .where((p) => p.name.startsWith('Butelie'))
+        .fold(0, (sum, p) => sum + p.quantity) * 5;
+  }
+
   // --- EDIT PRICE LOGIC  ---
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
     final TextEditingController priceEditController =
@@ -372,7 +379,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                                         if (_cardFidelitate)
                                           Text("${_calculateTotal.toStringAsFixed(0)} lei",
                                             style: TextStyle(color: theme.textSecondary, fontSize: 12, decoration: TextDecoration.lineThrough)),
-                                        Text("${(_calculateTotal - (_cardFidelitate ? 5 : 0)).toStringAsFixed(0)} lei",
+                                        Text("${(_calculateTotal - _discountAmount).toStringAsFixed(0)} lei",
                                           style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
                                       ],
                                     ),

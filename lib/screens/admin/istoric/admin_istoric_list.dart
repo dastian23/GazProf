@@ -24,6 +24,17 @@ class AdminIstoricList extends StatelessWidget {
 
   const AdminIstoricList({super.key, required this.comenzi, this.driverNames = const {}});
 
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
@@ -42,7 +53,8 @@ class AdminIstoricList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? 'N/A';
         final total = (data['total_comanda'] ?? 0).toDouble();
         final cardFidelitate = data['card_fidelitate'] == true;
-        final totalDisplay = cardFidelitate ? total - 5 : total;
+        final discount = cardFidelitate ? _cardDiscount(data) : 0;
+        final totalDisplay = total - discount;
         final tipAdresa = data['tip_adresa'] ?? 'oras';
         final tipPlata = data['tip_plata'] ?? 'cash';
         final status = data['status'] ?? 'Finalizata';
@@ -192,7 +204,7 @@ class AdminIstoricList extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       if (cardFidelitate)
-                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                        Text("Card -${discount.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
                       RichText(
                         text: TextSpan(
                           style: TextStyle(color: theme.textPrimary, fontSize: 13),

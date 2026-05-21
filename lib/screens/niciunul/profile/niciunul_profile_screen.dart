@@ -120,7 +120,7 @@ class NiciunulProfileScreen extends StatelessWidget {
 
                         const Spacer(flex: 1),
                         Text(
-                          "Versiune 1.0.1.3",
+                          "Versiune 1.0.1.4",
                           style: TextStyle(color: theme.textSecondary, fontSize: 10),
                         ),
                         const SizedBox(height: 80),
