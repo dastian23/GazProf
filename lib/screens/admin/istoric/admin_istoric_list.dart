@@ -40,7 +40,9 @@ class AdminIstoricList extends StatelessWidget {
         final blocAp = data['bloc_apartament'] ?? '';
         final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? 'N/A';
-        final total = data['total_comanda'] ?? 0;
+        final total = (data['total_comanda'] ?? 0).toDouble();
+        final cardFidelitate = data['card_fidelitate'] == true;
+        final totalDisplay = cardFidelitate ? total - 5 : total;
         final tipAdresa = data['tip_adresa'] ?? 'oras';
         final tipPlata = data['tip_plata'] ?? 'cash';
         final status = data['status'] ?? 'Finalizata';
@@ -186,17 +188,24 @@ class AdminIstoricList extends StatelessWidget {
                     displayDate,
                     style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12),
                   ),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                      children: [
-                        const TextSpan(text: "Total: "),
-                        TextSpan(
-                          text: "${total.toStringAsFixed(0)} lei",
-                          style: TextStyle(color: statusTextColor, fontWeight: FontWeight.bold),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (cardFidelitate)
+                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          children: [
+                            const TextSpan(text: "Total: "),
+                            TextSpan(
+                              text: "${totalDisplay.toStringAsFixed(0)} lei",
+                              style: TextStyle(color: statusTextColor, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),

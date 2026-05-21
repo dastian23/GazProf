@@ -268,7 +268,9 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                       for (var doc in filteredComenzi) {
                         final data = doc.data() as Map;
                         if (data['status'] == 'Finalizata') {
-                          sumIncasati += (data['total_comanda'] ?? 0);
+                          double total = (data['total_comanda'] ?? 0).toDouble();
+                          if (data['card_fidelitate'] == true) total -= 5;
+                          sumIncasati += total;
                         }
                       }
 

@@ -38,6 +38,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   bool _isLoading = false;
   bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
+  bool _cardFidelitate = false;
   String _selectedPayment = 'cash';
   String _addressType = 'oras';
 
@@ -204,6 +205,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
           'subtotal': p.price * p.quantity,
         }).toList(),
         'total_comanda': _calculateTotal,
+        'card_fidelitate': _cardFidelitate,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
 
@@ -228,6 +230,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         _addressLine2Controller.clear();
         _mentionsController.clear();
         _addressType = 'oras';
+        _cardFidelitate = false;
         _isMentionsExpanded = false;
         for (var p in products) {
           p.quantity = 0;
@@ -322,7 +325,16 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                       children: [
                                         Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                                        Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          children: [
+                                            if (_cardFidelitate)
+                                              Text("${_calculateTotal.toStringAsFixed(0)} lei",
+                                                style: TextStyle(color: theme.textSecondary, fontSize: 12, decoration: TextDecoration.lineThrough)),
+                                            Text("${(_calculateTotal - (_cardFidelitate ? 5 : 0)).toStringAsFixed(0)} lei",
+                                              style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                          ],
+                                        ),
                                       ],
                                     ),
                                   ],
@@ -338,6 +350,35 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                               _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
                               Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
                               _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildSectionTitle("CARD FIDELITATE", theme),
+                        _buildCardContainer(
+                          theme,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(Icons.card_giftcard, color: theme.brandBlue, size: 20),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text("Card fidelitate", style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                                      Text("Reducere de 5 lei", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Switch(
+                                value: _cardFidelitate,
+                                onChanged: (v) => setState(() => _cardFidelitate = v),
+                                activeThumbColor: theme.brandBlue,
+                              ),
                             ],
                           ),
                         ),

@@ -48,6 +48,9 @@ class SoferHomeList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? '-';
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
+        bool cardFidelitate = data['card_fidelitate'] == true;
+        double totalOriginal = (data['total_comanda'] ?? 0).toDouble();
+        double totalDisplay = cardFidelitate ? totalOriginal - 5 : totalOriginal;
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
@@ -158,17 +161,24 @@ class SoferHomeList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Azi $formattedTime", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                      children: [
-                        const TextSpan(text: "Total: "),
-                        TextSpan(
-                          text: "${data['total_comanda'] ?? 0} lei",
-                          style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (cardFidelitate)
+                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          children: [
+                            const TextSpan(text: "Total: "),
+                            TextSpan(
+                              text: "${totalDisplay.toStringAsFixed(0)} lei",
+                              style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),

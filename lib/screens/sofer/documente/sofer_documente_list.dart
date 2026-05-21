@@ -40,6 +40,8 @@ class SoferDocumenteList extends StatelessWidget {
 
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
+        bool cardFidelitate = data['card_fidelitate'] == true;
+        double totalDisplay = cardFidelitate ? total - 5 : total;
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
@@ -140,14 +142,21 @@ class SoferDocumenteList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Azi $formattedTime", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                      children: [
-                        const TextSpan(text: "Total: "),
-                        TextSpan(text: "${total.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (cardFidelitate)
+                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          children: [
+                            const TextSpan(text: "Total: "),
+                            TextSpan(text: "${totalDisplay.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

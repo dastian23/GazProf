@@ -64,7 +64,9 @@ class AdminHomeLiveList extends StatelessWidget {
         final blocAp = data['bloc_apartament'] ?? '';
         final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? '-';
-        final total = data['total_comanda'] ?? 0;
+        final total = (data['total_comanda'] ?? 0).toDouble();
+        final cardFidelitate = data['card_fidelitate'] == true;
+        final totalDisplay = cardFidelitate ? total - 5 : total;
 
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
@@ -183,14 +185,21 @@ class AdminHomeLiveList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Azi $formattedTime", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                      children: [
-                        const TextSpan(text: "Total: "),
-                        TextSpan(text: "$total lei", style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
-                      ],
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (cardFidelitate)
+                        Text("Card -5 lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          children: [
+                            const TextSpan(text: "Total: "),
+                            TextSpan(text: "${totalDisplay.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
