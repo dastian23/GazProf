@@ -239,6 +239,8 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'id_dispecer': FirebaseAuth.instance.currentUser?.uid,
+        'creat_de': 'dispecer',
+        'creat_de_nume': Provider.of<UserProvider>(context, listen: false).userName,
       };
 
       final docRef = await FirebaseFirestore.instance

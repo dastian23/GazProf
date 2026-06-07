@@ -83,6 +83,9 @@ class AdminHomeLiveList extends StatelessWidget {
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
 
+        final creatDeNume = data['creat_de_nume'] ?? '';
+        final creatDeRol = data['creat_de'] ?? '';
+
         String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'factura' ? 'Factura' : 'Cash';
 
@@ -135,6 +138,24 @@ class AdminHomeLiveList extends StatelessWidget {
                           "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
                           style: TextStyle(color: theme.textGriFix, fontSize: 11),
                         ),
+                        if (creatDeNume.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Text("Creat de: $creatDeNume • ",
+                                  style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                                Text(
+                                  creatDeRol == 'sofer' ? 'șofer' : creatDeRol == 'dispecer' ? 'dispecer' : 'admin',
+                                  style: TextStyle(
+                                    color: creatDeRol == 'sofer' ? theme.brandBlue
+                                        : creatDeRol == 'dispecer' ? theme.statusTextFinalizata
+                                        : theme.statusTextInAsteptare,
+                                    fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),

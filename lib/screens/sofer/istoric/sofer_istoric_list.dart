@@ -71,6 +71,9 @@ class SoferIstoricList extends StatelessWidget {
           displayStatus = "Anulată";
         }
 
+        final creatDeNume = data['creat_de_nume'] ?? '';
+        final creatDeRol = data['creat_de'] ?? '';
+
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
 
@@ -103,10 +106,28 @@ class SoferIstoricList extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
-                          style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                        "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                        style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                      ),
+                      if (creatDeNume.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Row(
+                            children: [
+                              Text("Creat de: $creatDeNume • ",
+                                style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                              Text(
+                                creatDeRol == 'sofer' ? 'șofer' : creatDeRol == 'dispecer' ? 'dispecer' : 'admin',
+                                style: TextStyle(
+                                  color: creatDeRol == 'sofer' ? theme.brandBlue
+                                      : creatDeRol == 'dispecer' ? theme.statusTextFinalizata
+                                      : theme.statusTextInAsteptare,
+                                  fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                    ],
                     ),
                   ),
                   const SizedBox(width: 10),

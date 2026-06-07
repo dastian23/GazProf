@@ -55,6 +55,9 @@ class SoferDocumenteList extends StatelessWidget {
         double discount = cardFidelitate ? _cardDiscount(data) : 0;
         double totalDisplay = total - discount;
 
+        final creatDeNume = data['creat_de_nume'] ?? '';
+        final creatDeRol = data['creat_de'] ?? '';
+
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
 
@@ -86,6 +89,24 @@ class SoferDocumenteList extends StatelessWidget {
                           "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
                           style: TextStyle(color: theme.textGriFix, fontSize: 11),
                         ),
+                        if (creatDeNume.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Row(
+                              children: [
+                                Text("Creat de: $creatDeNume • ",
+                                  style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                                Text(
+                                  creatDeRol == 'sofer' ? 'șofer' : creatDeRol == 'dispecer' ? 'dispecer' : 'admin',
+                                  style: TextStyle(
+                                    color: creatDeRol == 'sofer' ? theme.brandBlue
+                                        : creatDeRol == 'dispecer' ? theme.statusTextFinalizata
+                                        : theme.statusTextInAsteptare,
+                                    fontSize: 11, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                          ),
                       ],
                     ),
                   ),

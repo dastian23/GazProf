@@ -655,6 +655,30 @@ class SoferOrderDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           _buildPaymentRow(context, theme),
+          if ((orderData['creat_de_nume'] ?? '') != '')
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Row(
+                children: [
+                  Text("Creat de: ${orderData['creat_de_nume']} • ",
+                    style: TextStyle(color: theme.textGriFix, fontSize: 12)),
+                  Text(
+                    () {
+                      final r = (orderData['creat_de'] ?? '').toString();
+                      return r == 'sofer' ? 'șofer' : r == 'dispecer' ? 'dispecer' : 'admin';
+                    }(),
+                    style: TextStyle(
+                      color: () {
+                        final r = (orderData['creat_de'] ?? '').toString();
+                        return r == 'sofer' ? theme.brandBlue
+                            : r == 'dispecer' ? theme.statusTextFinalizata
+                            : theme.statusTextInAsteptare;
+                      }(),
+                      fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
           const Divider(height: 35, color: Colors.black12),
           Column(
             children: produse.map((item) {

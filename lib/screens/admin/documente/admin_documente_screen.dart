@@ -221,6 +221,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'creat_de': 'admin',
+        'creat_de_nume': Provider.of<UserProvider>(context, listen: false).userName,
       };
 
       final docRef = await FirebaseFirestore.instance

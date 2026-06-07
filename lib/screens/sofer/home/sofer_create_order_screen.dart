@@ -10,6 +10,7 @@ import 'package:gazprof/models/product_item.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
+import '../../../../core/user_provider.dart';
 
 class SoferCreateOrderScreen extends StatefulWidget {
   const SoferCreateOrderScreen({super.key});
@@ -183,6 +184,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         'data_creare': FieldValue.serverTimestamp(),
         'data_finalizare': FieldValue.serverTimestamp(), 
         'creat_de': 'sofer',
+        'creat_de_nume': Provider.of<UserProvider>(context, listen: false).userName,
       });
 
       _showMessage("Comandă creată și finalizată cu succes!", isError: false);
