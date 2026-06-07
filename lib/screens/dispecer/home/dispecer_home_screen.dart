@@ -128,12 +128,12 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   }
 
   double get _calculateTotal {
-    if (_selectedPayment == 'facutara') return 0;
+    if (_selectedPayment == 'factura') return 0;
     return products.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
   double get _discountAmount {
-    if (!_cardFidelitate || _selectedPayment == 'facutara') return 0;
+    if (!_cardFidelitate || _selectedPayment == 'factura') return 0;
     return products
         .where((p) => p.name.startsWith('Butelie'))
         .fold(0, (sum, p) => sum + p.quantity) * 5;
@@ -386,7 +386,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                                     ),
                                   ],
                                 ),
-                                if (_selectedPayment == 'facutara')
+                                if (_selectedPayment == 'factura')
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
                                     child: Text("Facturare ulterioară — totalul este 0 lei",
@@ -406,7 +406,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
                                 _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
                                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                                _buildPaymentRadio('Facutara', 'Plată cu factură', 'assets/invoice.svg', 'facutara', theme),
+                                _buildPaymentRadio('Factura', 'Plată cu factură', 'assets/invoice.svg', 'factura', theme),
                               ],
                             ),
                           ),
@@ -665,13 +665,13 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: value == 'facutara' ? theme.statusCardInAsteptare : (value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata),
+                color: value == 'factura' ? theme.statusCardInAsteptare : (value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SvgPicture.asset(
                   iconPath,
                   width: 22,
-                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : value == 'facutara' ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn)
+                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : value == 'factura' ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn)
               ),
             ),
             const SizedBox(width: 15),

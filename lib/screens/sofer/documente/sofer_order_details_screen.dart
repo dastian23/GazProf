@@ -113,7 +113,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 _paymentOption(dialogContext, theme, 'card', 'Card', Icons.credit_card, theme.brandBlue, current),
                 const SizedBox(height: 12),
-                _paymentOption(dialogContext, theme, 'facutara', 'Facutara', Icons.receipt, theme.statusTextInAsteptare, current),
+                _paymentOption(dialogContext, theme, 'factura', 'Factura', Icons.receipt, theme.statusTextInAsteptare, current),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => Navigator.pop(dialogContext),
@@ -781,16 +781,16 @@ class SoferOrderDetailsScreen extends StatelessWidget {
       valueListenable: paymentTypeNotifier,
       builder: (context, tipPlata, _) {
         final isCard = tipPlata.toLowerCase() == 'card';
-        final isFacutara = tipPlata.toLowerCase() == 'facutara';
-        final plataColor = isCard ? theme.brandBlue : isFacutara ? theme.statusTextInAsteptare : Colors.green;
+        final isFactura = tipPlata.toLowerCase() == 'factura';
+        final plataColor = isCard ? theme.brandBlue : isFactura ? theme.statusTextInAsteptare : Colors.green;
         return GestureDetector(
           onTap: () => _showPaymentTypeDialog(context, theme, tipPlata),
           child: Row(
             children: [
-              Icon(isCard ? Icons.credit_card : isFacutara ? Icons.receipt : Icons.money, size: 16, color: plataColor),
+              Icon(isCard ? Icons.credit_card : isFactura ? Icons.receipt : Icons.money, size: 16, color: plataColor),
               const SizedBox(width: 6),
               Text("Plată: ", style: TextStyle(color: theme.textGriFix, fontSize: 14)),
-              Text(isCard ? 'Card' : isFacutara ? 'Facutara' : 'Cash', style: TextStyle(color: plataColor, fontWeight: FontWeight.bold, fontSize: 14)),
+              Text(isCard ? 'Card' : isFactura ? 'Factura' : 'Cash', style: TextStyle(color: plataColor, fontWeight: FontWeight.bold, fontSize: 14)),
               const SizedBox(width: 4),
               Icon(Icons.edit, size: 14, color: theme.textGriFix),
             ],

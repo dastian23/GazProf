@@ -66,7 +66,7 @@ class FcmService {
           .map((p) => '${p['cantitate']}x ${p['nume']}')
           .toList();
 
-      final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
+      final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
       final tipAdresaLabel = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
 
       final bodyLines = <String>[

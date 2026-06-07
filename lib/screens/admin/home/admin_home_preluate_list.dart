@@ -55,7 +55,7 @@ class AdminHomePreluateList extends StatelessWidget {
         String tipPlata = data['tip_plata'] ?? 'cash';
 
         String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
+        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'factura' ? 'Factura' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
