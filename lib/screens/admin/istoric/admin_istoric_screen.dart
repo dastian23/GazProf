@@ -34,11 +34,31 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
   String? _selectedUserId;
   String? _selectedUserName;
   String? _selectedUserEmail;
+  String? _selectedUserRole;
 
   DateTimeRange _selectedDateRange = DateTimeRange(
     start: DateTime.now(),
     end: DateTime.now(),
   );
+
+  // --- CĂUTARE TEXT ---
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  void _onSearchSubmitted(String value) {
+    setState(() => _searchQuery = value.toLowerCase().trim());
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() => _searchQuery = '');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   String _formatDateRange(DateTimeRange range) {
     final start = range.start;
@@ -102,6 +122,7 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                           _selectedUserId = null;
                           _selectedUserName = null;
                           _selectedUserEmail = null;
+                          _selectedUserRole = null;
                         });
                         Navigator.pop(sheetContext);
                       },
@@ -158,6 +179,7 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                                     _selectedUserId = uDoc.id;
                                     _selectedUserName = nume;
                                     _selectedUserEmail = email;
+                                    _selectedUserRole = rol;
                                   });
                                   Navigator.pop(sheetContext);
                                 },
@@ -366,6 +388,7 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
     ));
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: theme.scaffoldBg,
       body: Stack(
         children: [
@@ -397,13 +420,9 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                         .collection('comenzi')
                         .where('status', whereIn: ['Finalizata', 'Anulata'])
                         .orderBy('data_creare', descending: true)
-                        .limit(200)
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator(color: theme.brandBlue));
-                      }
-
+                      final isLoading = snapshot.connectionState == ConnectionState.waiting;
                       final allIstoric = snapshot.data?.docs ?? [];
 
                       final filteredComenzi = allIstoric.where((doc) {
@@ -435,6 +454,15 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                           bool matchesCreator = (creatDe == _selectedUserId || (userEmailLower != null && creatDe == userEmailLower));
 
                           if (!matchesDriver && !matchesCreator) { return false; }
+                        }
+
+                        // 4. Căutare text după adresă sau telefon
+                        if (_searchQuery.isNotEmpty) {
+                          final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
+                          final telefon = (data['telefon_client'] ?? '').toString();
+                          if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) {
+                            return false;
+                          }
                         }
 
                         return true;
@@ -494,48 +522,69 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                           ),
                           const SizedBox(height: 12),
 
-                          // --- FILTER ON A SPECIFIC USER ---
+                          // --- CĂUTARE TEXT CU FILTRU UTILIZATOR ---
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: GestureDetector(
-                              onTap: () => _openUserFilterMenu(context, theme),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: theme.cardFill,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: _selectedUserId != null ? theme.brandBlue : theme.cardOutline),
+                            child: TextField(
+                              controller: _searchController,
+                              onSubmitted: _onSearchSubmitted,
+                              textInputAction: TextInputAction.search,
+                              style: TextStyle(color: theme.textPrimary, fontSize: 14),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+                                prefixIcon: GestureDetector(
+                                  onTap: () => _onSearchSubmitted(_searchController.text),
+                                  child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
                                 ),
-                                child: Row(
+                                hintText: _selectedUserId != null
+                                    ? 'Caută în comenzile lui $_selectedUserName...'
+                                    : 'Caută după adresă sau telefon...',
+                                hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+                                suffixIcon: Row(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(Icons.person_search_outlined, color: _selectedUserId != null ? theme.brandBlue : theme.textSecondary, size: 18),
-                                    const SizedBox(width: 10),
-                                    Expanded(
-                                      child: Text(
-                                        _selectedUserId != null ? "Utilizator: $_selectedUserName" : "Filtrează după utilizator (Toți)",
-                                        style: TextStyle(
-                                          color: _selectedUserId != null ? theme.brandBlue : theme.textPrimary,
-                                          fontSize: 13,
-                                          fontWeight: _selectedUserId != null ? FontWeight.bold : FontWeight.normal,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    if (_searchQuery.isNotEmpty)
+                                      GestureDetector(
+                                        onTap: _clearSearch,
+                                        child: Icon(Icons.clear, color: theme.textSecondary, size: 18),
                                       ),
+                                    if (_searchQuery.isNotEmpty) const SizedBox(width: 4),
+                                    GestureDetector(
+                                      onTap: () => _openUserFilterMenu(context, theme),
+                                      child: _selectedUserId != null
+                                          ? _buildUserAvatar(theme)
+                                          : Container(
+                                              padding: const EdgeInsets.all(6),
+                                              child: Icon(Icons.person_search_outlined, color: theme.textSecondary, size: 20),
+                                            ),
                                     ),
+                                    const SizedBox(width: 2),
                                     if (_selectedUserId != null)
                                       GestureDetector(
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedUserId = null;
-                                            _selectedUserName = null;
-                                            _selectedUserEmail = null;
-                                          });
-                                        },
-                                        child: const Icon(Icons.cancel, size: 18, color: Colors.grey),
+                                        onTap: () => setState(() {
+                                          _selectedUserId = null;
+                                          _selectedUserName = null;
+                                          _selectedUserEmail = null;
+                                          _selectedUserRole = null;
+                                        }),
+                                        child: Container(
+                                          padding: const EdgeInsets.all(6),
+                                          child: Icon(Icons.cancel, color: theme.textSecondary, size: 16),
+                                        ),
                                       )
                                     else
-                                      Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 18),
+                                      const SizedBox(width: 4),
                                   ],
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: _selectedUserId != null ? theme.brandBlue.withValues(alpha: 0.5) : theme.textCardOutline),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
                                 ),
                               ),
                             ),
@@ -587,9 +636,11 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
 
                           // --- LIST OR EMPTY ---
                           Expanded(
-                            child: filteredComenzi.isEmpty
-                                ? const AdminIstoricEmpty()
-                                : AdminIstoricList(comenzi: filteredComenzi, driverNames: istoricDriverNames),
+                            child: isLoading
+                                ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
+                                : filteredComenzi.isEmpty
+                                    ? const AdminIstoricEmpty()
+                                    : AdminIstoricList(comenzi: filteredComenzi, driverNames: istoricDriverNames),
                           ),
                         ],
                       );
@@ -629,6 +680,40 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
             style: TextStyle(color: isActive ? theme.textPrimary : theme.filterText, fontSize: 13, fontWeight: FontWeight.bold),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildUserAvatar(ThemeProvider theme) {
+    final nume = _selectedUserName ?? '';
+    final words = nume.trim().split(RegExp(r'\s+'));
+    final initials = words.length > 1
+        ? '${words[0][0]}${words[1][0]}'.toUpperCase()
+        : words.isNotEmpty ? words[0][0].toUpperCase() : 'U';
+
+    final rol = (_selectedUserRole ?? '').toLowerCase();
+    Color bgColor;
+    Color textColor;
+    if (rol == 'sofer') {
+      bgColor = theme.roleBgSofer;
+      textColor = theme.roleSofer;
+    } else if (rol == 'dispecer') {
+      bgColor = theme.roleBgDispecer;
+      textColor = theme.roleDispecer;
+    } else if (rol == 'admin' || rol == 'administrator') {
+      bgColor = theme.roleBgAdmin;
+      textColor = theme.roleAdmin;
+    } else {
+      bgColor = theme.brandBlue.withValues(alpha: 0.15);
+      textColor = theme.brandBlue;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(right: 2),
+      child: CircleAvatar(
+        radius: 14,
+        backgroundColor: bgColor,
+        child: Text(initials, style: TextStyle(color: textColor, fontSize: 11, fontWeight: FontWeight.bold)),
       ),
     );
   }

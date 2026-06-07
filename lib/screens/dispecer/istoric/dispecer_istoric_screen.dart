@@ -36,6 +36,25 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
     end: DateTime.now(),
   );
 
+  // --- CĂUTARE TEXT ---
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  void _onSearchSubmitted(String value) {
+    setState(() => _searchQuery = value.toLowerCase().trim());
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    setState(() => _searchQuery = '');
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
 // --- MAIN BUTTON TEXT FORMATTER ---
   String _formatDateRange(DateTimeRange range) {
     final start = range.start;
@@ -202,6 +221,7 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
     ));
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: theme.scaffoldBg,
       body: Stack(
         children: [
@@ -235,10 +255,7 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                         .orderBy('data_creare', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator(color: theme.brandBlue));
-                      }
-
+                      final isLoading = snapshot.connectionState == ConnectionState.waiting;
                       final allIstoric = snapshot.data?.docs ?? [];
 
                       final filteredComenzi = allIstoric.where((doc) {
@@ -256,6 +273,12 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                           if (_typeFilter != 'Toate') {
                           final tip = data['tip_adresa'] ?? 'oras';
                           if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
+                        }
+
+                        if (_searchQuery.isNotEmpty) {
+                          final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
+                          final telefon = (data['telefon_client'] ?? '').toString();
+                          if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) return false;
                         }
 
                         return true;
@@ -301,7 +324,44 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 15),
+                          const SizedBox(height: 12),
+
+                          // --- CĂUTARE TEXT ---
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            child: TextField(
+                              controller: _searchController,
+                              onSubmitted: _onSearchSubmitted,
+                              textInputAction: TextInputAction.search,
+                              style: TextStyle(color: theme.textPrimary, fontSize: 14),
+                              decoration: InputDecoration(
+                                filled: true,
+                                fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+                                prefixIcon: GestureDetector(
+                                  onTap: () => _onSearchSubmitted(_searchController.text),
+                                  child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
+                                ),
+                                hintText: 'Caută după adresă sau telefon...',
+                                hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+                                suffixIcon: _searchQuery.isNotEmpty
+                                    ? GestureDetector(
+                                        onTap: _clearSearch,
+                                        child: Icon(Icons.clear, color: theme.textSecondary, size: 18),
+                                      )
+                                    : null,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.textCardOutline),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
 
                           // --- FILTER INTERN/EXTERN ---
                           Padding(
@@ -348,9 +408,11 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
                           // --- LIST OR EMPTY STATE
                           Expanded(
-                            child: filteredComenzi.isEmpty
-                                ? const DispecerIstoricEmpty()
-                                : DispecerIstoricList(comenzi: filteredComenzi),
+                            child: isLoading
+                                ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
+                                : filteredComenzi.isEmpty
+                                    ? const DispecerIstoricEmpty()
+                                    : DispecerIstoricList(comenzi: filteredComenzi),
                           ),
                         ],
                       );
