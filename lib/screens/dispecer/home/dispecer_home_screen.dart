@@ -42,6 +42,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   bool _isLoading = false;
   bool _isProductsLoading = true;
   bool _isMentionsExpanded = false;
+  bool _cardFidelitate = false;
   String _selectedPayment = 'cash';
   String _addressType = 'oras';
 
@@ -131,6 +132,13 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     return products.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
+  double get _discountAmount {
+    if (!_cardFidelitate) return 0;
+    return products
+        .where((p) => p.name.startsWith('Butelie'))
+        .fold(0, (sum, p) => sum + p.quantity) * 5;
+  }
+
   // --- EDIT PRICE LOGIC  ---
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
     final TextEditingController priceEditController =
@@ -198,7 +206,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       _showMessage("Telefonul și adresa sunt obligatorii.");
       return;
     }
-    if (!RegExp(r'^07\d{8}$').hasMatch(phone)) {
+    if (!RegExp(r'^(?:\+?[1-9]\d{3,14}|07\d{8}|03\d{8}|02\d{8})$').hasMatch(phone)) {
       _showMessage("Număr de telefon invalid.");
       return;
     }
@@ -224,6 +232,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
           'subtotal': p.price * p.quantity,
         }).toList(),
         'total_comanda': _calculateTotal,
+        'card_fidelitate': _cardFidelitate,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
         'status': 'In asteptare',
@@ -246,6 +255,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         _addressLine2Controller.clear();
         _mentionsController.clear();
         _addressType = 'oras';
+        _cardFidelitate = false;
         _isMentionsExpanded = false;
         for (var p in products) { p.quantity = 0; }
       });
@@ -364,7 +374,16 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text("Total comandă", style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
-                                    Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.end,
+                                      children: [
+                                        if (_cardFidelitate)
+                                          Text("${_calculateTotal.toStringAsFixed(0)} lei",
+                                            style: TextStyle(color: theme.textSecondary, fontSize: 12, decoration: TextDecoration.lineThrough)),
+                                        Text("${(_calculateTotal - _discountAmount).toStringAsFixed(0)} lei",
+                                          style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
                                   ],
                                 ),
                                 if (_selectedPayment == 'facutara')
@@ -388,6 +407,35 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                                 _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
                                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
                                 _buildPaymentRadio('Facutara', 'Plată cu factură', 'assets/invoice.svg', 'facutara', theme),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+
+                          _buildSectionTitle("CARD FIDELITATE", theme),
+                          _buildCardContainer(
+                            theme,
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    Icon(Icons.card_giftcard, color: theme.brandBlue, size: 20),
+                                    const SizedBox(width: 10),
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text("Card fidelitate", style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                                        Text("Reducere de 5 lei", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                Switch(
+                                  value: _cardFidelitate,
+                                  onChanged: (v) => setState(() => _cardFidelitate = v),
+                                  activeThumbColor: theme.brandBlue,
+                                ),
                               ],
                             ),
                           ),

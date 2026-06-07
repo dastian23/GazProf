@@ -11,6 +11,17 @@ class SoferHomeList extends StatelessWidget {
 
   const SoferHomeList({super.key, required this.comenzi});
 
+  double _cardDiscount(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * 5;
+  }
+
   Future<void> _takeOrder(String id) async {
     try {
       await FirebaseFirestore.instance.collection('comenzi').doc(id).update({
@@ -48,6 +59,10 @@ class SoferHomeList extends StatelessWidget {
         final telefon = data['telefon_client'] ?? '-';
         String tipAdresa = data['tip_adresa'] ?? 'oras';
         String tipPlata = data['tip_plata'] ?? 'cash';
+        bool cardFidelitate = data['card_fidelitate'] == true;
+        double totalOriginal = (data['total_comanda'] ?? 0).toDouble();
+        double discount = cardFidelitate ? _cardDiscount(data) : 0;
+        double totalDisplay = totalOriginal - discount;
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
         String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
@@ -158,17 +173,24 @@ class SoferHomeList extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text("Azi $formattedTime", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  RichText(
-                    text: TextSpan(
-                      style: TextStyle(color: theme.textPrimary, fontSize: 13),
-                      children: [
-                        const TextSpan(text: "Total: "),
-                        TextSpan(
-                          text: "${data['total_comanda'] ?? 0} lei",
-                          style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      if (cardFidelitate)
+                        Text("Card -${discount.toStringAsFixed(0)} lei", style: TextStyle(color: theme.brandBlue, fontSize: 10, fontWeight: FontWeight.bold)),
+                      RichText(
+                        text: TextSpan(
+                          style: TextStyle(color: theme.textPrimary, fontSize: 13),
+                          children: [
+                            const TextSpan(text: "Total: "),
+                            TextSpan(
+                              text: "${totalDisplay.toStringAsFixed(0)} lei",
+                              style: const TextStyle(color: Color(0xFFFF6B00), fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
