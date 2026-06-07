@@ -58,7 +58,7 @@ class DispecerIstoricList extends StatelessWidget {
         }
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
+        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 15),

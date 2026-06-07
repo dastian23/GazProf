@@ -50,7 +50,7 @@ class SoferHomeList extends StatelessWidget {
         String tipPlata = data['tip_plata'] ?? 'cash';
 
         String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : 'Cash';
+        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

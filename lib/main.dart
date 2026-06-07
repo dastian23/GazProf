@@ -29,7 +29,7 @@ void main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  // Inițializăm serviciile de notificări
+  // Notification services
   await NotificationService().initialize();
   await FcmService().initialize();
 

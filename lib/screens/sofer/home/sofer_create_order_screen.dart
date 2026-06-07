@@ -46,7 +46,10 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
     super.dispose();
   }
 
-  double get _calculateTotal => products.fold(0, (total, item) => total + (item.price * item.quantity));
+  double get _calculateTotal {
+    if (_selectedPayment == 'facutara') return 0;
+    return products.fold(0, (total, item) => total + (item.price * item.quantity));
+  }
 
   Future<void> _loadLiveProducts() async {
     try {
@@ -274,6 +277,12 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
                               Text("${_calculateTotal.toStringAsFixed(0)} lei", style: const TextStyle(color: Color(0xFFFF6B00), fontSize: 16, fontWeight: FontWeight.bold)),
                             ],
                           ),
+                          if (_selectedPayment == 'facutara')
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text("Facturare ulterioară — totalul este 0 lei",
+                                style: TextStyle(color: theme.statusTextInAsteptare, fontSize: 12, fontStyle: FontStyle.italic)),
+                            ),
                         ],
                       ),
               ),
@@ -284,6 +293,8 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
                 _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
                 _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
+                Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
+                _buildPaymentRadio('Facutara', 'Plată cu factură', 'assets/invoice.svg', 'facutara', theme),
               ])),
               const SizedBox(height: 20),
 
@@ -497,13 +508,13 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata,
+                color: value == 'facutara' ? theme.statusCardInAsteptare : (value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SvgPicture.asset(
                   iconPath,
                   width: 22,
-                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : theme.brandBlue, BlendMode.srcIn)
+                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : value == 'facutara' ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn)
               ),
             ),
             const SizedBox(width: 15),

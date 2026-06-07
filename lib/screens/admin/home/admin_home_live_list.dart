@@ -70,7 +70,7 @@ class AdminHomeLiveList extends StatelessWidget {
         String tipPlata = data['tip_plata'] ?? 'cash';
 
         String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : 'Cash';
+        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'facutara' ? 'Facutara' : 'Cash';
 
         Color badgeColor;
         Color textColor;
