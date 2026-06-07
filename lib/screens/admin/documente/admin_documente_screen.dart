@@ -65,7 +65,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   }
 
   double get _discountAmount {
-    if (!_cardFidelitate) return 0;
+    if (!_cardFidelitate || _selectedPayment == 'facutara') return 0;
     return products
         .where((p) => p.name.startsWith('Butelie'))
         .fold(0, (sum, p) => sum + p.quantity) * 5;
