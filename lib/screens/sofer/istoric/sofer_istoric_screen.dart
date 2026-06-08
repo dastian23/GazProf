@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -253,9 +254,9 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('comenzi')
+                        .collection(FirestoreCollections.orders)
                         .where('id_sofer', isEqualTo: currentUserId)
-                        .where('status', whereIn: ['Finalizata', 'Anulata'])
+                        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
                         .orderBy('data_creare', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {
@@ -275,7 +276,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                         if (dt.isBefore(startBound) || dt.isAfter(endBound)) return false;
 
                           if (_typeFilter != 'Toate') {
-                          final tip = data['tip_adresa'] ?? 'oras';
+                          final tip = data['tip_adresa'] ?? AppConstants.addressTypeCity;
                           if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
                         }
 
@@ -297,14 +298,14 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                             count += (p['cantitate'] ?? 0).toDouble();
                           }
                         }
-                        return count * 5;
+                        return count * AppConstants.discountPerBottle;
                       }
-                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == 'Anulata').length;
+                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
                       int countCreate = filteredComenzi.length;
                       double sumIncasati = 0;
                       for (var doc in filteredComenzi) {
                         final data = doc.data() as Map;
-                        if (data['status'] == 'Finalizata') {
+                        if (data['status'] == OrderStatus.completed.label) {
                           double total = (data['total_comanda'] ?? 0).toDouble();
                           if (data['card_fidelitate'] == true) {
                             total -= _cardDiscountFromData(data);
@@ -374,9 +375,9 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                               children: [
                                 Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
                                 const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
+                                Expanded(child: _buildFilterToggle('Oraș', _typeFilter == AppConstants.addressTypeCity, () => setState(() => _typeFilter = AppConstants.addressTypeCity), theme)),
                                 const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
+                                Expanded(child: _buildFilterToggle('Rute', _typeFilter == AppConstants.addressTypeRoute, () => setState(() => _typeFilter = AppConstants.addressTypeRoute), theme)),
                               ],
                             ),
                           ),

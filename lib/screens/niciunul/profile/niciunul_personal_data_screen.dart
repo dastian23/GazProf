@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -66,7 +67,7 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
   Future<void> _fetchUserData() async {
     try {
       String uid = FirebaseAuth.instance.currentUser!.uid;
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(uid).get();
 
       if (doc.exists) {
         setState(() {
@@ -106,7 +107,7 @@ class _NiciunulPersonalDataScreenState extends State<NiciunulPersonalDataScreen>
       String uid = FirebaseAuth.instance.currentUser!.uid;
 
       // 3. Update Firebase
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(uid).update({
         'nume': name,
         'telefon': phone,
       });

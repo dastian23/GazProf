@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME ---
 import '../../../../core/theme_provider.dart';
@@ -18,7 +19,7 @@ Future<void> preloadDriverNames(Iterable<String?> ids) async {
   if (missing.isEmpty) return;
   await Future.wait(missing.map((id) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(id).get();
       if (doc.exists) driverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
     } catch (e) {
       debugPrint("Eroare preloadDriverNames: $e");
@@ -41,7 +42,7 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
 
   @override
   void initState() {
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    _timer = Timer.periodic(AppConstants.refreshInterval, (_) => setState(() {}));
     super.initState();
   }
 
@@ -59,13 +60,13 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   Future<void> _takeOrder(String id) async {
     try {
-      await FirebaseFirestore.instance.collection('comenzi').doc(id).update({
-        'status': 'Alocata',
+      await FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id).update({
+        'status': OrderStatus.allocated.label,
         'id_sofer': FirebaseAuth.instance.currentUser?.uid,
         'data_preluare': FieldValue.serverTimestamp(),
       });
@@ -95,7 +96,7 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
 
         List produse = data['produse'] ?? [];
         String mentiuni = data['mentiuni'] ?? "";
-        String status = data['status'] ?? 'In asteptare';
+        String status = data['status'] ?? OrderStatus.waiting.label;
         String? idSofer = data['id_sofer'];
 
         final adresa = data['adresa_livrare'] ?? 'Adresă necunoscută';
@@ -107,28 +108,28 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
         final discount = cardFidelitate ? _cardDiscount(data) : 0;
         final totalDisplay = total - discount;
 
-        String tipAdresa = data['tip_adresa'] ?? 'oras';
-        String tipPlata = data['tip_plata'] ?? 'cash';
+        String tipAdresa = data['tip_adresa'] ?? AppConstants.addressTypeCity;
+        String tipPlata = data['tip_plata'] ?? PaymentType.cash.value;
 
         final creatDeNume = data['creat_de_nume'] ?? '';
         final creatDeRol = data['creat_de'] ?? '';
 
-        String formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'factura' ? 'Factura' : 'Cash';
+        String formatAdresa = tipAdresa.toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
+        String formatPlata = tipPlata.toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
 
         Color badgeColor;
         Color textColor;
         String displayStatus;
 
-        if (status == 'In asteptare') {
+        if (status == OrderStatus.waiting.label) {
           badgeColor = theme.statusCardInAsteptare;
           textColor = theme.statusTextInAsteptare;
           displayStatus = "În așteptare";
-        } else if (status == 'Alocata') {
+        } else if (status == OrderStatus.allocated.label) {
           badgeColor = theme.statusCardAlocata;
           textColor = theme.statusTextAlocata;
           displayStatus = "Alocată";
-        } else if (status == 'Finalizata') {
+        } else if (status == OrderStatus.completed.label) {
           badgeColor = theme.statusCardFinalizata;
           textColor = theme.statusTextFinalizata;
           displayStatus = "Finalizată";
@@ -138,7 +139,7 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
           displayStatus = "Anulată";
         }
 
-        final bool canEdit = (status == 'In asteptare' || status == 'Alocata');
+        final bool canEdit = (status == OrderStatus.waiting.label || status == OrderStatus.allocated.label);
 
         return GestureDetector(
           onTap: canEdit
@@ -151,7 +152,7 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
             color: theme.cardFill,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: (status == 'In asteptare' || status == 'Alocata') ? getTimeBorderColor(date) : theme.cardOutline,
+              color: (status == OrderStatus.waiting.label || status == OrderStatus.allocated.label) ? getTimeBorderColor(date) : theme.cardOutline,
               width: 1.5,
             ),
           ),
@@ -280,10 +281,10 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
                 ],
               ),
 
-              if (status != 'In asteptare' && idSofer != null)
+              if (status != OrderStatus.waiting.label && idSofer != null)
                 _buildDriverInfo(idSofer, status, theme),
 
-              if (status == 'In asteptare') ...[
+              if (status == OrderStatus.waiting.label) ...[
                 const SizedBox(height: 15),
                 SizedBox(
                   width: double.infinity, height: 40,
@@ -323,8 +324,8 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
     }
 
     String actionText = "Preluată de";
-    if (status == 'Finalizata') actionText = "Finalizată de";
-    if (status == 'Anulata') actionText = "Anulată de";
+    if (status == OrderStatus.completed.label) actionText = "Finalizată de";
+    if (status == OrderStatus.cancelled.label) actionText = "Anulată de";
 
     return Padding(
       padding: const EdgeInsets.only(top: 15),

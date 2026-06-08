@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- MODELS ---
+import 'package:gazprof/core/constants.dart';
 import 'package:gazprof/models/product_item.dart';
 
 // --- THEME & PROVIDERS ---
@@ -82,7 +83,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   Future<void> _loadLiveProducts() async {
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('produse')
+          .collection(FirestoreCollections.products)
           .orderBy('pozitie')
           .get();
 
@@ -97,7 +98,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         ];
 
         for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection('produse').add({
+          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
             'nume': defaultProducts[i]['nume'],
             'pret': defaultProducts[i]['pret'],
             'pozitie': i,
@@ -235,7 +236,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
         'card_fidelitate': _cardFidelitate,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
-        'status': 'In asteptare',
+        'status': OrderStatus.waiting.label,
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'id_dispecer': FirebaseAuth.instance.currentUser?.uid,
@@ -244,7 +245,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
       };
 
       final docRef = await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .add(orderData);
 
       FcmService().sendNewOrderNotification(docRef.id, orderData);

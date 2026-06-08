@@ -6,6 +6,7 @@ import 'firebase_options.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- PROVIDERS & SERVICES ---
 import 'package:gazprof/core/theme_provider.dart';
@@ -45,7 +46,7 @@ void main() async {
 
     try {
       await NotificationService().saveFcmTokenIfNeeded();
-      final doc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(user.uid).get();
       if (doc.exists) {
         final role = doc['rol']?.toString().toLowerCase() ?? '';
         if (role == 'sofer') {
@@ -135,7 +136,7 @@ class RoleRouter extends StatelessWidget {
 
     return FutureBuilder<DocumentSnapshot>(
       future: FirebaseFirestore.instance
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .doc(user.uid)
           .get(),
       builder: (context, snapshot) {

@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../core/time_indicator.dart';
 
@@ -23,7 +24,7 @@ class _SoferHomeListState extends State<SoferHomeList> {
 
   @override
   void initState() {
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    _timer = Timer.periodic(AppConstants.refreshInterval, (_) => setState(() {}));
     super.initState();
   }
 
@@ -41,13 +42,13 @@ class _SoferHomeListState extends State<SoferHomeList> {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   Future<void> _takeOrder(String id) async {
     try {
-      await FirebaseFirestore.instance.collection('comenzi').doc(id).update({
-        'status': 'Alocata',
+      await FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id).update({
+        'status': OrderStatus.allocated.label,
         'id_sofer': FirebaseAuth.instance.currentUser?.uid,
         'data_preluare': FieldValue.serverTimestamp(),
       });
@@ -80,8 +81,8 @@ class _SoferHomeListState extends State<SoferHomeList> {
         final blocAp = data['bloc_apartament'] ?? '';
         final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
         final telefon = data['telefon_client'] ?? '-';
-        String tipAdresa = data['tip_adresa'] ?? 'oras';
-        String tipPlata = data['tip_plata'] ?? 'cash';
+        String tipAdresa = data['tip_adresa'] ?? AppConstants.addressTypeCity;
+        String tipPlata = data['tip_plata'] ?? PaymentType.cash.value;
         bool cardFidelitate = data['card_fidelitate'] == true;
         double totalOriginal = (data['total_comanda'] ?? 0).toDouble();
         double discount = cardFidelitate ? _cardDiscount(data) : 0;
@@ -90,8 +91,8 @@ class _SoferHomeListState extends State<SoferHomeList> {
         final creatDeNume = data['creat_de_nume'] ?? '';
         final creatDeRol = data['creat_de'] ?? '';
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
+        String formatAdresa = tipAdresa.toString().toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
+        String formatPlata = tipPlata.toString().toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toString().toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -19,7 +20,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
     super.key,
     required this.orderId,
     required this.orderData,
-  }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? 'cash'),
+  }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? PaymentType.cash.value),
        _cardFidelitate = orderData['card_fidelitate'] == true;
 
   double _cardDiscount(Map data) {
@@ -30,13 +31,13 @@ class SoferOrderDetailsScreen extends StatelessWidget {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   Future<void> _openNavigation(UserProvider userProvider) async {
     final address = Uri.encodeComponent('${orderData['adresa_livrare']}');
     Uri uri;
-    if (userProvider.navigationApp == 'Waze') {
+    if (userProvider.navigationApp == AppConstants.navigationWaze) {
       uri = Uri.parse('waze://?q=$address&navigate=yes');
     } else {
       uri = Uri.parse('https://www.google.com/maps/search/?api=1&query=$address');
@@ -45,7 +46,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (e) {
       debugPrint("Eroare la deschiderea navigației: $e");
-      if (userProvider.navigationApp == 'Waze') {
+      if (userProvider.navigationApp == AppConstants.navigationWaze) {
         Uri fallbackWaze = Uri.parse('https://www.waze.com/ul?q=$address&navigate=yes');
         await launchUrl(fallbackWaze, mode: LaunchMode.externalApplication);
       }
@@ -67,7 +68,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   Future<void> _updateStatus(BuildContext context, String status) async {
     try {
       await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .doc(orderId)
           .update({'status': status});
       if (context.mounted) Navigator.pop(context);
@@ -84,7 +85,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   Future<void> _updatePaymentType(BuildContext context, String tipPlata) async {
     try {
       await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .doc(orderId)
           .update({'tip_plata': tipPlata});
     } catch (e) {
@@ -127,11 +128,11 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                 const SizedBox(height: 18),
                 Text("Schimbă tipul de plată", style: TextStyle(color: theme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 20),
-                _paymentOption(dialogContext, theme, 'cash', 'Cash', Icons.money, Colors.green, current),
+                _paymentOption(dialogContext, theme, PaymentType.cash.value, 'Cash', Icons.money, Colors.green, current),
                 const SizedBox(height: 12),
-                _paymentOption(dialogContext, theme, 'card', 'Card', Icons.credit_card, theme.brandBlue, current),
+                _paymentOption(dialogContext, theme, PaymentType.card.value, 'Card', Icons.credit_card, theme.brandBlue, current),
                 const SizedBox(height: 12),
-                _paymentOption(dialogContext, theme, 'factura', 'Factura', Icons.receipt, theme.statusTextInAsteptare, current),
+                _paymentOption(dialogContext, theme, PaymentType.invoice.value, 'Factura', Icons.receipt, theme.statusTextInAsteptare, current),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: () => Navigator.pop(dialogContext),
@@ -185,10 +186,10 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   Future<void> _unassignOrder(BuildContext context) async {
     try {
       await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .doc(orderId)
           .update({
-        'status': 'In asteptare',
+        'status': OrderStatus.waiting.label,
         'id_sofer': FieldValue.delete(),
       });
       FcmService().sendNewOrderNotification(orderId, orderData);
@@ -834,8 +835,8 @@ class SoferOrderDetailsScreen extends StatelessWidget {
     return ValueListenableBuilder<String>(
       valueListenable: paymentTypeNotifier,
       builder: (context, tipPlata, _) {
-        final isCard = tipPlata.toLowerCase() == 'card';
-        final isFactura = tipPlata.toLowerCase() == 'factura';
+        final isCard = tipPlata.toLowerCase() == PaymentType.card.value;
+        final isFactura = tipPlata.toLowerCase() == PaymentType.invoice.value;
         final plataColor = isCard ? theme.brandBlue : isFactura ? theme.statusTextInAsteptare : Colors.green;
         return GestureDetector(
           onTap: () => _showPaymentTypeDialog(context, theme, tipPlata),
@@ -916,7 +917,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: () => _updateStatus(context, 'Finalizata'),
+            onPressed: () => _updateStatus(context, OrderStatus.completed.label),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0C9E43),
               shape: RoundedRectangleBorder(
@@ -969,7 +970,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
             onPressed: () async {
               bool confirm = await _showCancelDialog(context, theme);
               if (confirm && context.mounted) {
-                _updateStatus(context, 'Anulata');
+                _updateStatus(context, OrderStatus.cancelled.label);
               }
             },
             style: OutlinedButton.styleFrom(

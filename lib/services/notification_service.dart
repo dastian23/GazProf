@@ -4,6 +4,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/core/constants.dart';
 
 import '../screens/sofer/documente/sofer_documente_screen.dart';
 
@@ -63,7 +64,7 @@ class NotificationService {
   Future<void> _saveFcmToken(String token) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+      await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(user.uid).set(
         {'fcmToken': token},
         SetOptions(merge: true),
       );

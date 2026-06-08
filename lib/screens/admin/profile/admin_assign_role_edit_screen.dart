@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- THEME ---
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 
 class AdminAssignRoleEditScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _AdminAssignRoleEditScreenState extends State<AdminAssignRoleEditScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseFirestore.instance.collection('users').doc(widget.userId).update({
+      await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(widget.userId).update({
         'rol': _selectedRole,
       });
 

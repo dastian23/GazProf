@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- MODELS ---
+import 'package:gazprof/core/constants.dart';
 import 'package:gazprof/models/product_item.dart';
 
 // --- THEME & PROVIDERS ---
@@ -28,8 +29,8 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   bool _cardFidelitate = false;
-  String _selectedPayment = 'cash';
-  String _addressType = 'oras';
+  String _selectedPayment = PaymentType.cash.value;
+  String _addressType = AppConstants.addressTypeCity;
 
   List<ProductItem> products = []; 
 
@@ -49,12 +50,12 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   }
 
   double get _calculateTotal {
-    if (_selectedPayment == 'factura') return 0;
+    if (_selectedPayment == PaymentType.invoice.value) return 0;
     return products.fold(0, (total, item) => total + (item.price * item.quantity));
   }
 
   double get _discountAmount {
-    if (!_cardFidelitate || _selectedPayment == 'factura') return 0;
+    if (!_cardFidelitate || _selectedPayment == PaymentType.invoice.value) return 0;
     return products
         .where((p) => p.name.startsWith('Butelie'))
         .fold(0, (sum, p) => sum + p.quantity) * 5;
@@ -63,7 +64,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   Future<void> _loadLiveProducts() async {
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('produse')
+          .collection(FirestoreCollections.products)
           .orderBy('pozitie')
           .get();
       
@@ -78,7 +79,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         ];
         
         for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection('produse').add({
+          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
             'nume': defaultProducts[i]['nume'],
             'pret': defaultProducts[i]['pret'],
             'pozitie': i,
@@ -141,8 +142,8 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
     _addressLine2Controller.clear();
     _mentionsController.clear();
     setState(() {
-      _selectedPayment = 'cash';
-      _addressType = 'oras';
+      _selectedPayment = PaymentType.cash.value;
+      _addressType = AppConstants.addressTypeCity;
       _cardFidelitate = false;
       _isMentionsExpanded = false;
       for (var product in products) {
@@ -169,7 +170,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await FirebaseFirestore.instance.collection('comenzi').add({
+      await FirebaseFirestore.instance.collection(FirestoreCollections.orders).add({
         'telefon_client': _phoneController.text.trim(),
         'adresa_livrare': _addressController.text.trim(),
         'bloc_apartament': _addressLine2Controller.text.trim(),
@@ -179,7 +180,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         'card_fidelitate': _cardFidelitate,
         'tip_plata': _selectedPayment,
         'mentiuni': _mentionsController.text.trim(),
-        'status': 'Finalizata', 
+        'status': OrderStatus.completed.label, 
         'id_sofer': FirebaseAuth.instance.currentUser?.uid,
         'data_creare': FieldValue.serverTimestamp(),
         'data_finalizare': FieldValue.serverTimestamp(), 
@@ -299,7 +300,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
                               ),
                             ],
                           ),
-                          if (_selectedPayment == 'factura')
+                          if (_selectedPayment == PaymentType.invoice.value)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
                               child: Text("Facturare ulterioară — totalul este 0 lei",
@@ -312,11 +313,11 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
 
               _buildSectionTitle("TIP PLATĂ", theme),
               _buildCardContainer(theme, Column(children: [
-                _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
+                _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', PaymentType.cash.value, theme),
                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
+                _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', PaymentType.card.value, theme),
                 Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                _buildPaymentRadio('Factura', 'Plată cu factură', 'assets/invoice.svg', 'factura', theme),
+                _buildPaymentRadio('Factura', 'Plată cu factură', 'assets/invoice.svg', PaymentType.invoice.value, theme),
               ])),
               const SizedBox(height: 20),
 
@@ -469,16 +470,16 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'oras'),
+            onTap: () => setState(() => _addressType = AppConstants.addressTypeCity),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'oras' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == AppConstants.addressTypeCity ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'oras' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == AppConstants.addressTypeCity ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Oraș', style: TextStyle(color: _addressType == 'oras' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Oraș', style: TextStyle(color: _addressType == AppConstants.addressTypeCity ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -486,16 +487,16 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'rute'),
+            onTap: () => setState(() => _addressType = AppConstants.addressTypeRoute),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'rute' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == AppConstants.addressTypeRoute ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'rute' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == AppConstants.addressTypeRoute ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Rute', style: TextStyle(color: _addressType == 'rute' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Rute', style: TextStyle(color: _addressType == AppConstants.addressTypeRoute ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -559,13 +560,13 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: value == 'factura' ? theme.statusCardInAsteptare : (value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata),
+                color: value == PaymentType.invoice.value ? theme.statusCardInAsteptare : (value == PaymentType.card.value ? theme.statusCardAlocata : theme.statusCardFinalizata),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SvgPicture.asset(
                   iconPath,
                   width: 22,
-                  colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : value == 'factura' ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn)
+                  colorFilter: ColorFilter.mode(value == PaymentType.cash.value ? Colors.green : value == PaymentType.invoice.value ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn)
               ),
             ),
             const SizedBox(width: 15),

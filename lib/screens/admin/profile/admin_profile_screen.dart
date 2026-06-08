@@ -11,6 +11,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
   // --- THEME & PROVIDERS ---
   import '../../../../core/theme_provider.dart';
   import '../../../../core/user_provider.dart';
+  import 'package:gazprof/core/constants.dart';
 
   // --- SERVICES ---
   import 'package:gazprof/services/auth_service.dart';
@@ -257,7 +258,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
           children: [
             Expanded(
               child: FutureBuilder<AggregateQuerySnapshot>(
-                future: FirebaseFirestore.instance.collection('users').count().get(),
+                future: FirebaseFirestore.instance.collection(FirestoreCollections.users).count().get(),
                 builder: (context, snapshot) {
                   int count = snapshot.data?.count ?? 0;
                   return _buildStatBox(count.toString(), "Utilizatori", const Color(0xFFFF6B00), theme);
@@ -269,7 +270,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
               flex: 2,
               child: StreamBuilder<QuerySnapshot>(
                 stream: FirebaseFirestore.instance
-                    .collection('comenzi')
+                    .collection(FirestoreCollections.orders)
                     .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
                     .where('data_creare', isLessThan: _endOfShift)
                     .snapshots(),
@@ -280,7 +281,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
                   if (snapshot.hasData) {
                     for (var doc in snapshot.data!.docs) {
                       final data = doc.data() as Map<String, dynamic>;
-                      if (data['status'] == 'Finalizata') {
+                      if (data['status'] == OrderStatus.completed.label) {
                         leiIncasati += (data['total_comanda'] ?? 0).toDouble();
                         comenziFinalizate++;
                       }

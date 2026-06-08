@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:gazprof/core/constants.dart';
 
 import '../../../../core/theme_provider.dart';
 
@@ -12,7 +13,7 @@ Future<void> preloadIstoricDriverNames(Iterable<String?> ids) async {
   if (missing.isEmpty) return;
   await Future.wait(missing.map((id) async {
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
+      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(id).get();
       if (doc.exists) istoricDriverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
     } catch (e) {
       debugPrint("Eroare preloadIstoricDriverNames: $e");
@@ -34,7 +35,7 @@ class AdminIstoricList extends StatelessWidget {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   @override
@@ -57,9 +58,9 @@ class AdminIstoricList extends StatelessWidget {
         final cardFidelitate = data['card_fidelitate'] == true;
         final discount = cardFidelitate ? _cardDiscount(data) : 0;
         final totalDisplay = total - discount;
-        final tipAdresa = data['tip_adresa'] ?? 'oras';
-        final tipPlata = data['tip_plata'] ?? 'cash';
-        final status = data['status'] ?? 'Finalizata';
+        final tipAdresa = data['tip_adresa'] ?? AppConstants.addressTypeCity;
+        final tipPlata = data['tip_plata'] ?? PaymentType.cash.value;
+        final status = data['status'] ?? OrderStatus.completed.label;
         final idSofer = data['id_sofer'];
 
         final mentiuni = data['mentiuni'] ?? '';
@@ -77,7 +78,7 @@ class AdminIstoricList extends StatelessWidget {
         Color statusBgColor;
         String displayStatus = status;
 
-        if (status == 'Finalizata') {
+        if (status == OrderStatus.completed.label) {
           statusTextColor = theme.statusTextFinalizata;
           statusBgColor = theme.statusCardFinalizata;
           displayStatus = "Finalizată";
@@ -90,8 +91,8 @@ class AdminIstoricList extends StatelessWidget {
         final creatDeNume = data['creat_de_nume'] ?? '';
         final creatDeRol = data['creat_de'] ?? '';
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
+        String formatAdresa = tipAdresa.toString().toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
+        String formatPlata = tipPlata.toString().toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toString().toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.only(bottom: 15),
@@ -278,7 +279,7 @@ class AdminIstoricList extends StatelessWidget {
       }
     }
 
-    String actionText = status == 'Finalizata' ? "Finalizată de" : "Anulată de";
+    String actionText = status == OrderStatus.completed.label ? "Finalizată de" : "Anulată de";
 
     return Padding(
       padding: const EdgeInsets.only(top: 15),

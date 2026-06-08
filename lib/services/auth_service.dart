@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart' as g_auth;
+import 'package:gazprof/core/constants.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -23,7 +24,7 @@ class AuthService {
         password: password,
       );
 
-      await _db.collection('users').doc(res.user!.uid).set({
+      await _db.collection(FirestoreCollections.users).doc(res.user!.uid).set({
         'nume': name,
         'telefon': phone,
         'email': email,
@@ -43,7 +44,7 @@ class AuthService {
     required String password,
   }) async {
     try {
-      var userCheck = await _db.collection('users').where('email', isEqualTo: email.trim()).get();
+      var userCheck = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: email.trim()).get();
       if (userCheck.docs.isEmpty) {
         return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
       }
@@ -55,7 +56,7 @@ class AuthService {
       );
 
       // 2. Extract the user's document from Firestore
-      DocumentSnapshot doc = await _db.collection('users').doc(res.user!.uid).get();
+      DocumentSnapshot doc = await _db.collection(FirestoreCollections.users).doc(res.user!.uid).get();
 
       if (doc.exists) {
         return {
@@ -83,7 +84,7 @@ class AuthService {
 
       final String userEmail = googleUser.email;
 
-      var userCheck = await _db.collection('users').where('email', isEqualTo: userEmail).get();
+      var userCheck = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: userEmail).get();
       if (userCheck.docs.isEmpty) {
         await g_auth.GoogleSignIn().signOut();
         return {
@@ -102,7 +103,7 @@ class AuthService {
       User? user = userCredential.user;
 
       if (user != null) {
-        DocumentSnapshot doc = await _db.collection('users').doc(user.uid).get();
+        DocumentSnapshot doc = await _db.collection(FirestoreCollections.users).doc(user.uid).get();
 
         if (doc.exists) {
           return {
@@ -131,12 +132,12 @@ class AuthService {
   Future<String?> sendOtpCode(String email) async {
     try {
       final normalizedEmail = email.trim();
-      var userCheck = await _db.collection('users').where('email', isEqualTo: normalizedEmail).get();
+      var userCheck = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: normalizedEmail).get();
       if (userCheck.docs.isEmpty) return "Nu există un cont cu acest email.";
 
       String otpCode = (1000 + Random().nextInt(9000)).toString();
 
-      await _db.collection('password_resets').doc(normalizedEmail).set({
+      await _db.collection(FirestoreCollections.passwordResets).doc(normalizedEmail).set({
         'otp': otpCode,
         'createdAt': FieldValue.serverTimestamp(),
         'expiresAt': DateTime.now().add(const Duration(minutes: 10)).millisecondsSinceEpoch,
@@ -161,7 +162,7 @@ class AuthService {
 
   Future<bool> verifyOtp(String email, String enteredCode) async {
     try {
-      var doc = await _db.collection('password_resets').doc(email.trim()).get();
+      var doc = await _db.collection(FirestoreCollections.passwordResets).doc(email.trim()).get();
       if (!doc.exists) return false;
 
       bool isValid = (doc.data()!['otp'] == enteredCode &&
@@ -169,7 +170,7 @@ class AuthService {
 
       if (isValid) {
         await _auth.sendPasswordResetEmail(email: email.trim());
-        await _db.collection('password_resets').doc(email.trim()).delete();
+        await _db.collection(FirestoreCollections.passwordResets).doc(email.trim()).delete();
       }
 
       return isValid;
@@ -180,12 +181,12 @@ class AuthService {
 
   Future<String?> updatePasswordManual(String email, String newPassword) async {
     try {
-      var userQuery = await _db.collection('users').where('email', isEqualTo: email.trim()).get();
+      var userQuery = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: email.trim()).get();
 
       if (userQuery.docs.isNotEmpty) {
         String uid = userQuery.docs.first.id;
 
-        await _db.collection('users').doc(uid).update({
+        await _db.collection(FirestoreCollections.users).doc(uid).update({
           'parola_resetata': true,
           'ultima_actualizare_parola': FieldValue.serverTimestamp(),
         });

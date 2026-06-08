@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -80,7 +81,7 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('comenzi')
+                        .collection(FirestoreCollections.orders)
                     // 1. Filter to be >= today at hour 07:00
                         .where('data_creare', isGreaterThanOrEqualTo: startOfShift)
                     // 2. Filter to be < tomorrow at hour 01:00

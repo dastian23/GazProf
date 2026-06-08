@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -250,8 +251,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
                     stream: FirebaseFirestore.instance
-                        .collection('comenzi')
-                        .where('status', whereIn: ['Finalizata', 'Anulata'])
+                        .collection(FirestoreCollections.orders)
+                        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
                         .orderBy('data_creare', descending: true)
                         .snapshots(),
                     builder: (context, snapshot) {
@@ -293,14 +294,14 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                             count += (p['cantitate'] ?? 0).toDouble();
                           }
                         }
-                        return count * 5;
+                        return count * AppConstants.discountPerBottle;
                       }
-                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == 'Anulata').length;
+                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
                       int countCreate = filteredComenzi.length;
                       double sumIncasati = 0;
                       for (var doc in filteredComenzi) {
                         final data = doc.data() as Map;
-                        if (data['status'] == 'Finalizata') {
+                        if (data['status'] == OrderStatus.completed.label) {
                           double total = (data['total_comanda'] ?? 0).toDouble();
                           if (data['card_fidelitate'] == true) {
                             total -= _cardDiscountFromData(data);

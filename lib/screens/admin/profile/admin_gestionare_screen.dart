@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 // --- THEME ---
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 
 // --- SCREENS ---
@@ -54,7 +55,7 @@ class AdminGestionareScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('users').orderBy('data_creare', descending: true).limit(200).snapshots(),
+        stream: FirebaseFirestore.instance.collection(FirestoreCollections.users).orderBy('data_creare', descending: true).limit(200).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator(color: theme.brandBlue));

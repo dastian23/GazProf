@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -26,7 +27,7 @@ class SoferHomeScreen extends StatefulWidget {
 }
 
 class _SoferHomeScreenState extends State<SoferHomeScreen> {
-  String _filterType = 'oras';
+  String _filterType = AppConstants.addressTypeCity;
 
   // --- GETTERS FOR CURRENT SHIFT
   DateTime get _startOfShift {
@@ -157,8 +158,8 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('comenzi')
-          .where('status', isEqualTo: 'In asteptare')
+          .collection(FirestoreCollections.orders)
+          .where('status', isEqualTo: OrderStatus.waiting.label)
           .where('tip_adresa', isEqualTo: _filterType)
           .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
           .where('data_creare', isLessThan: _endOfShift)
@@ -180,7 +181,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
         if (docs.isEmpty) {
           // Dynamic message
-          String tipComanda = _filterType == 'oras' ? 'Oraș' : 'Rute';
+          String tipComanda = _filterType == AppConstants.addressTypeCity ? 'Oraș' : 'Rute';
 
           return SoferHomeEmpty(
             titlu: "Ești online",
@@ -197,7 +198,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
   Widget _buildRealStatsRow(ThemeProvider theme) {
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
           .where('data_creare', isLessThan: _endOfShift)
           .snapshots(),
@@ -211,9 +212,9 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
             String status = data['status'] ?? '';
             String? idSofer = data['id_sofer'];
 
-            if (status == 'In asteptare') disponibile++;
-            if (status == 'Alocata' && idSofer == uid) preluate++;
-            if (status == 'Finalizata' && idSofer == uid) livrate++;
+            if (status == OrderStatus.waiting.label) disponibile++;
+            if (status == OrderStatus.allocated.label && idSofer == uid) preluate++;
+            if (status == OrderStatus.completed.label && idSofer == uid) livrate++;
           }
         }
 

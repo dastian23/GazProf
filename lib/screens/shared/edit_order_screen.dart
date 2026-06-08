@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:another_flushbar/flushbar.dart';
 
+import 'package:gazprof/core/constants.dart';
 import '../../models/product_item.dart';
 import '../../core/theme_provider.dart';
 import '../../core/user_provider.dart';
@@ -35,13 +36,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   bool _isProductsLoading = true;
   bool _isMentionsExpanded = false;
   bool _cardFidelitate = false;
-  String _selectedPayment = 'cash';
-  String _addressType = 'oras';
+  String _selectedPayment = PaymentType.cash.value;
+  String _addressType = AppConstants.addressTypeCity;
   String? _driverName;
 
   List<ProductItem> products = [];
 
-  String get _status => widget.orderData['status'] ?? 'In asteptare';
+  String get _status => widget.orderData['status'] ?? OrderStatus.waiting.label;
 
   @override
   void initState() {
@@ -53,8 +54,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     _addressLine2Controller = TextEditingController(text: data['bloc_apartament'] ?? '');
     _mentionsController = TextEditingController(text: data['mentiuni'] ?? '');
     _cardFidelitate = data['card_fidelitate'] == true;
-    _selectedPayment = data['tip_plata'] ?? 'cash';
-    _addressType = data['tip_adresa'] ?? 'oras';
+    _selectedPayment = data['tip_plata'] ?? PaymentType.cash.value;
+    _addressType = data['tip_adresa'] ?? AppConstants.addressTypeCity;
 
     _loadProducts();
     _loadDriverName();
@@ -64,7 +65,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     final idSofer = widget.orderData['id_sofer'];
     if (idSofer == null || idSofer.toString().isEmpty) return;
     try {
-      final doc = await FirebaseFirestore.instance.collection('users').doc(idSofer.toString()).get();
+      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(idSofer.toString()).get();
       if (doc.exists && mounted) {
         setState(() => _driverName = (doc.data() as Map)['nume'] ?? 'Șofer');
       }
@@ -76,7 +77,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   Future<void> _loadProducts() async {
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('produse')
+          .collection(FirestoreCollections.products)
           .orderBy('pozitie')
           .get();
 
@@ -90,7 +91,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           {"nume": "Ceas butelie", "pret": 40.0},
         ];
         for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection('produse').add({
+          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
             'nume': defaultProducts[i]['nume'],
             'pret': defaultProducts[i]['pret'],
             'pozitie': i,
@@ -136,15 +137,15 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   }
 
   double get _calculateTotal {
-    if (_selectedPayment == 'factura') return 0;
+    if (_selectedPayment == PaymentType.invoice.value) return 0;
     return products.fold(0, (val, item) => val + (item.price * item.quantity));
   }
 
   double get _discountAmount {
-    if (!_cardFidelitate || _selectedPayment == 'factura') return 0;
+    if (!_cardFidelitate || _selectedPayment == PaymentType.invoice.value) return 0;
     return products
         .where((p) => p.name.startsWith('Butelie'))
-        .fold(0, (sum, p) => sum + p.quantity) * 5;
+        .fold(0, (sum, p) => sum + p.quantity) * AppConstants.discountPerBottle;
   }
 
   void _showMessage(String message, {bool isError = true}) {
@@ -226,7 +227,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
     try {
       await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .doc(widget.orderId)
           .update({
         'telefon_client': phone,
@@ -260,10 +261,10 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
 
   Future<void> _unassignDriver() async {
     await FirebaseFirestore.instance
-        .collection('comenzi')
+        .collection(FirestoreCollections.orders)
         .doc(widget.orderId)
         .update({
-      'status': 'In asteptare',
+      'status': OrderStatus.waiting.label,
       'id_sofer': FieldValue.delete(),
     });
     FcmService().sendNewOrderNotification(widget.orderId, widget.orderData);
@@ -604,7 +605,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                                     ),
                                   ],
                                 ),
-                                if (_selectedPayment == 'factura')
+                                if (_selectedPayment == PaymentType.invoice.value)
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
                                     child: Text("Facturare ulterioară — totalul este 0 lei",
@@ -621,11 +622,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                       theme,
                       Column(
                         children: [
-                          _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', 'cash', theme),
+                          _buildPaymentRadio('Cash', 'Plata la livrare', 'assets/cash.svg', PaymentType.cash.value, theme),
                           Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                          _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', 'card', theme),
+                          _buildPaymentRadio('Card', 'Plata cu cardul', 'assets/card.svg', PaymentType.card.value, theme),
                           Divider(color: theme.isDark ? Colors.white10 : Colors.black12, height: 1, indent: 40),
-                          _buildPaymentRadio('Factura', 'Plată cu factură', 'assets/invoice.svg', 'factura', theme),
+                          _buildPaymentRadio('Factura', 'Plată cu factură', 'assets/invoice.svg', PaymentType.invoice.value, theme),
                         ],
                       ),
                     ),
@@ -706,13 +707,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                     const SizedBox(height: 24),
 
                     // --- UNASSIGN BUTTON (doar Alocata) ---
-                    if (_status == 'Alocata') ...[
+                    if (_status == OrderStatus.allocated.label) ...[
                       _buildUnassignSection(theme),
                       const SizedBox(height: 16),
                     ],
 
                     // --- URGENT BUTTON (doar admin/dispecer, doar Alocata) ---
-                    if (_status == 'Alocata' && canUrge) ...[
+                    if (_status == OrderStatus.allocated.label && canUrge) ...[
                       _buildUrgentSection(theme),
                       const SizedBox(height: 16),
                     ],
@@ -753,24 +754,24 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
   Widget _buildInfoBanner(ThemeProvider theme) {
     final creatDeNume = widget.orderData['creat_de_nume'] ?? '';
     final creatDe = widget.orderData['creat_de'] ?? '';
-    final statusColor = _status == 'Alocata' ? theme.statusTextAlocata
-        : _status == 'Finalizata' ? theme.statusTextFinalizata
-        : _status == 'Anulata' ? theme.statusTextAnulata
+    final statusColor = _status == OrderStatus.allocated.label ? theme.statusTextAlocata
+        : _status == OrderStatus.completed.label ? theme.statusTextFinalizata
+        : _status == OrderStatus.cancelled.label ? theme.statusTextAnulata
         : theme.statusTextInAsteptare;
-    final displayStatus = _status == 'In asteptare' ? 'În așteptare'
-        : _status == 'Alocata' ? 'Alocată'
-        : _status == 'Finalizata' ? 'Finalizată'
-        : _status == 'Anulata' ? 'Anulată'
+    final displayStatus = _status == OrderStatus.waiting.label ? 'În așteptare'
+        : _status == OrderStatus.allocated.label ? 'Alocată'
+        : _status == OrderStatus.completed.label ? 'Finalizată'
+        : _status == OrderStatus.cancelled.label ? 'Anulată'
         : _status;
 
     final adresa = widget.orderData['adresa_livrare'] ?? '';
     final blocAp = widget.orderData['bloc_apartament'] ?? '';
     final adresaFull = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
     final telefon = widget.orderData['telefon_client'] ?? '-';
-    final tipPlata = widget.orderData['tip_plata'] ?? 'cash';
-    final formatPlata = tipPlata.toLowerCase() == 'card' ? 'Card' : tipPlata.toLowerCase() == 'factura' ? 'Factura' : 'Cash';
-    final tipAdresa = widget.orderData['tip_adresa'] ?? 'oras';
-    final formatAdresa = tipAdresa.toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
+    final tipPlata = widget.orderData['tip_plata'] ?? PaymentType.cash.value;
+    final formatPlata = tipPlata.toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
+    final tipAdresa = widget.orderData['tip_adresa'] ?? AppConstants.addressTypeCity;
+    final formatAdresa = tipAdresa.toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -778,7 +779,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         color: theme.cardFill,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: _status == 'Alocata' || _status == 'In asteptare'
+          color: _status == OrderStatus.allocated.label || _status == OrderStatus.waiting.label
               ? statusColor.withValues(alpha: 0.4)
               : theme.cardOutline,
           width: 1.5,
@@ -807,9 +808,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
           Row(
             children: [
               Icon(
-                tipPlata == 'card' ? Icons.credit_card : tipPlata == 'factura' ? Icons.receipt : Icons.money,
+                tipPlata == PaymentType.card.value ? Icons.credit_card : tipPlata == PaymentType.invoice.value ? Icons.receipt : Icons.money,
                 size: 14,
-                color: tipPlata == 'card' ? theme.brandBlue : tipPlata == 'factura' ? theme.statusTextInAsteptare : Colors.green,
+                color: tipPlata == PaymentType.card.value ? theme.brandBlue : tipPlata == PaymentType.invoice.value ? theme.statusTextInAsteptare : Colors.green,
               ),
               const SizedBox(width: 6),
               Text("Plată: $formatPlata", style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500)),
@@ -837,7 +838,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               ],
             ),
           ],
-          if (_driverName != null && _status == 'Alocata') ...[
+          if (_driverName != null && _status == OrderStatus.allocated.label) ...[
             const SizedBox(height: 4),
             Row(
               children: [
@@ -1011,16 +1012,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       children: [
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'oras'),
+            onTap: () => setState(() => _addressType = AppConstants.addressTypeCity),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'oras' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == AppConstants.addressTypeCity ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'oras' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == AppConstants.addressTypeCity ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Oraș', style: TextStyle(color: _addressType == 'oras' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Oraș', style: TextStyle(color: _addressType == AppConstants.addressTypeCity ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -1028,16 +1029,16 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         const SizedBox(width: 10),
         Expanded(
           child: GestureDetector(
-            onTap: () => setState(() => _addressType = 'rute'),
+            onTap: () => setState(() => _addressType = AppConstants.addressTypeRoute),
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
               decoration: BoxDecoration(
-                color: _addressType == 'rute' ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
+                color: _addressType == AppConstants.addressTypeRoute ? theme.brandBlue : (theme.isDark ? Colors.white12 : Colors.black12),
                 borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: _addressType == 'rute' ? theme.brandBlue : Colors.transparent),
+                border: Border.all(color: _addressType == AppConstants.addressTypeRoute ? theme.brandBlue : Colors.transparent),
               ),
               child: Center(
-                child: Text('Rute', style: TextStyle(color: _addressType == 'rute' ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
+                child: Text('Rute', style: TextStyle(color: _addressType == AppConstants.addressTypeRoute ? Colors.white : theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold)),
               ),
             ),
           ),
@@ -1103,13 +1104,13 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
             Container(
               padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
-                color: value == 'factura' ? theme.statusCardInAsteptare : (value == 'card' ? theme.statusCardAlocata : theme.statusCardFinalizata),
+                color: value == PaymentType.invoice.value ? theme.statusCardInAsteptare : (value == PaymentType.card.value ? theme.statusCardAlocata : theme.statusCardFinalizata),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: SvgPicture.asset(
                 iconPath,
                 width: 22,
-                colorFilter: ColorFilter.mode(value == 'cash' ? Colors.green : value == 'factura' ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn),
+                colorFilter: ColorFilter.mode(value == PaymentType.cash.value ? Colors.green : value == PaymentType.invoice.value ? theme.statusTextInAsteptare : theme.brandBlue, BlendMode.srcIn),
               ),
             ),
             const SizedBox(width: 15),

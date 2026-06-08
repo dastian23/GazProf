@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 // --- PROVIDERS ---
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../core/time_indicator.dart';
 
@@ -26,7 +27,7 @@ class _SoferDocumenteListState extends State<SoferDocumenteList> {
 
   @override
   void initState() {
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    _timer = Timer.periodic(AppConstants.refreshInterval, (_) => setState(() {}));
     super.initState();
   }
 
@@ -44,7 +45,7 @@ class _SoferDocumenteListState extends State<SoferDocumenteList> {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   @override
@@ -72,8 +73,8 @@ class _SoferDocumenteListState extends State<SoferDocumenteList> {
         String telefon = data['telefon_client'] ?? '-';
         double total = (data['total_comanda'] ?? 0).toDouble();
 
-        String tipAdresa = data['tip_adresa'] ?? 'oras';
-        String tipPlata = data['tip_plata'] ?? 'cash';
+        String tipAdresa = data['tip_adresa'] ?? AppConstants.addressTypeCity;
+        String tipPlata = data['tip_plata'] ?? PaymentType.cash.value;
         bool cardFidelitate = data['card_fidelitate'] == true;
         double discount = cardFidelitate ? _cardDiscount(data) : 0;
         double totalDisplay = total - discount;
@@ -81,8 +82,8 @@ class _SoferDocumenteListState extends State<SoferDocumenteList> {
         final creatDeNume = data['creat_de_nume'] ?? '';
         final creatDeRol = data['creat_de'] ?? '';
 
-        String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-        String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
+        String formatAdresa = tipAdresa.toString().toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
+        String formatPlata = tipPlata.toString().toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toString().toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
 
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),

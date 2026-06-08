@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../core/time_indicator.dart';
 import '../../shared/edit_order_screen.dart';
@@ -23,7 +24,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
 
   @override
   void initState() {
-    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    _timer = Timer.periodic(AppConstants.refreshInterval, (_) => setState(() {}));
     super.initState();
   }
 
@@ -41,7 +42,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
         count += (p['cantitate'] ?? 0).toDouble();
       }
     }
-    return count * 5;
+    return count * AppConstants.discountPerBottle;
   }
 
   @override
@@ -49,10 +50,10 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
     final theme = Provider.of<ThemeProvider>(context);
     final comenzi = widget.comenzi;
 
-    int countDisponibile = comenzi.where((c) => c['status'] == 'In asteptare').length;
-    int countPreluate = comenzi.where((c) => c['status'] == 'Alocata').length;
-    int countLivrate = comenzi.where((c) => c['status'] == 'Finalizata').length;
-    int countAnulate = comenzi.where((c) => c['status'] == 'Anulata').length;
+    int countDisponibile = comenzi.where((c) => c['status'] == OrderStatus.waiting.label).length;
+    int countPreluate = comenzi.where((c) => c['status'] == OrderStatus.allocated.label).length;
+    int countLivrate = comenzi.where((c) => c['status'] == OrderStatus.completed.label).length;
+    int countAnulate = comenzi.where((c) => c['status'] == OrderStatus.cancelled.label).length;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,9 +100,9 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
               final cardFidelitate = data['card_fidelitate'] == true;
               final discount = cardFidelitate ? _cardDiscount(data) : 0;
               final totalDisplay = total - discount;
-              final tipAdresa = data['tip_adresa'] ?? 'oras';
-              final tipPlata = data['tip_plata'] ?? 'cash';
-              final status = data['status'] ?? 'In asteptare';
+              final tipAdresa = data['tip_adresa'] ?? AppConstants.addressTypeCity;
+              final tipPlata = data['tip_plata'] ?? PaymentType.cash.value;
+              final status = data['status'] ?? OrderStatus.waiting.label;
               final idSofer = data['id_sofer'];
 
               final mentiuni = data['mentiuni'] ?? '';
@@ -119,15 +120,15 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
               Color statusBgColor;
               String displayStatus = status;
 
-              if (status == 'In asteptare') {
+              if (status == OrderStatus.waiting.label) {
                 statusTextColor = theme.statusTextInAsteptare;
                 statusBgColor = theme.statusCardInAsteptare;
                 displayStatus = "În așteptare";
-              } else if (status == 'Alocata') {
+              } else if (status == OrderStatus.allocated.label) {
                 statusTextColor = theme.statusTextAlocata;
                 statusBgColor = theme.statusCardAlocata;
                 displayStatus = "Alocată";
-              } else if (status == 'Finalizata') {
+              } else if (status == OrderStatus.completed.label) {
                 statusTextColor = theme.statusTextFinalizata;
                 statusBgColor = theme.statusCardFinalizata;
                 displayStatus = "Finalizată";
@@ -140,10 +141,10 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
               final creatDeNume = data['creat_de_nume'] ?? '';
               final creatDeRol = data['creat_de'] ?? '';
 
-              String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
-              String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
+              String formatAdresa = tipAdresa.toString().toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
+              String formatPlata = tipPlata.toString().toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toString().toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
 
-              final bool canEdit = (status == 'In asteptare' || status == 'Alocata');
+              final bool canEdit = (status == OrderStatus.waiting.label || status == OrderStatus.allocated.label);
 
               return GestureDetector(
                 onTap: canEdit
@@ -156,7 +157,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
                   color: theme.cardFill,
                   borderRadius: BorderRadius.circular(18),
                   border: Border.all(
-              color: (status == 'In asteptare' || status == 'Alocata') ? getTimeBorderColor(date) : theme.cardOutline,
+              color: (status == OrderStatus.waiting.label || status == OrderStatus.allocated.label) ? getTimeBorderColor(date) : theme.cardOutline,
               width: 1.5,
             ),
                 ),
@@ -341,7 +342,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
                       ],
                     ),
 
-                    if (status != 'In asteptare' && idSofer != null)
+                    if (status != OrderStatus.waiting.label && idSofer != null)
                       _buildDriverInfo(idSofer, status, theme),
                   ],
                 ),
@@ -356,7 +357,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
 
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
     return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance.collection('users').doc(idSofer).get(),
+      future: FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(idSofer).get(),
       builder: (context, snapshot) {
         if (!snapshot.hasData || !snapshot.data!.exists) {
           return const SizedBox();
@@ -380,8 +381,8 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
         }
 
         String actionText = "Preluată de";
-        if (status == 'Finalizata') actionText = "Finalizată de";
-        if (status == 'Anulata') actionText = "Anulată de";
+        if (status == OrderStatus.completed.label) actionText = "Finalizată de";
+        if (status == OrderStatus.cancelled.label) actionText = "Anulată de";
 
         return Padding(
           padding: const EdgeInsets.only(top: 15),

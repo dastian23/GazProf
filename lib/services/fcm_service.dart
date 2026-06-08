@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gazprof/core/constants.dart';
 
 class FcmService {
   static final FcmService _instance = FcmService._internal();
@@ -38,7 +39,7 @@ class FcmService {
 
     try {
       final usersSnapshot = await FirebaseFirestore.instance
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .where('rol', isEqualTo: 'sofer')
           .get();
       debugPrint('[FCM] found ${usersSnapshot.docs.length} sofer users');
@@ -59,15 +60,15 @@ class FcmService {
       final adresaCompleta = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
       final total = orderData['total_comanda'] ?? 0;
       final produse = orderData['produse'] ?? [];
-      final tipPlata = orderData['tip_plata'] ?? 'cash';
-      final tipAdresa = orderData['tip_adresa'] ?? 'oras';
+      final tipPlata = orderData['tip_plata'] ?? PaymentType.cash.value;
+      final tipAdresa = orderData['tip_adresa'] ?? AppConstants.addressTypeCity;
 
       final produseLines = (produse as List)
           .map((p) => '${p['cantitate']}x ${p['nume']}')
           .toList();
 
-      final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
-      final tipAdresaLabel = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
+      final tipPlataLabel = tipPlata.toString().toLowerCase() == PaymentType.card.value ? 'Card' : tipPlata.toString().toLowerCase() == PaymentType.invoice.value ? 'Factura' : 'Cash';
+      final tipAdresaLabel = tipAdresa.toString().toLowerCase() == AppConstants.addressTypeRoute ? 'Rute' : 'Oraș';
 
       final bodyLines = <String>[
         adresaCompleta,
@@ -150,7 +151,7 @@ class FcmService {
 
     try {
       final driverDoc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection(FirestoreCollections.users)
           .doc(driverId)
           .get();
       final token = driverDoc.data()?['fcmToken'] as String?;
@@ -164,15 +165,15 @@ class FcmService {
       final adresaCompleta = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
       final total = orderData['total_comanda'] ?? 0;
       final produse = orderData['produse'] ?? [];
-      final tipPlata = orderData['tip_plata'] ?? 'cash';
+      final tipPlata = orderData['tip_plata'] ?? PaymentType.cash.value;
 
       final produseLines = (produse as List)
           .map((p) => '${p['cantitate']}x ${p['nume']}')
           .toList();
 
-      final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card'
+      final tipPlataLabel = tipPlata.toString().toLowerCase() == PaymentType.card.value
           ? 'Card'
-          : tipPlata.toString().toLowerCase() == 'factura'
+          : tipPlata.toString().toLowerCase() == PaymentType.invoice.value
               ? 'Factura'
               : 'Cash';
 

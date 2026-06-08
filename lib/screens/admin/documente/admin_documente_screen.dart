@@ -6,6 +6,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- MODELS ---
+import 'package:gazprof/core/constants.dart';
 import 'package:gazprof/models/product_item.dart';
 
 // --- THEME & PROVIDERS ---
@@ -74,7 +75,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   Future<void> _loadLiveProducts() async {
     try {
       final snapshot = await FirebaseFirestore.instance
-          .collection('produse')
+          .collection(FirestoreCollections.products)
           .orderBy('pozitie')
           .get();
       
@@ -89,7 +90,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         ];
         
         for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection('produse').add({
+          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
             'nume': defaultProducts[i]['nume'],
             'pret': defaultProducts[i]['pret'],
             'pozitie': i,
@@ -217,7 +218,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         'mentiuni': _mentionsController.text.trim(),
 
         // --- ADMIN SETTINGS ---
-        'status': 'In asteptare',
+        'status': OrderStatus.waiting.label,
         'id_sofer': null,
         'data_creare': FieldValue.serverTimestamp(),
         'creat_de': 'admin',
@@ -225,7 +226,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
       };
 
       final docRef = await FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .add(orderData);
 
       FcmService().sendNewOrderNotification(docRef.id, orderData);

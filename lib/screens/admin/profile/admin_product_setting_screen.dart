@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 // --- THEME & PROVIDERS ---
+import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 
 class AdminProductSettingScreen extends StatefulWidget {
@@ -75,8 +76,8 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
               final pret = double.tryParse(_pretController.text.trim()) ?? 0.0;
               
               if (nume.isNotEmpty && pret > 0) {
-                final snapshot = await FirebaseFirestore.instance.collection('produse').get();
-                await FirebaseFirestore.instance.collection('produse').add({
+                final snapshot = await FirebaseFirestore.instance.collection(FirestoreCollections.products).get();
+                await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
                   'nume': nume,
                   'pret': pret,
                   'pozitie': snapshot.docs.length,
@@ -122,7 +123,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
             onPressed: () async {
               final noulPret = double.tryParse(priceEditController.text.trim());
               if (noulPret != null && noulPret > 0) {
-                await FirebaseFirestore.instance.collection('produse').doc(docId).update({'pret': noulPret});
+                await FirebaseFirestore.instance.collection(FirestoreCollections.products).doc(docId).update({'pret': noulPret});
                 if (mounted) Navigator.pop(context);
               }
             },
@@ -154,7 +155,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await FirebaseFirestore.instance.collection('produse').doc(docId).delete();
+              await FirebaseFirestore.instance.collection(FirestoreCollections.products).doc(docId).delete();
               if (mounted) Navigator.pop(context);
             },
             child: const Text("Șterge", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
@@ -194,7 +195,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('produse').orderBy('pozitie').snapshots(),
+        stream: FirebaseFirestore.instance.collection(FirestoreCollections.products).orderBy('pozitie').snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
             return const Center(child: CircularProgressIndicator());

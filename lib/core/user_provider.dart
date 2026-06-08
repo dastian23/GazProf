@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gazprof/core/constants.dart';
 
 class UserProvider extends ChangeNotifier {
   String _userName = "";
@@ -36,7 +37,7 @@ class UserProvider extends ChangeNotifier {
       if (currentUser == null) return;
 
       String uid = currentUser.uid;
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      DocumentSnapshot doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(uid).get();
       if (doc.exists) {
         _userName = doc['nume'] ?? "";
         _userRole = doc['rol'] ?? "";

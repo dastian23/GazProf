@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
 // --- THEME ---
+import 'package:gazprof/core/constants.dart';
 import '../../../../../core/theme_provider.dart';
 
 class AdminHomeUsersList extends StatelessWidget {
@@ -13,7 +14,7 @@ class AdminHomeUsersList extends StatelessWidget {
     final theme = Provider.of<ThemeProvider>(context);
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').limit(100).snapshots(),
+      stream: FirebaseFirestore.instance.collection(FirestoreCollections.users).limit(100).snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return Padding(

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:gazprof/core/constants.dart';
 
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
@@ -147,7 +148,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: FutureBuilder<AggregateQuerySnapshot>(
-              future: FirebaseFirestore.instance.collection('users').count().get(),
+              future: FirebaseFirestore.instance.collection(FirestoreCollections.users).count().get(),
               builder: (context, snapshot) {
                 return _buildStatCard((snapshot.data?.count ?? 0).toString(), "Utilizatori", theme.brandBlue, theme);
               },
@@ -253,7 +254,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
-          .collection('comenzi')
+          .collection(FirestoreCollections.orders)
           .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
           .where('data_creare', isLessThan: _endOfShift)
           .orderBy('data_creare', descending: true)
@@ -267,12 +268,12 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
         final comenziPreluate = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          return data['status'] == 'Alocata' && data['id_sofer'] == currentAdminId;
+          return data['status'] == OrderStatus.allocated.label && data['id_sofer'] == currentAdminId;
         }).toList();
 
         final comenziLive = docs.where((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          if (data['status'] == 'Alocata' && data['id_sofer'] == currentAdminId) return false;
+          if (data['status'] == OrderStatus.allocated.label && data['id_sofer'] == currentAdminId) return false;
           return true;
         }).toList();
 
@@ -285,7 +286,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         preloadDriverNames(ids);
 
         int totalAzi = docs.length;
-        int livrate = docs.where((d) => (d.data() as Map<String, dynamic>)['status'] == 'Finalizata').length;
+        int livrate = docs.where((d) => (d.data() as Map<String, dynamic>)['status'] == OrderStatus.completed.label).length;
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
