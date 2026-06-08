@@ -17,9 +17,15 @@ class NotificationService {
   final FirebaseMessaging _fcm = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
-  StreamSubscription<QuerySnapshot>? _orderSubscription;
+  StreamSubscription<String>? _tokenRefreshSubscription;
+  StreamSubscription<RemoteMessage>? _onMessageSubscription;
+  StreamSubscription<RemoteMessage>? _onMessageOpenedAppSubscription;
 
   Future<void> initialize() async {
+    _tokenRefreshSubscription?.cancel();
+    _onMessageSubscription?.cancel();
+    _onMessageOpenedAppSubscription?.cancel();
+
     const androidSettings = AndroidInitializationSettings('@mipmap/launcher_icon');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -42,11 +48,11 @@ class NotificationService {
       await _saveFcmToken(token);
     }
 
-    _fcm.onTokenRefresh.listen(_saveFcmToken);
+    _tokenRefreshSubscription = _fcm.onTokenRefresh.listen(_saveFcmToken);
 
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _onMessageSubscription = FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundTap);
+    _onMessageOpenedAppSubscription = FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundTap);
 
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
@@ -73,28 +79,19 @@ class NotificationService {
     }
   }
 
+  void dispose() {
+    _tokenRefreshSubscription?.cancel();
+    _onMessageSubscription?.cancel();
+    _onMessageOpenedAppSubscription?.cancel();
+    stopOrderListener();
+  }
+
   void startOrderListener() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    _orderSubscription?.cancel();
-
-    final now = DateTime.now();
-    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
-    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
-
-    _orderSubscription = FirebaseFirestore.instance
-        .collection('comenzi')
-        .where('status', isEqualTo: 'In asteptare')
-        .where('data_creare', isGreaterThanOrEqualTo: startOfShift)
-        .where('data_creare', isLessThan: endOfShift)
-        .snapshots()
-        .listen((_) {});
+    // Reserved for future use
   }
 
   void stopOrderListener() {
-    _orderSubscription?.cancel();
-    _orderSubscription = null;
+    // Reserved for future use
   }
 
   void _handleForegroundMessage(RemoteMessage message) {
