@@ -819,7 +819,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
               children: [
                 Icon(Icons.person_outline, color: theme.textSecondary, size: 14),
                 const SizedBox(width: 6),
-                Text("Creat de: $creatDeNume • ", style: TextStyle(color: theme.textSecondary, fontSize: 12)),
+                Flexible(
+                  child: Text("Creat de: $creatDeNume • ",
+                    style: TextStyle(color: theme.textSecondary, fontSize: 12),
+                    overflow: TextOverflow.ellipsis),
+                  ),
                 Text(
                   creatDe == 'sofer' ? 'șofer' : creatDe == 'dispecer' ? 'dispecer' : 'admin',
                   style: TextStyle(

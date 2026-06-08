@@ -121,8 +121,11 @@ class _SoferDocumenteListState extends State<SoferDocumenteList> {
                             padding: const EdgeInsets.only(top: 2),
                             child: Row(
                               children: [
-                                Text("Creat de: $creatDeNume • ",
-                                  style: TextStyle(color: theme.textGriFix, fontSize: 11)),
+                                Flexible(
+                                  child: Text("Creat de: $creatDeNume • ",
+                                    style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                                    overflow: TextOverflow.ellipsis),
+                                  ),
                                 Text(
                                   creatDeRol == 'sofer' ? 'șofer' : creatDeRol == 'dispecer' ? 'dispecer' : 'admin',
                                   style: TextStyle(

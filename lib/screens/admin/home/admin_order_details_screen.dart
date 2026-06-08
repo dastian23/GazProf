@@ -479,8 +479,11 @@ class AdminOrderDetailsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
-                  Text("Creat de: ${orderData['creat_de_nume']} • ",
-                    style: TextStyle(color: theme.textGriFix, fontSize: 12)),
+                  Flexible(
+                    child: Text("Creat de: ${orderData['creat_de_nume']} • ",
+                      style: TextStyle(color: theme.textGriFix, fontSize: 12),
+                      overflow: TextOverflow.ellipsis),
+                    ),
                   Text(
                     () {
                       final r = (orderData['creat_de'] ?? '').toString();
