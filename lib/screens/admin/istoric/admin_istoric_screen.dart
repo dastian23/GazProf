@@ -528,6 +528,8 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: TextField(
                               controller: _searchController,
+                              maxLength: 200,
+                              inputFormatters: [LengthLimitingTextInputFormatter(200)],
                               onSubmitted: _onSearchSubmitted,
                               textInputAction: TextInputAction.search,
                               style: TextStyle(color: theme.textPrimary, fontSize: 14),

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -689,6 +690,8 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                               const SizedBox(height: 15),
                               TextField(
                                 controller: _mentionsController,
+                                maxLength: 500,
+                                inputFormatters: [LengthLimitingTextInputFormatter(500)],
                                 maxLines: 3,
                                 style: TextStyle(color: theme.textPrimary, fontSize: 13),
                                 decoration: InputDecoration(
@@ -989,9 +992,11 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
     );
   }
 
-  Widget _buildTextField({required String hint, required IconData icon, required TextEditingController controller, required ThemeProvider theme, bool isPhone = false}) {
+  Widget _buildTextField({required String hint, required IconData icon, required TextEditingController controller, required ThemeProvider theme, bool isPhone = false, int maxLength = 200}) {
     return TextField(
       controller: controller,
+      maxLength: maxLength,
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(

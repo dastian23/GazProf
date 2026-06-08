@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -27,19 +28,41 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool _isObscured = true;
   bool _isLoading = false;
+  int _loginAttempts = 0;
+  int _lockoutSeconds = 0;
+  Timer? _lockoutTimer;
 
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
   @override
   void dispose() {
+    _lockoutTimer?.cancel();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
+  void _startLockoutTimer() {
+    _lockoutTimer?.cancel();
+    setState(() => _lockoutSeconds = 30);
+    _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_lockoutSeconds <= 1) {
+        timer.cancel();
+        setState(() {
+          _lockoutSeconds = 0;
+          _loginAttempts = 0;
+        });
+      } else {
+        setState(() => _lockoutSeconds--);
+      }
+    });
+  }
+
   // --- LOGIN LOGIC ---
   Future<void> _handleLogin() async {
+    if (_lockoutSeconds > 0) return;
+
     if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
       _showError("Te rugăm să completezi toate câmpurile.");
       return;
@@ -58,67 +81,32 @@ class _LoginScreenState extends State<LoginScreen> {
       if (result['success'] == true) {
         String rol = result['rol'] ?? 'neatribuit';
         String nume = result['nume'];
-        //String status = result['status'] ?? 'neatribuit';
 
-        // ROUTE TO APPROPRIATE SCREEN by ROLE
         if (rol == 'neatribuit') {
-          // 1. Saving the data globally in Provider
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-
-          // 2. Navigation
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const NiciunulHomeScreen(),
-            ),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()));
         } else if (rol == 'sofer') {
-            // 1. Saving the data globally in Provider
-            Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-
-            // 2. Navigation
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const SoferHomeScreen(),
-              ),
-            );
+          Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SoferHomeScreen()));
         } else if (rol == 'dispecer') {
-          // 1. Saving the data globally in Provider
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-
-          // 2. Navigation
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const DispecerHomeScreen(),
-            ),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const DispecerHomeScreen()));
         } else if (rol == 'admin') {
-          // 1. Saving the data globally in Provider
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-
-          // 2. Navigation
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AdminHomeScreen(),
-            ),
-          );
-
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AdminHomeScreen()));
         } else {
-          // Fallback
           Provider.of<UserProvider>(context, listen: false).setUserData(nume, rol, _emailController.text.trim());
-
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const NiciunulHomeScreen(),
-            ),
-          );
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NiciunulHomeScreen()));
         }
       } else {
-        _showError(result['error']);
+        _loginAttempts++;
+        if (_loginAttempts >= 5) {
+          _startLockoutTimer();
+          _showError("Prea multe încercări eșuate. Așteaptă 30 de secunde.");
+        } else {
+          final remaining = 5 - _loginAttempts;
+          _showError("${result['error']} (încercări rămase: $remaining)");
+        }
       }
     }
   }
@@ -242,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // INPUT FIELD
               _buildTextField(hint: 'Introduceți e-mailul', icon: Icons.email_outlined, theme: theme, controller: _emailController),
               const SizedBox(height: 18),
-              _buildTextField(hint: 'Introduceți parola', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
+              _buildTextField(hint: 'Introduceți parola', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController, maxLength: 100),
 
               // BUTTON "AI UITAT PAROLA?"
               Align(
@@ -269,7 +257,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
+                  onPressed: (_isLoading || _lockoutSeconds > 0) ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.brandBlue,
                     elevation: 0,
@@ -277,9 +265,19 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: _isLoading
                       ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                      : Text('Conectează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
+                      : _lockoutSeconds > 0
+                          ? Text('$_lockoutSeconds', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold))
+                          : Text('Conectează-te', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold)),
                 ),
               ),
+              if (_lockoutSeconds > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Ai depășit numărul de încercări. Așteaptă.',
+                    style: TextStyle(color: Colors.orange.shade700, fontSize: 11, fontWeight: FontWeight.w600),
+                  ),
+                ),
 
               const SizedBox(height: 25),
               const Text('sau', style: TextStyle(color: Colors.grey, fontSize: 13)),
@@ -294,7 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: Border.all(color: theme.buttonCardOutline, width: 1.2),
                 ),
                 child: InkWell(
-                  onTap: _isLoading ? null : _handleGoogleLogin,
+                  onTap: (_isLoading || _lockoutSeconds > 0) ? null : _handleGoogleLogin,
                   borderRadius: BorderRadius.circular(30),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -340,11 +338,14 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     bool isPassword = false,
     required ThemeProvider theme,
-    required TextEditingController controller
+    required TextEditingController controller,
+    int maxLength = 200,
   }) {
     return TextField(
       controller: controller,
       obscureText: isPassword ? _isObscured : false,
+      maxLength: maxLength,
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,

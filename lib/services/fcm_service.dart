@@ -15,7 +15,7 @@ class FcmService {
 
   Future<void> initialize() async {
     final base64Json = dotenv.env['FCM_SERVICE_ACCOUNT_BASE64'];
-    debugPrint('[FCM] init, base64 length: ${base64Json?.length}');
+    if (kDebugMode) debugPrint('[FCM] init, base64 length: ${base64Json?.length}');
     if (base64Json == null || base64Json.isEmpty) return;
 
     try {
@@ -24,9 +24,9 @@ class FcmService {
 
       _credentials = auth.ServiceAccountCredentials.fromJson(jsonMap);
       _initialized = true;
-      debugPrint('[FCM] initialized successfully');
+      if (kDebugMode) debugPrint('[FCM] initialized successfully');
     } catch (e) {
-      debugPrint('[FCM] init error: $e');
+      if (kDebugMode) debugPrint('[FCM] init error: $e');
     }
   }
 
@@ -34,7 +34,7 @@ class FcmService {
     String orderId,
     Map<String, dynamic> orderData,
   ) async {
-    debugPrint('[FCM] sendNewOrderNotification called, initialized: $_initialized');
+    if (kDebugMode) debugPrint('[FCM] sendNewOrderNotification called, initialized: $_initialized');
     if (!_initialized) return;
 
     try {
@@ -42,7 +42,7 @@ class FcmService {
           .collection(FirestoreCollections.users)
           .where('rol', isEqualTo: 'sofer')
           .get();
-      debugPrint('[FCM] found ${usersSnapshot.docs.length} sofer users');
+      if (kDebugMode) debugPrint('[FCM] found ${usersSnapshot.docs.length} sofer users');
 
       final tokens = <String>[];
       for (final doc in usersSnapshot.docs) {
@@ -52,7 +52,7 @@ class FcmService {
         }
       }
 
-      debugPrint('[FCM] tokens found: ${tokens.length}');
+      if (kDebugMode) debugPrint('[FCM] tokens found: ${tokens.length}');
       if (tokens.isEmpty) return;
 
       final adresa = orderData['adresa_livrare'] ?? 'Adresă necunoscută';
@@ -130,14 +130,14 @@ class FcmService {
           successCount++;
         } else {
           failureCount++;
-          debugPrint('FCM error ${response.statusCode}: ${response.body}');
+          if (kDebugMode) debugPrint('FCM error ${response.statusCode}: ${response.body}');
         }
       }
 
       client.close();
-      debugPrint('FCM sent: $successCount success, $failureCount failure');
+      if (kDebugMode) debugPrint('FCM sent: $successCount success, $failureCount failure');
     } catch (e) {
-      debugPrint('FCM error: $e');
+      if (kDebugMode) debugPrint('FCM error: $e');
     }
   }
 
@@ -146,7 +146,7 @@ class FcmService {
     Map<String, dynamic> orderData,
     String driverId,
   ) async {
-    debugPrint('[FCM] sendUrgentNotification called, initialized: $_initialized');
+    if (kDebugMode) debugPrint('[FCM] sendUrgentNotification called, initialized: $_initialized');
     if (!_initialized) return;
 
     try {
@@ -156,7 +156,7 @@ class FcmService {
           .get();
       final token = driverDoc.data()?['fcmToken'] as String?;
       if (token == null || token.isEmpty) {
-        debugPrint('[FCM] no token for driver $driverId');
+        if (kDebugMode) debugPrint('[FCM] no token for driver $driverId');
         return;
       }
 
@@ -232,13 +232,13 @@ class FcmService {
       client.close();
 
       if (response.statusCode == 200) {
-        debugPrint('[FCM] urgent notification sent to driver $driverId');
+        if (kDebugMode) debugPrint('[FCM] urgent notification sent to driver $driverId');
       } else {
-        debugPrint(
+        if (kDebugMode) debugPrint(
             '[FCM] urgent notification error ${response.statusCode}: ${response.body}');
       }
     } catch (e) {
-      debugPrint('[FCM] urgent notification error: $e');
+      if (kDebugMode) debugPrint('[FCM] urgent notification error: $e');
     }
   }
 }

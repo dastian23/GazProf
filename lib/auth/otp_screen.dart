@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -24,15 +25,34 @@ class _OtpScreenState extends State<OtpScreen> {
   final List<TextEditingController> _controllers = List.generate(4, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
   bool _isLoading = false;
+  int _attemptsLeft = 5;
+  int _lockoutSeconds = 0;
+  Timer? _lockoutTimer;
 
   @override
   void dispose() {
+    _lockoutTimer?.cancel();
     for (var node in _focusNodes) node.dispose();
     for (var controller in _controllers) controller.dispose();
     super.dispose();
   }
 
+  void _startLockoutTimer(int seconds) {
+    _lockoutTimer?.cancel();
+    setState(() => _lockoutSeconds = seconds);
+    _lockoutTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_lockoutSeconds <= 1) {
+        timer.cancel();
+        setState(() => _lockoutSeconds = 0);
+      } else {
+        setState(() => _lockoutSeconds--);
+      }
+    });
+  }
+
   Future<void> _handleVerifyOtp() async {
+    if (_lockoutSeconds > 0) return;
+
     String enteredCode = _controllers.map((c) => c.text).join();
 
     if (enteredCode.length < 4) {
@@ -42,13 +62,12 @@ class _OtpScreenState extends State<OtpScreen> {
 
     setState(() => _isLoading = true);
 
-    bool isValid = await AuthService().verifyOtp(widget.email, enteredCode);
+    final result = await AuthService().verifyOtp(widget.email, enteredCode);
 
     if (mounted) {
       setState(() => _isLoading = false);
 
-      if (isValid) {
-        // Navigation to success screen
+      if (result['verified'] == true) {
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -59,8 +78,14 @@ class _OtpScreenState extends State<OtpScreen> {
             ),
           ),
         );
+      } else if (result['locked'] == true) {
+        final seconds = result['secondsLeft'] as int;
+        _startLockoutTimer(seconds);
+        _showError("Prea multe încercări. Așteaptă $seconds secunde.");
       } else {
-        _showError("Codul este incorect sau a expirat.");
+        final attemptsLeft = result['attemptsLeft'] as int;
+        setState(() => _attemptsLeft = attemptsLeft);
+        _showError("Codul este incorect sau a expirat. Mai ai $attemptsLeft încercări.");
       }
     }
   }
@@ -161,6 +186,22 @@ class _OtpScreenState extends State<OtpScreen> {
 
                 // BUTTON VERIFICARE
                 _buildVerifyButton(theme),
+                if (_lockoutSeconds > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      'Poți reîncerca în $_lockoutSeconds secunde',
+                      style: TextStyle(color: Colors.orange.shade700, fontSize: 12, fontWeight: FontWeight.w600),
+                    ),
+                  )
+                else if (_attemptsLeft < 5)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      'Încercări rămase: $_attemptsLeft din 5',
+                      style: TextStyle(color: theme.textSecondary, fontSize: 12),
+                    ),
+                  ),
                 const SizedBox(height: 60),
               ],
             ),
@@ -197,6 +238,7 @@ class _OtpScreenState extends State<OtpScreen> {
   }
 
   Widget _buildVerifyButton(ThemeProvider theme) {
+    final isLocked = _lockoutSeconds > 0;
     return Container(
       width: 180,
       height: 45,
@@ -206,7 +248,7 @@ class _OtpScreenState extends State<OtpScreen> {
         boxShadow: theme.buttonShadow,
       ),
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _handleVerifyOtp,
+        onPressed: (_isLoading || isLocked) ? null : _handleVerifyOtp,
         style: ElevatedButton.styleFrom(
           backgroundColor: theme.brandBlue,
           elevation: 0,
@@ -214,10 +256,12 @@ class _OtpScreenState extends State<OtpScreen> {
         ),
         child: _isLoading
             ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-            : Text(
-          'Verifică cod',
-          style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
-        ),
+            : isLocked
+                ? Text('$_lockoutSeconds', style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold))
+                : Text(
+            'Verifică cod',
+            style: TextStyle(color: theme.textPrimary, fontSize: 15, fontWeight: FontWeight.bold),
+          ),
       ),
     );
   }

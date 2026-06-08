@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 
@@ -42,6 +43,8 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
           children: [
             TextField(
               controller: _numeController,
+              maxLength: 200,
+              inputFormatters: [LengthLimitingTextInputFormatter(200)],
               style: TextStyle(color: theme.textPrimary, fontSize: 14),
               decoration: InputDecoration(
                 hintText: "Nume produs (ex: Butelie 10kg)",

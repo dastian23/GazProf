@@ -278,11 +278,14 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
     required ThemeProvider theme,
     bool isPhone = false,
     bool isReadOnly = false,
+    int maxLength = 200,
   }) {
     return TextField(
       controller: controller,
       readOnly: isReadOnly,
+      maxLength: maxLength,
       keyboardType: isPhone ? TextInputType.phone : TextInputType.text,
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       style: TextStyle(color: isReadOnly ? theme.textGriFix : theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,

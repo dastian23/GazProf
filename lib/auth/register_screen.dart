@@ -207,7 +207,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           _buildTextField(hint: 'E-mail', icon: Icons.email_outlined, theme: theme, controller: _emailController, isEmail: true),
                           const SizedBox(height: 12),
 
-                          _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController),
+                          _buildTextField(hint: 'Parolă', icon: Icons.lock_outline, isPassword: true, theme: theme, controller: _passwordController, maxLength: 100),
 
                           const SizedBox(height: 8),
                           Padding(
@@ -277,7 +277,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     bool isPhone = false,
     bool isEmail = false,
     required ThemeProvider theme,
-    required TextEditingController controller
+    required TextEditingController controller,
+    int maxLength = 200,
   }) {
     TextInputType inputType = TextInputType.text;
     if (isPhone) inputType = TextInputType.phone;
@@ -287,6 +288,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: controller,
       obscureText: isPassword ? _isObscured : false,
       keyboardType: inputType,
+      maxLength: maxLength,
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,

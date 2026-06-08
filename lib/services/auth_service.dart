@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart' as g_auth;
@@ -29,7 +30,6 @@ class AuthService {
         'telefon': phone,
         'email': email,
         'rol': 'neatribuit',
-        'esteAprobat': false,
         'data_creare': FieldValue.serverTimestamp(),
       });
       return null;
@@ -46,7 +46,7 @@ class AuthService {
     try {
       var userCheck = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: email.trim()).get();
       if (userCheck.docs.isEmpty) {
-        return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
+        return {'success': false, 'error': 'Email sau parolă incorectă.'};
       }
 
       // 1. Authentication
@@ -67,7 +67,7 @@ class AuthService {
         };
       } else {
         await _auth.signOut();
-        return {'success': false, 'error': 'Datele utilizatorului nu au fost găsite în baza de date.'};
+        return {'success': false, 'error': 'Email sau parolă incorectă.'};
       }
     } catch (e) {
       return {'success': false, 'error': 'E-mail sau parolă incorectă.'};
@@ -133,7 +133,7 @@ class AuthService {
     try {
       final normalizedEmail = email.trim();
       var userCheck = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: normalizedEmail).get();
-      if (userCheck.docs.isEmpty) return "Nu există un cont cu acest email.";
+      if (userCheck.docs.isEmpty) return null;
 
       String otpCode = (1000 + Random().nextInt(9000)).toString();
 
@@ -141,6 +141,7 @@ class AuthService {
         'otp': otpCode,
         'createdAt': FieldValue.serverTimestamp(),
         'expiresAt': DateTime.now().add(const Duration(minutes: 10)).millisecondsSinceEpoch,
+        'attempts': 0,
       });
 
       final response = await http.post(
@@ -160,43 +161,46 @@ class AuthService {
     }
   }
 
-  Future<bool> verifyOtp(String email, String enteredCode) async {
+  Future<Map<String, dynamic>> verifyOtp(String email, String enteredCode) async {
     try {
       var doc = await _db.collection(FirestoreCollections.passwordResets).doc(email.trim()).get();
-      if (!doc.exists) return false;
+      if (!doc.exists) return {'verified': false, 'locked': false, 'secondsLeft': 0, 'attemptsLeft': 0};
 
-      bool isValid = (doc.data()!['otp'] == enteredCode &&
-          DateTime.now().millisecondsSinceEpoch < doc.data()!['expiresAt']);
+      final data = doc.data()!;
 
-      if (isValid) {
+      final lockedUntil = data['lockedUntil'] as int?;
+      if (lockedUntil != null && DateTime.now().millisecondsSinceEpoch < lockedUntil) {
+        final secondsLeft = ((lockedUntil - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
+        return {'verified': false, 'locked': true, 'secondsLeft': secondsLeft, 'attemptsLeft': 0};
+      }
+
+      final expiresAt = data['expiresAt'] as int;
+      if (DateTime.now().millisecondsSinceEpoch >= expiresAt) {
+        return {'verified': false, 'locked': false, 'secondsLeft': 0, 'attemptsLeft': 0};
+      }
+
+      if (data['otp'] == enteredCode) {
         await _auth.sendPasswordResetEmail(email: email.trim());
         await _db.collection(FirestoreCollections.passwordResets).doc(email.trim()).delete();
+        return {'verified': true, 'locked': false, 'secondsLeft': 0, 'attemptsLeft': 5};
       }
 
-      return isValid;
-    } catch (e) {
-      return false;
-    }
-  }
+      final attempts = (data['attempts'] as int? ?? 0) + 1;
+      const maxAttempts = 5;
+      final attemptsLeft = maxAttempts - attempts;
 
-  Future<String?> updatePasswordManual(String email, String newPassword) async {
-    try {
-      var userQuery = await _db.collection(FirestoreCollections.users).where('email', isEqualTo: email.trim()).get();
-
-      if (userQuery.docs.isNotEmpty) {
-        String uid = userQuery.docs.first.id;
-
-        await _db.collection(FirestoreCollections.users).doc(uid).update({
-          'parola_resetata': true,
-          'ultima_actualizare_parola': FieldValue.serverTimestamp(),
+      if (attempts >= maxAttempts) {
+        await doc.reference.update({
+          'attempts': attempts,
+          'lockedUntil': DateTime.now().add(const Duration(seconds: 30)).millisecondsSinceEpoch,
         });
-
-        await _auth.sendPasswordResetEmail(email: email.trim());
-        return null;
+        return {'verified': false, 'locked': true, 'secondsLeft': 30, 'attemptsLeft': 0};
       }
-      return "Utilizatorul nu a fost găsit.";
+
+      await doc.reference.update({'attempts': attempts});
+      return {'verified': false, 'locked': false, 'secondsLeft': 0, 'attemptsLeft': attemptsLeft};
     } catch (e) {
-      return e.toString();
+      return {'verified': false, 'locked': false, 'secondsLeft': 0, 'attemptsLeft': 0};
     }
   }
 
@@ -205,7 +209,7 @@ class AuthService {
       await _auth.signOut();
       await g_auth.GoogleSignIn().signOut();
     } catch (e) {
-      print("Eroare la deconectare: $e");
+      if (kDebugMode) debugPrint("Eroare la deconectare: $e");
     }
   }
 

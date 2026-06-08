@@ -248,10 +248,13 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     required IconData icon,
     required TextEditingController controller,
     required ThemeProvider theme,
+    int maxLength = 200,
   }) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.emailAddress,
+      maxLength: maxLength,
+      inputFormatters: [LengthLimitingTextInputFormatter(maxLength)],
       style: TextStyle(color: theme.textPrimary, fontSize: 14),
       decoration: InputDecoration(
         filled: true,
