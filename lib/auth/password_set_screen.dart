@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme_provider.dart';
-import 'success_reset_password.dart';
+import 'package:gazprof/screens/shared/success_screen.dart';
 import 'package:gazprof/services/auth_service.dart';
 import 'package:another_flushbar/flushbar.dart';
 
@@ -49,7 +49,11 @@ class _PasswordSetScreenState extends State<PasswordSetScreen> {
   if (mounted) {
     setState(() => _isLoading = false);
     if (error == null) {
-      Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessResetPassword()));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => const SuccessScreen(
+        title: 'Verifică emailul!',
+        message: 'Ți-am trimis un link de resetare a parolei. Verifică inbox-ul și urmează instrucțiunile.',
+        showStatusBarBrightness: true,
+      )));
     } else {
       _showError(error);
     }

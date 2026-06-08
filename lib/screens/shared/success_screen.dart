@@ -2,17 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme_provider.dart';
+import '../../core/theme_provider.dart';
 
-class SuccessResetPassword extends StatefulWidget {
-  const SuccessResetPassword({super.key});
+class SuccessScreen extends StatefulWidget {
+  final String title;
+  final String message;
+  final bool showStatusBarBrightness;
+
+  const SuccessScreen({
+    super.key,
+    required this.title,
+    required this.message,
+    this.showStatusBarBrightness = false,
+  });
 
   @override
-  State<SuccessResetPassword> createState() => _SuccessScreenState();
+  State<SuccessScreen> createState() => _SuccessScreenState();
 }
 
-class _SuccessScreenState extends State<SuccessResetPassword> {
-  // Animation states
+class _SuccessScreenState extends State<SuccessScreen> {
   double _checkOpacity = 0.0;
   double _checkScale = 0.4;
 
@@ -33,11 +41,12 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
 
-    // activating the status bar
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
-      statusBarBrightness: theme.isDark ? Brightness.dark : Brightness.light,
+      statusBarBrightness: widget.showStatusBarBrightness
+          ? (theme.isDark ? Brightness.dark : Brightness.light)
+          : null,
     ));
 
     return Scaffold(
@@ -49,7 +58,6 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
             children: [
               const SizedBox(height: 10),
 
-              // LOGO & FLAME
               Stack(
                 alignment: Alignment.center,
                 children: [
@@ -83,10 +91,8 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
                 style: TextStyle(color: theme.textGriFix, fontSize: 12),
               ),
 
-              // space between logo & success icon
               const Spacer(flex: 2),
 
-              // SUCCESS ICON
               Container(
                 height: 140,
                 width: 140,
@@ -124,12 +130,10 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
                 ),
               ),
 
-              // space between success icon & TEXT MESSAGE
               const SizedBox(height: 30),
 
-              // TEXT MESSAGE
               Text(
-                'Verifică emailul!',
+                widget.title,
                 style: TextStyle(
                   color: theme.textPrimary,
                   fontSize: 20,
@@ -138,15 +142,13 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
               ),
               const SizedBox(height: 15),
               Text(
-                'Ți-am trimis un link de resetare a parolei. Verifică inbox-ul și urmează instrucțiunile.',
+                widget.message,
                 textAlign: TextAlign.center,
                 style: TextStyle(color: theme.textGriFix, fontSize: 14),
               ),
 
-              // space between text message & buton
               const Spacer(flex: 3),
 
-              // BUTON CONTINUĂ
               Container(
                 width: 180,
                 height: 45,
@@ -176,7 +178,7 @@ class _SuccessScreenState extends State<SuccessResetPassword> {
                   ),
                 ),
               ),
-              //space to push everything up
+
               const SizedBox(height: 60),
             ],
           ),

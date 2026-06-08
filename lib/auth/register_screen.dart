@@ -4,7 +4,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:another_flushbar/flushbar.dart';
 
 // --- SCREENS ---
-import 'success_screen.dart';
+import 'package:gazprof/screens/shared/success_screen.dart';
 
 // --- SERVICES & PROVIDERS ---
 import '../../../core/theme_provider.dart';
@@ -83,7 +83,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => SuccessScreen(email: _emailController.text),
+            builder: (context) => const SuccessScreen(
+              title: 'Succes!',
+              message: 'Felicitări! Contul tău a fost creat! Apasă pe continuă pentru a te autentifica.',
+            ),
           ),
         );
       } else {

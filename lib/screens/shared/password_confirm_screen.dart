@@ -3,19 +3,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 import 'package:another_flushbar/flushbar.dart';
-import '../../../core/theme_provider.dart';
-import 'package:gazprof/services/auth_service.dart';
-import 'package:gazprof/auth/success_reset_password.dart';
 
-class ChangePasswordConfirmScreen extends StatefulWidget {
+import '../../core/theme_provider.dart';
+import 'package:gazprof/services/auth_service.dart';
+import 'package:gazprof/screens/shared/success_screen.dart';
+
+class PasswordConfirmScreen extends StatefulWidget {
   final String email;
-  const ChangePasswordConfirmScreen({super.key, required this.email});
+  const PasswordConfirmScreen({super.key, required this.email});
 
   @override
-  State<ChangePasswordConfirmScreen> createState() => _ChangePasswordConfirmScreenState();
+  State<PasswordConfirmScreen> createState() => _PasswordConfirmScreenState();
 }
 
-class _ChangePasswordConfirmScreenState extends State<ChangePasswordConfirmScreen> {
+class _PasswordConfirmScreenState extends State<PasswordConfirmScreen> {
   bool _isLoading = false;
 
   Future<void> _handleSendReset() async {
@@ -28,7 +29,11 @@ class _ChangePasswordConfirmScreenState extends State<ChangePasswordConfirmScree
         setState(() => _isLoading = false);
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const SuccessResetPassword()),
+          MaterialPageRoute(builder: (context) => const SuccessScreen(
+            title: 'Verifică emailul!',
+            message: 'Ți-am trimis un link de resetare a parolei. Verifică inbox-ul și urmează instrucțiunile.',
+            showStatusBarBrightness: true,
+          )),
         );
       }
     } catch (e) {
@@ -81,7 +86,6 @@ class _ChangePasswordConfirmScreenState extends State<ChangePasswordConfirmScree
             children: [
               const SizedBox(height: 10),
 
-              // LOGO & FLAME
               SvgPicture.asset(
                 'assets/flame.svg',
                 width: 45, height: 65,
@@ -105,7 +109,7 @@ class _ChangePasswordConfirmScreenState extends State<ChangePasswordConfirmScree
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Îți vom trimite un link de resetare\na parolei pe adresa de email\nassociată contului tău.',
+                      'Îți vom trimite un link de resetare\na parolei pe adresa de email\nasociată contului tău.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: theme.textGriFix, fontSize: 13, height: 1.5),
                     ),

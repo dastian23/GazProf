@@ -7,18 +7,17 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:another_flushbar/flushbar.dart';
 import 'package:gazprof/core/constants.dart';
 
-// --- THEME & PROVIDERS ---
-import '../../../../core/theme_provider.dart';
-import '../../../../core/user_provider.dart';
+import '../../core/theme_provider.dart';
+import '../../core/user_provider.dart';
 
-class SoferPersonalDataScreen extends StatefulWidget {
-  const SoferPersonalDataScreen({super.key});
+class PersonalDataScreen extends StatefulWidget {
+  const PersonalDataScreen({super.key});
 
   @override
-  State<SoferPersonalDataScreen> createState() => _SoferPersonalDataScreenState();
+  State<PersonalDataScreen> createState() => _PersonalDataScreenState();
 }
 
-class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
+class _PersonalDataScreenState extends State<PersonalDataScreen> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -40,7 +39,6 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
     super.dispose();
   }
 
-  // --- FLUSHBAR NOTIFICATIONS FEATURE ---
   Future<void> _showFlushbar(String message, {bool isError = true}) async {
     FocusScope.of(context).unfocus();
 
@@ -83,19 +81,16 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
     }
   }
 
-  // --- SAVING FEATURE
   Future<void> _saveData() async {
     String name = _nameController.text.trim();
     String phone = _phoneController.text.trim();
     String email = _emailController.text.trim();
 
-    // 1. Verify empty fields
     if (name.isEmpty || phone.isEmpty || email.isEmpty) {
       await _showFlushbar("Te rugăm să completezi toate câmpurile.");
       return;
     }
 
-    // 2. Verify phone number
     if (!RegExp(r'^07\d{8}$').hasMatch(phone)) {
       await _showFlushbar("Număr de telefon invalid.\nTrebuie să înceapă cu 07 și să aibă 10 cifre.");
       return;
@@ -104,15 +99,15 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
     setState(() => _isSaving = true);
 
     try {
-      String uid = FirebaseAuth.instance.currentUser!.uid;
+      User? currentUser = FirebaseAuth.instance.currentUser;
+      if (currentUser == null) return;
+      String uid = currentUser.uid;
 
-      // 3. Update data in FIrestore
       await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(uid).update({
         'nume': name,
         'telefon': phone,
       });
 
-      // 4. Update global UserProvider
       if (mounted) {
         Provider.of<UserProvider>(context, listen: false).setUserData(
             name,
@@ -121,7 +116,6 @@ class _SoferPersonalDataScreenState extends State<SoferPersonalDataScreen> {
         );
       }
 
-      // 5. Success messaje and delay
       await _showFlushbar("Datele au fost salvate cu succes!", isError: false);
 
       if (mounted) {

@@ -19,8 +19,8 @@ import 'package:gazprof/widgets/app_nav_bar.dart';
 import '../home/sofer_home_screen.dart';
 import '../documente/sofer_documente_screen.dart';
 import '../istoric/sofer_istoric_screen.dart';
-import 'sofer_personal_data_screen.dart';
-import 'sofer_password_set_confirmation_screen.dart';
+import 'package:gazprof/screens/shared/personal_data_screen.dart';
+import 'package:gazprof/screens/shared/password_confirm_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
 
 class SoferProfileScreen extends StatelessWidget {
@@ -65,7 +65,7 @@ class SoferProfileScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const SoferPersonalDataScreen()),
+                                MaterialPageRoute(builder: (context) => const PersonalDataScreen()),
                               );
                             },
                           ),
@@ -73,7 +73,7 @@ class SoferProfileScreen extends StatelessWidget {
                           _buildTile('assets/password.svg', 'Schimbă parola', 'Actualizează securitatea', theme, theme.iconLock, theme.bgLock, onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SoferPasswordConfirmScreen(email: userProvider.userEmail)),
+                              MaterialPageRoute(builder: (context) => PasswordConfirmScreen(email: userProvider.userEmail)),
                             );
                           }),
                         ]),

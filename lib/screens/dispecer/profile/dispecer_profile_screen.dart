@@ -15,12 +15,12 @@ import 'package:provider/provider.dart';
 import 'package:gazprof/widgets/app_nav_bar.dart';
 
 // --- SCREENS ---
-import 'package:gazprof/screens/dispecer/profile/dispecer_personal_data_screen.dart';
+import 'package:gazprof/screens/shared/personal_data_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
 import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
 import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
 import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
-import 'package:gazprof/screens/niciunul/profile/niciunul_password_set_confirmation_screen.dart';
+import 'package:gazprof/screens/shared/password_confirm_screen.dart';
 
 
 class DispecerProfileScreen extends StatelessWidget {
@@ -65,7 +65,7 @@ class DispecerProfileScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => const DispecerPersonalDataScreen()),
+                                MaterialPageRoute(builder: (context) => const PersonalDataScreen()),
                               );
                             },
                           ),
@@ -73,7 +73,7 @@ class DispecerProfileScreen extends StatelessWidget {
                           _buildTile('assets/password.svg', 'Schimbă parola', 'Actualizează securitatea', theme, theme.iconLock, theme.bgLock, onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => ChangePasswordConfirmScreen(email: userProvider.userEmail)),
+                              MaterialPageRoute(builder: (context) => PasswordConfirmScreen(email: userProvider.userEmail)),
                             );
                           }),
                         ]),

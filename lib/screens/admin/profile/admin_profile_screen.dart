@@ -23,8 +23,8 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
   import 'package:gazprof/auth/login_screen.dart';
   import '../home/admin_home_screen.dart';
   import '../documente/admin_documente_screen.dart';
-  import 'admin_personal_data_screen.dart';
-  import 'admin_password_set_confirmation_screen.dart';
+  import 'package:gazprof/screens/shared/personal_data_screen.dart';
+  import 'package:gazprof/screens/shared/password_confirm_screen.dart';
   import 'package:gazprof/screens/admin/profile/admin_gestionare_screen.dart';
 
 
@@ -81,7 +81,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
                               onTap: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const AdminPersonalDataScreen()),
+                                  MaterialPageRoute(builder: (context) => const PersonalDataScreen()),
                                 );
                               },
                             ),
@@ -89,7 +89,7 @@ import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
                             _buildTile('assets/password.svg', 'Schimbă parola', 'Actualizează securitatea', theme, theme.iconLock, theme.bgLock, onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(builder: (context) => AdminPasswordConfirmScreen(email: userProvider.userEmail)),
+                                MaterialPageRoute(builder: (context) => PasswordConfirmScreen(email: userProvider.userEmail)),
                               );
                             }),
                           ]),
