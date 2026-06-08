@@ -52,7 +52,9 @@ void main() async {
           NotificationService().startOrderListener();
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Eroare authStateChanges: $e");
+    }
   });
 
   runApp(

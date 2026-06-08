@@ -20,7 +20,9 @@ Future<void> preloadDriverNames(Iterable<String?> ids) async {
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
       if (doc.exists) driverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Eroare preloadDriverNames: $e");
+    }
   }));
 }
 

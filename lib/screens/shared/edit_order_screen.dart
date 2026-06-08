@@ -68,7 +68,9 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
       if (doc.exists && mounted) {
         setState(() => _driverName = (doc.data() as Map)['nume'] ?? 'Șofer');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Eroare _loadDriverName: $e");
+    }
   }
 
   Future<void> _loadProducts() async {

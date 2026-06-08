@@ -65,18 +65,36 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   }
 
   Future<void> _updateStatus(BuildContext context, String status) async {
-    await FirebaseFirestore.instance
-        .collection('comenzi')
-        .doc(orderId)
-        .update({'status': status});
-    if (context.mounted) Navigator.pop(context);
+    try {
+      await FirebaseFirestore.instance
+          .collection('comenzi')
+          .doc(orderId)
+          .update({'status': status});
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint("Eroare la _updateStatus: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Eroare la actualizare status: $e")),
+        );
+      }
+    }
   }
 
   Future<void> _updatePaymentType(BuildContext context, String tipPlata) async {
-    await FirebaseFirestore.instance
-        .collection('comenzi')
-        .doc(orderId)
-        .update({'tip_plata': tipPlata});
+    try {
+      await FirebaseFirestore.instance
+          .collection('comenzi')
+          .doc(orderId)
+          .update({'tip_plata': tipPlata});
+    } catch (e) {
+      debugPrint("Eroare la _updatePaymentType: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Eroare la schimbarea tipului de plată: $e")),
+        );
+      }
+    }
   }
 
   Future<void> _showPaymentTypeDialog(BuildContext context, ThemeProvider theme, String current) async {
@@ -165,15 +183,24 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   }
 
   Future<void> _unassignOrder(BuildContext context) async {
-    await FirebaseFirestore.instance
-        .collection('comenzi')
-        .doc(orderId)
-        .update({
-      'status': 'In asteptare',
-      'id_sofer': FieldValue.delete(),
-    });
-    FcmService().sendNewOrderNotification(orderId, orderData);
-    if (context.mounted) Navigator.pop(context);
+    try {
+      await FirebaseFirestore.instance
+          .collection('comenzi')
+          .doc(orderId)
+          .update({
+        'status': 'In asteptare',
+        'id_sofer': FieldValue.delete(),
+      });
+      FcmService().sendNewOrderNotification(orderId, orderData);
+      if (context.mounted) Navigator.pop(context);
+    } catch (e) {
+      debugPrint("Eroare la _unassignOrder: $e");
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Eroare la retragerea alocării: $e")),
+        );
+      }
+    }
   }
 
   Future<bool> _showUnassignDialog(BuildContext context, ThemeProvider theme) async {

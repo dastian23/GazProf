@@ -14,7 +14,9 @@ Future<void> preloadIstoricDriverNames(Iterable<String?> ids) async {
     try {
       final doc = await FirebaseFirestore.instance.collection('users').doc(id).get();
       if (doc.exists) istoricDriverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
-    } catch (_) {}
+    } catch (e) {
+      debugPrint("Eroare preloadIstoricDriverNames: $e");
+    }
   }));
 }
 
