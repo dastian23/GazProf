@@ -302,6 +302,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : null,
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        counterText: '',
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),

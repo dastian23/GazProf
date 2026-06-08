@@ -49,6 +49,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
               decoration: InputDecoration(
                 hintText: "Nume produs (ex: Butelie 10kg)",
                 hintStyle: TextStyle(color: theme.textSecondary),
+                counterText: '',
                 enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.cardOutline)),
                 focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: theme.brandBlue)),
               ),

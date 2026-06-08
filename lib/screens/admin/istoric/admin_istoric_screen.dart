@@ -544,6 +544,7 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                                     ? 'Caută în comenzile lui $_selectedUserName...'
                                     : 'Caută după adresă sau telefon...',
                                 hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+                                counterText: '',
                                 suffixIcon: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [

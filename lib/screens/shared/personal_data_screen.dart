@@ -293,6 +293,7 @@ class _PersonalDataScreenState extends State<PersonalDataScreen> {
         prefixIcon: Icon(icon, color: theme.textFieldIcon, size: 18),
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        counterText: '',
         contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 15),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

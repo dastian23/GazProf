@@ -350,6 +350,7 @@ class _SoferIstoricScreenState extends State<SoferIstoricScreen> {
                                 ),
                                 hintText: 'Caută după adresă sau telefon...',
                                 hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+                                counterText: '',
                                 suffixIcon: _searchQuery.isNotEmpty
                                     ? GestureDetector(
                                         onTap: _clearSearch,

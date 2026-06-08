@@ -697,6 +697,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
                                 decoration: InputDecoration(
                                   hintText: 'Adaugă instrucțiuni...',
                                   hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+                                  counterText: '',
                                   filled: true,
                                   fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
@@ -1005,6 +1006,7 @@ class _EditOrderScreenState extends State<EditOrderScreen> {
         prefixIcon: Icon(icon, color: theme.textFieldIcon, size: 20),
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+        counterText: '',
         contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),

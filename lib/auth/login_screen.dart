@@ -275,6 +275,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   padding: const EdgeInsets.only(top: 8),
                   child: Text(
                     'Ai depășit numărul de încercări. Așteaptă.',
+                    textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.orange.shade700, fontSize: 11, fontWeight: FontWeight.w600),
                   ),
                 ),
@@ -359,6 +360,7 @@ class _LoginScreenState extends State<LoginScreen> {
             : null,
         hintText: hint,
         hintStyle: TextStyle(color: theme.textSecondary, fontSize: 13),
+        counterText: '',
         contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline, width: 1.0)),
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),
