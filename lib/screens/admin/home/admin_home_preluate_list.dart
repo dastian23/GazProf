@@ -1,16 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme_provider.dart';
+import '../../../../core/time_indicator.dart';
+import '../../shared/edit_order_screen.dart';
 
-import 'admin_order_details_screen.dart';
-
-class AdminHomePreluateList extends StatelessWidget {
+class AdminHomePreluateList extends StatefulWidget {
   final List<QueryDocumentSnapshot> comenzi;
 
   const AdminHomePreluateList({super.key, required this.comenzi});
+
+  @override
+  State<AdminHomePreluateList> createState() => _AdminHomePreluateListState();
+}
+
+class _AdminHomePreluateListState extends State<AdminHomePreluateList> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   double _cardDiscount(Map data) {
     final produse = data['produse'] as List? ?? [];
@@ -26,6 +47,7 @@ class AdminHomePreluateList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
+    final comenzi = widget.comenzi;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -66,7 +88,7 @@ class AdminHomePreluateList extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.cardCreateCommand,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: theme.brandBlue.withValues(alpha: 0.4), width: 1.5),
+            border: Border.all(color: getTimeBorderColor(date), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,7 +104,11 @@ class AdminHomePreluateList extends StatelessWidget {
                         Text(adresaFull, style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.bold, fontSize: 14)),
                         const SizedBox(height: 3),
                         Text(
-                            "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                            "$formatAdresa  •  $telefon",
+                            style: TextStyle(color: theme.textGriFix, fontSize: 11)
+                        ),
+                        Text(
+                            "Plată: $formatPlata",
                             style: TextStyle(color: theme.textGriFix, fontSize: 11)
                         ),
                         if (creatDeNume.isNotEmpty)
@@ -184,7 +210,7 @@ class AdminHomePreluateList extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => AdminOrderDetailsScreen(orderId: doc.id, orderData: data),
+                        builder: (_) => EditOrderScreen(orderId: doc.id, orderData: data),
                       ),
                     );
                   },

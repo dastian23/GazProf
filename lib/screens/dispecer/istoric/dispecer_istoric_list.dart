@@ -106,7 +106,11 @@ class DispecerIstoricList extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                        "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                        "$formatAdresa  •  $telefon",
+                        style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                      ),
+                      Text(
+                        "Plată: $formatPlata",
                         style: TextStyle(color: theme.textGriFix, fontSize: 11),
                       ),
                       if (creatDeNume.isNotEmpty)

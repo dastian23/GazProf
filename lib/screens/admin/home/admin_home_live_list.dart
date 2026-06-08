@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +8,8 @@ import 'package:provider/provider.dart';
 
 // --- THEME ---
 import '../../../../core/theme_provider.dart';
+import '../../../../core/time_indicator.dart';
+import '../../shared/edit_order_screen.dart';
 
 final Map<String, String> driverNameCache = {};
 
@@ -20,11 +24,30 @@ Future<void> preloadDriverNames(Iterable<String?> ids) async {
   }));
 }
 
-class AdminHomeLiveList extends StatelessWidget {
+class AdminHomeLiveList extends StatefulWidget {
   final List<QueryDocumentSnapshot> comenzi;
   final Map<String, String> driverNames;
 
   const AdminHomeLiveList({super.key, required this.comenzi, this.driverNames = const {}});
+
+  @override
+  State<AdminHomeLiveList> createState() => _AdminHomeLiveListState();
+}
+
+class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   double _cardDiscount(Map data) {
     final produse = data['produse'] as List? ?? [];
@@ -52,6 +75,8 @@ class AdminHomeLiveList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
+    final comenzi = widget.comenzi;
+    final driverNames = widget.driverNames;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -111,13 +136,22 @@ class AdminHomeLiveList extends StatelessWidget {
           displayStatus = "Anulată";
         }
 
-        return Container(
+        final bool canEdit = (status == 'In asteptare' || status == 'Alocata');
+
+        return GestureDetector(
+          onTap: canEdit
+              ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditOrderScreen(orderId: doc.id, orderData: data)))
+              : null,
+          child: Container(
           margin: const EdgeInsets.only(bottom: 15),
           padding: const EdgeInsets.all(15),
           decoration: BoxDecoration(
             color: theme.cardFill,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: theme.cardOutline),
+            border: Border.all(
+              color: (status == 'In asteptare' || status == 'Alocata') ? getTimeBorderColor(date) : theme.cardOutline,
+              width: 1.5,
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,7 +169,11 @@ class AdminHomeLiveList extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                          "$formatAdresa  •  $telefon",
+                          style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                        ),
+                        Text(
+                          "Plată: $formatPlata",
                           style: TextStyle(color: theme.textGriFix, fontSize: 11),
                         ),
                         if (creatDeNume.isNotEmpty)
@@ -256,13 +294,14 @@ class AdminHomeLiveList extends StatelessWidget {
               ],
             ],
           ),
+        ),
         );
       },
     );
   }
 
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
-    final String fullName = driverNames[idSofer] ?? 'Necunoscut';
+    final String fullName = widget.driverNames[idSofer] ?? 'Necunoscut';
 
     List<String> words = fullName.trim().split(RegExp(r'\s+'));
     String initials = "U";

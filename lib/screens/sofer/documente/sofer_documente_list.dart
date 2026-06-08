@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
@@ -5,14 +7,34 @@ import 'package:intl/intl.dart';
 
 // --- PROVIDERS ---
 import '../../../../core/theme_provider.dart';
+import '../../../../core/time_indicator.dart';
 
 // --- SCREENS ---
 import 'sofer_order_details_screen.dart';
 
-class SoferDocumenteList extends StatelessWidget {
+class SoferDocumenteList extends StatefulWidget {
   final List<QueryDocumentSnapshot> comenzi;
 
   const SoferDocumenteList({super.key, required this.comenzi});
+
+  @override
+  State<SoferDocumenteList> createState() => _SoferDocumenteListState();
+}
+
+class _SoferDocumenteListState extends State<SoferDocumenteList> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   double _cardDiscount(Map data) {
     final produse = data['produse'] as List? ?? [];
@@ -28,6 +50,7 @@ class SoferDocumenteList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
+    final comenzi = widget.comenzi;
 
     return ListView.builder(
       shrinkWrap: true,
@@ -67,7 +90,7 @@ class SoferDocumenteList extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.cardCreateCommand,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: theme.brandBlue.withValues(alpha: 0.3), width: 1.5),
+            border: Border.all(color: getTimeBorderColor(date), width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +109,11 @@ class SoferDocumenteList extends StatelessWidget {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                          "$formatAdresa  •  $telefon",
+                          style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                        ),
+                        Text(
+                          "Plată: $formatPlata",
                           style: TextStyle(color: theme.textGriFix, fontSize: 11),
                         ),
                         if (creatDeNume.isNotEmpty)

@@ -5,7 +5,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../screens/sofer/home/sofer_home_screen.dart';
+import '../screens/sofer/documente/sofer_documente_screen.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -50,7 +50,7 @@ class NotificationService {
 
     final initialMessage = await _fcm.getInitialMessage();
     if (initialMessage != null) {
-      _navigateHome();
+      _navigateToOrder(initialMessage.data['orderId'] ?? '');
     }
   }
 
@@ -101,15 +101,17 @@ class NotificationService {
     final notification = message.notification;
     final data = message.data;
     final orderId = data['orderId'] ?? '';
+    final type = data['type'] ?? '';
     if (notification == null || orderId.isEmpty) return;
 
+    final isUrgent = type == 'urgent_order';
     final androidDetails = AndroidNotificationDetails(
       'new_orders',
       'Comenzi noi',
       channelDescription: 'Notificări pentru comenzi noi disponibile',
       importance: Importance.high,
       priority: Priority.high,
-      color: const Color(0xFF0779B7),
+      color: isUrgent ? const Color(0xFFFF0000) : const Color(0xFF0779B7),
       icon: '@mipmap/launcher_icon',
     );
     final details = NotificationDetails(android: androidDetails);
@@ -123,16 +125,18 @@ class NotificationService {
   }
 
   void _onNotificationTap(NotificationResponse response) {
-    _navigateHome();
+    final orderId = response.payload ?? '';
+    _navigateToOrder(orderId);
   }
 
   void _handleBackgroundTap(RemoteMessage message) {
-    _navigateHome();
+    final orderId = message.data['orderId'] ?? '';
+    _navigateToOrder(orderId);
   }
 
-  void _navigateHome() {
+  void _navigateToOrder(String orderId) {
     navigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SoferHomeScreen()),
+      MaterialPageRoute(builder: (_) => const SoferDocumenteScreen()),
       (route) => false,
     );
   }

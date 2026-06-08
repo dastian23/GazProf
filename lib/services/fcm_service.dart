@@ -139,4 +139,105 @@ class FcmService {
       debugPrint('FCM error: $e');
     }
   }
+
+  Future<void> sendUrgentNotification(
+    String orderId,
+    Map<String, dynamic> orderData,
+    String driverId,
+  ) async {
+    debugPrint('[FCM] sendUrgentNotification called, initialized: $_initialized');
+    if (!_initialized) return;
+
+    try {
+      final driverDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(driverId)
+          .get();
+      final token = driverDoc.data()?['fcmToken'] as String?;
+      if (token == null || token.isEmpty) {
+        debugPrint('[FCM] no token for driver $driverId');
+        return;
+      }
+
+      final adresa = orderData['adresa_livrare'] ?? 'Adresă necunoscută';
+      final blocAp = orderData['bloc_apartament'] ?? '';
+      final adresaCompleta = blocAp.isNotEmpty ? '$adresa, $blocAp' : adresa;
+      final total = orderData['total_comanda'] ?? 0;
+      final produse = orderData['produse'] ?? [];
+      final tipPlata = orderData['tip_plata'] ?? 'cash';
+
+      final produseLines = (produse as List)
+          .map((p) => '${p['cantitate']}x ${p['nume']}')
+          .toList();
+
+      final tipPlataLabel = tipPlata.toString().toLowerCase() == 'card'
+          ? 'Card'
+          : tipPlata.toString().toLowerCase() == 'factura'
+              ? 'Factura'
+              : 'Cash';
+
+      final body = [
+        adresaCompleta,
+        ...produseLines,
+        tipPlataLabel,
+      ].join('\n');
+
+      final scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
+      final client = await auth.clientViaServiceAccount(_credentials!, scopes);
+
+      final message = {
+        'message': {
+          'token': token,
+          'notification': {
+            'title': '⚠️   Comandă urgentă! Te rugăm să livrezi cât mai rapid.',
+            'body': body,
+          },
+          'data': {
+            'orderId': orderId,
+            'type': 'urgent_order',
+          },
+          'android': {
+            'priority': 'HIGH',
+            'notification': {
+              'channel_id': 'new_orders',
+              'color': '#FF0000',
+              'visibility': 'PUBLIC',
+              'sound': 'default',
+              'notification_count': 1,
+            },
+          },
+          'apns': {
+            'payload': {
+              'aps': {
+                'sound': 'default',
+                'badge': 1,
+                'alert': {
+                  'title': '⚠️   Comandă urgentă! Te rugăm să livrezi cât mai rapid.',
+                  'body': body,
+                },
+              },
+            },
+          },
+        },
+      };
+
+      final response = await client.post(
+        Uri.parse(
+            'https://fcm.googleapis.com/v1/projects/gazprof-ec09d/messages:send'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(message),
+      );
+
+      client.close();
+
+      if (response.statusCode == 200) {
+        debugPrint('[FCM] urgent notification sent to driver $driverId');
+      } else {
+        debugPrint(
+            '[FCM] urgent notification error ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('[FCM] urgent notification error: $e');
+    }
+  }
 }

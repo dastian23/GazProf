@@ -1,14 +1,37 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme_provider.dart';
+import '../../../../core/time_indicator.dart';
+import '../../shared/edit_order_screen.dart';
 
-class DispecerDocumenteList extends StatelessWidget {
+class DispecerDocumenteList extends StatefulWidget {
   final List<QueryDocumentSnapshot> comenzi;
 
   const DispecerDocumenteList({super.key, required this.comenzi});
+
+  @override
+  State<DispecerDocumenteList> createState() => _DispecerDocumenteListState();
+}
+
+class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) => setState(() {}));
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   double _cardDiscount(Map data) {
     final produse = data['produse'] as List? ?? [];
@@ -24,6 +47,7 @@ class DispecerDocumenteList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
+    final comenzi = widget.comenzi;
 
     int countDisponibile = comenzi.where((c) => c['status'] == 'In asteptare').length;
     int countPreluate = comenzi.where((c) => c['status'] == 'Alocata').length;
@@ -119,13 +143,22 @@ class DispecerDocumenteList extends StatelessWidget {
               String formatAdresa = tipAdresa.toString().toLowerCase() == 'rute' ? 'Rute' : 'Oraș';
               String formatPlata = tipPlata.toString().toLowerCase() == 'card' ? 'Card' : tipPlata.toString().toLowerCase() == 'factura' ? 'Factura' : 'Cash';
 
-              return Container(
+              final bool canEdit = (status == 'In asteptare' || status == 'Alocata');
+
+              return GestureDetector(
+                onTap: canEdit
+                    ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => EditOrderScreen(orderId: doc.id, orderData: data)))
+                    : null,
+                child: Container(
                 margin: const EdgeInsets.only(bottom: 15),
                 padding: const EdgeInsets.all(15),
                 decoration: BoxDecoration(
                   color: theme.cardFill,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: theme.cardOutline, width: 1.0),
+                  border: Border.all(
+              color: (status == 'In asteptare' || status == 'Alocata') ? getTimeBorderColor(date) : theme.cardOutline,
+              width: 1.5,
+            ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,7 +181,11 @@ class DispecerDocumenteList extends StatelessWidget {
                               ),
                               const SizedBox(height: 3),
                               Text(
-                        "$formatAdresa  •  $telefon  •  Plată: $formatPlata",
+                        "$formatAdresa  •  $telefon",
+                        style: TextStyle(color: theme.textGriFix, fontSize: 11),
+                      ),
+                      Text(
+                        "Plată: $formatPlata",
                         style: TextStyle(color: theme.textGriFix, fontSize: 11),
                       ),
                       if (creatDeNume.isNotEmpty)
@@ -305,8 +342,9 @@ class DispecerDocumenteList extends StatelessWidget {
                       _buildDriverInfo(idSofer, status, theme),
                   ],
                 ),
+              ),
               );
-            },
+              },
           ),
         ),
       ],
