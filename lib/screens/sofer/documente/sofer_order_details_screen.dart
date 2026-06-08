@@ -145,7 +145,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
   Future<bool> _showCancelDialog(BuildContext context, ThemeProvider theme) async {
     return await showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withValues(alpha:0.6),
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -154,12 +154,12 @@ class SoferOrderDetailsScreen extends StatelessWidget {
             color: theme.cardCreateCommand,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
-              color: Colors.red.withOpacity(0.3),
+              color: Colors.red.withValues(alpha:0.3),
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha:0.1),
                 blurRadius: 20,
                 spreadRadius: 2,
               ),
@@ -174,10 +174,10 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.1),
+                    color: Colors.red.withValues(alpha:0.1),
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: Colors.red.withOpacity(0.3),
+                      color: Colors.red.withValues(alpha:0.3),
                       width: 1.5,
                     ),
                   ),
@@ -218,8 +218,8 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: theme.isDark
-                        ? Colors.white.withOpacity(0.05)
-                        : Colors.black.withOpacity(0.04),
+                        ? Colors.white.withValues(alpha:0.05)
+                        : Colors.black.withValues(alpha:0.04),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
@@ -262,13 +262,13 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                           height: 48,
                           decoration: BoxDecoration(
                             color: theme.isDark
-                                ? Colors.white.withOpacity(0.07)
-                                : Colors.black.withOpacity(0.05),
+                                ? Colors.white.withValues(alpha:0.07)
+                                : Colors.black.withValues(alpha:0.05),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
                               color: theme.isDark
-                                  ? Colors.white.withOpacity(0.1)
-                                  : Colors.black.withOpacity(0.08),
+                                  ? Colors.white.withValues(alpha:0.1)
+                                  : Colors.black.withValues(alpha:0.08),
                             ),
                           ),
                           child: Center(
@@ -297,7 +297,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(14),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.red.withOpacity(0.35),
+                                color: Colors.red.withValues(alpha:0.35),
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -359,7 +359,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
           child: Container(
-            color: theme.sectionLabel.withOpacity(0.3),
+            color: theme.sectionLabel.withValues(alpha:0.3),
             height: 1.0,
           ),
         ),
@@ -415,7 +415,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             decoration: BoxDecoration(
-              color: theme.brandBlue.withOpacity(0.15),
+              color: theme.brandBlue.withValues(alpha:0.15),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -485,7 +485,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: theme.brandBlue.withOpacity(0.1),
+                        color: theme.brandBlue.withValues(alpha:0.1),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(
@@ -527,9 +527,9 @@ class SoferOrderDetailsScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.orange.withOpacity(0.07),
+                color: Colors.orange.withValues(alpha:0.07),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                border: Border.all(color: Colors.orange.withValues(alpha:0.2)),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -794,7 +794,7 @@ class SoferOrderDetailsScreen extends StatelessWidget {
         height: 2,
         color: active
             ? theme.brandBlue
-            : theme.textGriFix.withOpacity(0.3),
+            : theme.textGriFix.withValues(alpha:0.3),
         margin: const EdgeInsets.only(bottom: 16),
       ),
     );

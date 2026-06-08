@@ -184,7 +184,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1.0),
-          child: Container(color: theme.sectionLabel.withOpacity(0.3), height: 1.0),
+          child: Container(color: theme.sectionLabel.withValues(alpha:0.3), height: 1.0),
         ),
         actions: [
           IconButton(
@@ -254,7 +254,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: theme.brandBlue.withOpacity(0.1),
+                              color: theme.brandBlue.withValues(alpha:0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(Icons.edit_outlined, color: theme.brandBlue, size: 16),
@@ -266,7 +266,7 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(0.1),
+                              color: Colors.red.withValues(alpha:0.1),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(Icons.delete_outline, color: Colors.red, size: 16),
