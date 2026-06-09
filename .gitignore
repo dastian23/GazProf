@@ -122,3 +122,5 @@ app.*.symbols
 # Secret environments
 .env
 lib/firebase_options.dart
+firebase.json
+android/app/google-services.json
