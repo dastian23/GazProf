@@ -263,12 +263,26 @@ class AdminIstoricList extends StatelessWidget {
   }
 
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
-    final String fullName = driverNames[idSofer] ?? 'Necunoscut';
+    final cachedName = driverNames[idSofer];
+    if (cachedName == null) {
+      return FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(idSofer).get(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
+          final userData = snapshot.data!.data() as Map<String, dynamic>;
+          final String name = userData['nume'] as String? ?? 'Necunoscut';
+          istoricDriverNameCache[idSofer] = name;
+          return _driverInfoRow(name, status, theme);
+        },
+      );
+    }
+    return _driverInfoRow(cachedName, status, theme);
+  }
 
+  Widget _driverInfoRow(String fullName, String status, ThemeProvider theme) {
     List<String> words = fullName.trim().split(RegExp(r'\s+'));
     String initials = "U";
     String displayName = fullName;
-
     if (words.isNotEmpty) {
       if (words.length > 1) {
         initials = (words[0][0] + words[1][0]).toUpperCase();
