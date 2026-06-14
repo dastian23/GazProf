@@ -9,13 +9,10 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
 
-// --- SCREENS ---
-import '../home/dispecer_home_screen.dart';
-import '../profile/dispecer_profile_screen.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
+// --- SHELL ---
+import 'package:gazprof/screens/dispecer/dispecer_shell.dart';
 
 // --- INTERNAL COMPONENTS ---
 import 'dispecer_documente_empty.dart';
@@ -28,14 +25,59 @@ class DispecerDocumenteScreen extends StatefulWidget {
   State<DispecerDocumenteScreen> createState() => _DispecerDocumenteScreenState();
 }
 
-class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
+class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> with WidgetsBindingObserver {
 
-  // -- MODIFY THIS TO TEST ---
-  bool _esteInProgram() {
+  late DateTime _startOfShift;
+  late DateTime _endOfShift;
+  late bool _inProgram;
+  late Stream<QuerySnapshot> _ordersStream;
+
+  void _recomputeShift() {
     final now = DateTime.now();
-    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
-    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
-    return now.isAfter(startOfShift) && now.isBefore(endOfShift);
+    final newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    final newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    if (newStart != _startOfShift || newEnd != _endOfShift || newInProgram != _inProgram) {
+      setState(() {
+        _startOfShift = newStart;
+        _endOfShift = newEnd;
+        _inProgram = newInProgram;
+        _ordersStream = FirebaseFirestore.instance
+            .collection(FirestoreCollections.orders)
+            .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
+            .where('data_creare', isLessThan: _endOfShift)
+            .orderBy('data_creare', descending: true)
+            .snapshots();
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    final now = DateTime.now();
+    _startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    _endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    _inProgram = now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
+
+    _ordersStream = FirebaseFirestore.instance
+        .collection(FirestoreCollections.orders)
+        .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
+        .where('data_creare', isLessThan: _endOfShift)
+        .orderBy('data_creare', descending: true)
+        .snapshots();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _recomputeShift();
   }
 
   @override
@@ -46,11 +88,6 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: theme.isDark ? Brightness.light : Brightness.dark,
     ));
-
-    // --- DEFINING THE TIME RANGE FOR ORDERS  ---
-    final now = DateTime.now();
-    final startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
-    final endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
@@ -80,24 +117,15 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
                 // --- DYNAMIC RANGE  ---
                 Expanded(
                   child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection(FirestoreCollections.orders)
-                    // 1. Filter to be >= today at hour 07:00
-                        .where('data_creare', isGreaterThanOrEqualTo: startOfShift)
-                    // 2. Filter to be < tomorrow at hour 01:00
-                        .where('data_creare', isLessThan: endOfShift)
-                    // 3. We order from the new to the oldest
-                        .orderBy('data_creare', descending: true)
-                        .snapshots(),
+                    stream: _ordersStream,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return Center(child: CircularProgressIndicator(color: theme.brandBlue));
                       }
 
                       final comenzi = snapshot.data?.docs ?? [];
-                      final inProgram = _esteInProgram();
 
-                      if (!inProgram || comenzi.isEmpty) {
+                      if (!_inProgram || comenzi.isEmpty) {
                         return const DispecerDocumenteEmpty();
                       }
 
@@ -109,14 +137,7 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
             ),
           ),
 
-          // --- NAVBAR ---
-          AppNavBar(
-            selectedIndex: 1,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
     );
@@ -125,27 +146,7 @@ class _DispecerDocumenteScreenState extends State<DispecerDocumenteScreen> {
   // --- HELPERS UI  ---
 
   void _navigate(BuildContext context, int index) {
-    if (index == 1) return;
-
-    Widget nextScreen;
-    if (index == 0) {
-      nextScreen = const DispecerHomeScreen();
-    } else if (index == 2) {
-      nextScreen = const DispecerIstoricScreen();
-    } else if (index == 3) {
-      nextScreen = const DispecerProfileScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    DispecerShellState.of(context)?.switchTab(index);
   }
 
 }

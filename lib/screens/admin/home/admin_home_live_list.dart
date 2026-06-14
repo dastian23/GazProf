@@ -10,21 +10,20 @@ import 'package:gazprof/core/constants.dart';
 // --- THEME ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/time_indicator.dart';
+import '../../../../core/driver_name_cache.dart';
 import '../../shared/edit_order_screen.dart';
 
+// Păstrăm alias-urile pentru compatibilitate cu admin_home_screen.dart
+// care le apelează direct
 final Map<String, String> driverNameCache = {};
 
 Future<void> preloadDriverNames(Iterable<String?> ids) async {
-  final missing = ids.whereType<String>().where((id) => !driverNameCache.containsKey(id)).toList();
-  if (missing.isEmpty) return;
-  await Future.wait(missing.map((id) async {
-    try {
-      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(id).get();
-      if (doc.exists) driverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
-    } catch (e) {
-      debugPrint("Eroare preloadDriverNames: $e");
-    }
-  }));
+  await DriverNameCache.instance.preload(ids);
+  // Sincronizăm și map-ul local folosit de admin_home_screen pentru lookups rapide
+  for (final id in ids.whereType<String>()) {
+    final name = DriverNameCache.instance.get(id);
+    if (name != null) driverNameCache[id] = name;
+  }
 }
 
 class AdminHomeLiveList extends StatefulWidget {
@@ -64,12 +63,30 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
   }
 
   Future<void> _takeOrder(String id) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
     try {
-      await FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id).update({
-        'status': OrderStatus.allocated.label,
-        'id_sofer': FirebaseAuth.instance.currentUser?.uid,
-        'data_preluare': FieldValue.serverTimestamp(),
+      final ref = FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id);
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        if (!snap.exists) throw Exception('Comanda nu mai există.');
+        final currentStatus = (snap.data() as Map<String, dynamic>)['status'] as String?;
+        if (currentStatus != OrderStatus.waiting.label) {
+          throw Exception('Comanda a fost deja preluată de altcineva.');
+        }
+        tx.update(ref, {
+          'status': OrderStatus.allocated.label,
+          'id_sofer': uid,
+          'data_preluare': FieldValue.serverTimestamp(),
+        });
       });
+    } on Exception catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.orange.shade800),
+        );
+      }
     } catch (e) {
       debugPrint('Eroare alocare comandă: $e');
     }
@@ -306,14 +323,21 @@ class _AdminHomeLiveListState extends State<AdminHomeLiveList> {
   }
 
   Widget _buildDriverInfo(String idSofer, String status, ThemeProvider theme) {
-    final cachedName = widget.driverNames[idSofer];
+    // Încearcă cache-ul centralizat cu TTL
+    final cachedName = DriverNameCache.instance.get(idSofer)
+        ?? widget.driverNames[idSofer];
+
     if (cachedName == null) {
       return FutureBuilder<DocumentSnapshot>(
-        future: FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(idSofer).get(),
+        future: FirebaseFirestore.instance
+            .collection(FirestoreCollections.users)
+            .doc(idSofer)
+            .get(),
         builder: (context, snapshot) {
           if (!snapshot.hasData || !snapshot.data!.exists) return const SizedBox();
           final userData = snapshot.data!.data() as Map<String, dynamic>;
           final String name = userData['nume'] as String? ?? 'Necunoscut';
+          DriverNameCache.instance.set(idSofer, name);
           driverNameCache[idSofer] = name;
           return _driverInfoRow(name, status, theme);
         },

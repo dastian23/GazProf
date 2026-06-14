@@ -10,18 +10,15 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
 
-// --- SCREENS ---
-import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
+// --- SHELL ---
+import 'package:gazprof/screens/admin/admin_shell.dart';
 
 // --- COMPONENTS ---
 import 'admin_home_preluate_list.dart';
 import 'admin_home_live_list.dart';
 import 'admin_home_users_list.dart';
-import 'package:gazprof/screens/admin/documente/admin_documente_screen.dart';
-import 'package:gazprof/screens/admin/profile/admin_profile_screen.dart';
 import 'package:gazprof/screens/admin/profile/admin_gestionare_screen.dart';
 
 
@@ -32,16 +29,40 @@ class AdminHomeScreen extends StatefulWidget {
   State<AdminHomeScreen> createState() => _AdminHomeScreenState();
 }
 
-class _AdminHomeScreenState extends State<AdminHomeScreen> {
-  // --- GETTERS FOR CURRENT SHIFT
-  DateTime get _startOfShift {
+class _AdminHomeScreenState extends State<AdminHomeScreen> with WidgetsBindingObserver {
+  late DateTime _startOfShift;
+  late DateTime _endOfShift;
+
+  void _recomputeShift() {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    if (newStart != _startOfShift || newEnd != _endOfShift) {
+      setState(() {
+        _startOfShift = newStart;
+        _endOfShift = newEnd;
+      });
+    }
   }
 
-  DateTime get _endOfShift {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    _startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    _endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _recomputeShift();
   }
 
   @override
@@ -125,14 +146,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             ),
           ),
 
-          // --- NAVBAR  ---
-          AppNavBar(
-            selectedIndex: 0,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
     );
@@ -326,27 +340,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
 
   // --- NAVIGATE LOGIC ---
   void _navigate(BuildContext context, int index) {
-    if (index == 0) return;
-
-    Widget nextScreen;
-    if (index == 1) {
-      nextScreen = const AdminDocumenteScreen();
-    } else if (index == 2) {
-      nextScreen = const AdminIstoricScreen();
-    } else if (index == 3) {
-      nextScreen = const AdminProfileScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    AdminShellState.of(context)?.switchTab(index);
   }
 }
 

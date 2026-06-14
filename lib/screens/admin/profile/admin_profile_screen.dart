@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:gazprof/screens/admin/profile/admin_product_setting_screen.dart';
@@ -16,13 +15,8 @@ import 'package:gazprof/core/constants.dart';
 // --- SERVICES ---
 import 'package:gazprof/services/auth_service.dart';
 
-// --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
-
 // --- SCREENS ---
 import 'package:gazprof/auth/login_screen.dart';
-import '../home/admin_home_screen.dart';
-import '../documente/admin_documente_screen.dart';
 import 'package:gazprof/screens/shared/personal_data_screen.dart';
 import 'package:gazprof/screens/shared/password_confirm_screen.dart';
 import 'package:gazprof/screens/admin/profile/admin_gestionare_screen.dart';
@@ -168,7 +162,7 @@ class AdminProfileScreen extends StatelessWidget {
                         ]),
 
                         Text(
-                          "Versiune 1.0.1.4",
+                          "Versiune 1.0.1.5",
                           style: TextStyle(color: theme.textSecondary, fontSize: 10),
                         ),
                         const SizedBox(height: 100),
@@ -180,14 +174,7 @@ class AdminProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // --- NAVBAR ---
-          AppNavBar(
-            selectedIndex: 3,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
     );
@@ -424,27 +411,5 @@ class AdminProfileScreen extends StatelessWidget {
     );
   }
 
-  void _navigate(BuildContext context, int index) {
-    if (index == 3) return;
 
-    Widget nextScreen;
-    if (index == 0) {
-      nextScreen = const AdminHomeScreen();
-    } else if (index == 1) {
-      nextScreen = const AdminDocumenteScreen();
-    } else if (index == 2) {
-      nextScreen = const AdminIstoricScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
-  }
 }

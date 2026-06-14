@@ -70,10 +70,18 @@ class SoferOrderDetailsScreen extends StatelessWidget {
 
   Future<void> _updateStatus(BuildContext context, String status) async {
     try {
+      final Map<String, dynamic> updateData = {'status': status};
+
+      if (status == OrderStatus.completed.label) {
+        updateData['data_finalizare'] = FieldValue.serverTimestamp();
+      } else if (status == OrderStatus.cancelled.label) {
+        updateData['data_anulare'] = FieldValue.serverTimestamp();
+      }
+
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
           .doc(orderId)
-          .update({'status': status});
+          .update(updateData);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       debugPrint("Eroare la _updateStatus: $e");

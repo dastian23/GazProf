@@ -13,6 +13,7 @@ import 'package:gazprof/models/product_item.dart';
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
+import '../../../../core/products_provider.dart';
 
 class SoferCreateOrderScreen extends StatefulWidget {
   const SoferCreateOrderScreen({super.key});
@@ -27,18 +28,26 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   bool _cardFidelitate = false;
   String _selectedPayment = PaymentType.cash.value;
   String _addressType = AppConstants.addressTypeCity;
 
-  List<ProductItem> products = []; 
+  List<ProductItem> products = [];
 
   @override
   void initState() {
     super.initState();
-    _loadLiveProducts(); 
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
+      productsProvider.loadIfNeeded().then((_) {
+        if (mounted) {
+          setState(() {
+            products = productsProvider.freshCopy();
+          });
+        }
+      });
+    });
   }
 
   @override
@@ -62,53 +71,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
         .fold(0, (sum, p) => sum + p.quantity) * 5;
   }
 
-  Future<void> _loadLiveProducts() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection(FirestoreCollections.products)
-          .orderBy('pozitie')
-          .get();
-      
-      if (snapshot.docs.isEmpty) {
-        final defaultProducts = [
-          {"nume": "Butelie 10kg", "pret": 120.0},
-          {"nume": "Butelie 11kg", "pret": 115.0},
-          {"nume": "Butelie 11kg filet", "pret": 115.0},
-          {"nume": "Butelie 35kg", "pret": 400.0},
-          {"nume": "Ambalaj", "pret": 250.0},
-          {"nume": "Ceas butelie", "pret": 40.0},
-        ];
-        
-        for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
-            'nume': defaultProducts[i]['nume'],
-            'pret': defaultProducts[i]['pret'],
-            'pozitie': i,
-          });
-        }
-        return _loadLiveProducts(); 
-      }
 
-      if (mounted) {
-        setState(() {
-          products = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return ProductItem(
-              data['nume'] ?? 'Produs',
-              (data['pret'] ?? 0.0).toDouble(),
-              0,
-            );
-          }).toList();
-          _isProductsLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Eroare la încărcarea nomenclatorului de produse în ecran Șofer: $e");
-      if (mounted) {
-        setState(() => _isProductsLoading = false);
-      }
-    }
-  }
 
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
     final TextEditingController priceEditController = TextEditingController(text: item.price.toStringAsFixed(0));
@@ -272,7 +235,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
               _buildSectionTitle("TIP BUTELIE", theme),
               _buildCardContainer(
                 theme,
-                _isProductsLoading
+                products.isEmpty
                     ? const Center(
                         child: Padding(
                           padding: EdgeInsets.all(20),
@@ -406,7 +369,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
                   boxShadow: theme.buttonShadow,
                 ),
                 child: ElevatedButton(
-                  onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
+                  onPressed: _isLoading || products.isEmpty ? null : _createOrder,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
                     shape: RoundedRectangleBorder(

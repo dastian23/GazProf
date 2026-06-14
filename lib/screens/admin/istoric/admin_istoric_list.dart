@@ -5,20 +5,18 @@ import 'package:intl/intl.dart';
 import 'package:gazprof/core/constants.dart';
 
 import '../../../../core/theme_provider.dart';
+import '../../../../core/driver_name_cache.dart';
 
+// Alias păstrat pentru compatibilitate cu admin_istoric_screen.dart
 final Map<String, String> istoricDriverNameCache = {};
 
 Future<void> preloadIstoricDriverNames(Iterable<String?> ids) async {
-  final missing = ids.whereType<String>().where((id) => !istoricDriverNameCache.containsKey(id)).toList();
-  if (missing.isEmpty) return;
-  await Future.wait(missing.map((id) async {
-    try {
-      final doc = await FirebaseFirestore.instance.collection(FirestoreCollections.users).doc(id).get();
-      if (doc.exists) istoricDriverNameCache[id] = (doc.data() as Map)['nume'] ?? 'Necunoscut';
-    } catch (e) {
-      debugPrint("Eroare preloadIstoricDriverNames: $e");
-    }
-  }));
+  await DriverNameCache.instance.preload(ids);
+  // Sincronizăm map-ul local folosit de screen pentru lookups
+  for (final id in ids.whereType<String>()) {
+    final name = DriverNameCache.instance.get(id);
+    if (name != null) istoricDriverNameCache[id] = name;
+  }
 }
 
 class AdminIstoricList extends StatelessWidget {

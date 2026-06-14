@@ -11,15 +11,9 @@ import '../../../../core/user_provider.dart';
 import 'package:provider/provider.dart';
 
 
-// --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
-
 // --- SCREENS ---
 import 'package:gazprof/screens/shared/personal_data_screen.dart';
 import 'package:gazprof/auth/login_screen.dart';
-import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
-import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
 import 'package:gazprof/screens/shared/password_confirm_screen.dart';
 
 
@@ -120,7 +114,7 @@ class DispecerProfileScreen extends StatelessWidget {
 
                         const Spacer(flex: 1),
                         Text(
-                          "Versiune 1.0.1.4",
+                          "Versiune 1.0.1.5",
                           style: TextStyle(color: theme.textSecondary, fontSize: 10),
                         ),
                         const SizedBox(height: 80),
@@ -132,14 +126,7 @@ class DispecerProfileScreen extends StatelessWidget {
             ),
           ),
 
-          // NAVBAR
-          AppNavBar(
-            selectedIndex: 3,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
     );
@@ -285,28 +272,6 @@ class DispecerProfileScreen extends StatelessWidget {
   }
 
 
-  void _navigate(BuildContext context, int index) {
-    if (index == 3) return;
 
-    Widget nextScreen;
-    if (index == 0) {
-      nextScreen = const DispecerHomeScreen();
-    } else if (index == 1) {
-      nextScreen = const DispecerDocumenteScreen();
-    } else if (index == 2) {
-      nextScreen = const DispecerIstoricScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
-  }
 }
 

@@ -10,11 +10,8 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- SCREENS & COMPONENTS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
-import '../documente/sofer_documente_screen.dart';
-import '../istoric/sofer_istoric_screen.dart';
-import '../profile/sofer_profile_screen.dart';
+import 'package:gazprof/screens/sofer/sofer_shell.dart';
 import 'sofer_create_order_screen.dart';
 import 'sofer_home_list.dart';
 import 'sofer_home_empty.dart';
@@ -26,23 +23,63 @@ class SoferHomeScreen extends StatefulWidget {
   State<SoferHomeScreen> createState() => _SoferHomeScreenState();
 }
 
-class _SoferHomeScreenState extends State<SoferHomeScreen> {
+class _SoferHomeScreenState extends State<SoferHomeScreen> with WidgetsBindingObserver {
   String _filterType = AppConstants.addressTypeCity;
 
-  // --- GETTERS FOR CURRENT SHIFT
-  DateTime get _startOfShift {
+  late DateTime _startOfShift;
+  late DateTime _endOfShift;
+  late bool _inProgram;
+  Stream<QuerySnapshot>? _allShiftOrdersStream;
+
+  void _recomputeShift() {
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    final newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    if (newStart != _startOfShift || newEnd != _endOfShift || newInProgram != _inProgram) {
+      setState(() {
+        _startOfShift = newStart;
+        _endOfShift = newEnd;
+        _inProgram = newInProgram;
+        _allShiftOrdersStream = newInProgram
+            ? FirebaseFirestore.instance
+                .collection(FirestoreCollections.orders)
+                .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
+                .where('data_creare', isLessThan: _endOfShift)
+                .orderBy('data_creare', descending: true)
+                .snapshots()
+            : null;
+      });
+    }
   }
 
-  DateTime get _endOfShift {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    _startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    _endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    _inProgram = now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
+    if (_inProgram) {
+      _allShiftOrdersStream = FirebaseFirestore.instance
+          .collection(FirestoreCollections.orders)
+          .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
+          .where('data_creare', isLessThan: _endOfShift)
+          .orderBy('data_creare', descending: true)
+          .snapshots();
+    }
   }
 
-  bool _esteInProgram() {
-    final now = DateTime.now();
-    return now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _recomputeShift();
   }
 
   @override
@@ -50,8 +87,6 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
 
-
-    final bool inProgram = _esteInProgram();
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -115,7 +150,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                         const SizedBox(height: 20),
 
                         // Show the rapid order creation btn only if the driver is in the schedule
-                        if (inProgram) ...[
+                        if (_inProgram) ...[
                           _buildQuickOrderButton(context),
                           const SizedBox(height: 25),
                         ],
@@ -123,7 +158,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
                         _buildSectionHeader(theme),
 
                         // DYNAMIC ZONE
-                        _buildDynamicContent(theme, inProgram),
+                        _buildDynamicContent(theme),
 
                         const SizedBox(height: 100),
                       ],
@@ -134,22 +169,15 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
             ),
           ),
 
-          // --- NAVBAR ---
-          AppNavBar(
-            selectedIndex: 0,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
     );
   }
 
-  // --- WIDGET DYNAMIC ZONE ( EMPTY OR LIST )
-  Widget _buildDynamicContent(ThemeProvider theme, bool inProgram) {
-    if (!inProgram) {
+  // --- WIDGET DYNAMIC ZONE + STATS: uses a single shared stream ---
+  Widget _buildDynamicContent(ThemeProvider theme) {
+    if (!_inProgram) {
       return const SoferHomeEmpty(
         titlu: "În afara programului",
         mesaj: "Te afli în afara programului de lucru\n(07:00 - 24:00).\nPreluarea și crearea comenzilor sunt dezactivate.",
@@ -157,51 +185,53 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
     }
 
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection(FirestoreCollections.orders)
-          .where('status', isEqualTo: OrderStatus.waiting.label)
-          .where('tip_adresa', isEqualTo: _filterType)
-          .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
-          .where('data_creare', isLessThan: _endOfShift)
-          .orderBy('data_creare', descending: true)
-          .snapshots(),
+      stream: _allShiftOrdersStream,
       builder: (context, snapshot) {
         if (snapshot.hasError) {
           return const SoferHomeEmpty(titlu: "Eroare", mesaj: "A apărut o problemă la încărcarea comenzilor.");
         }
 
-        if (!snapshot.hasData) {
-          return Padding(
-            padding: const EdgeInsets.only(top: 30),
-            child: Center(child: CircularProgressIndicator(color: theme.brandBlue)),
-          );
-        }
+        final docs = snapshot.data?.docs ?? [];
 
-        final docs = snapshot.data!.docs;
+        // Filter locally for the active tab type
+        final filteredDocs = docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return data['status'] == OrderStatus.waiting.label &&
+              data['tip_adresa'] == _filterType;
+        }).toList();
 
-        if (docs.isEmpty) {
-          // Dynamic message
+        if (filteredDocs.isEmpty && snapshot.hasData) {
           String tipComanda = _filterType == AppConstants.addressTypeCity ? 'Oraș' : 'Rute';
-
           return SoferHomeEmpty(
             titlu: "Ești online",
             mesaj: "Nu există comenzi de tip $tipComanda în așteptare pentru tura curentă.",
           );
         }
 
-        return SoferHomeList(comenzi: docs);
+        return SoferHomeList(comenzi: filteredDocs);
       },
     );
   }
 
-  // --- STATS ---
+  // --- STATS: reuses the same shared stream via a separate StreamBuilder ---
   Widget _buildRealStatsRow(ThemeProvider theme) {
+    if (!_inProgram) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            Expanded(child: _buildStatCard("0", "Disponibile", const Color(0xFFFF6B00), theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildStatCard("0", "Preluate", theme.brandBlue, theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildStatCard("0", "Livrate", const Color(0xFF0C9E43), theme)),
+          ],
+        ),
+      );
+    }
+
     return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection(FirestoreCollections.orders)
-          .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
-          .where('data_creare', isLessThan: _endOfShift)
-          .snapshots(),
+      stream: _allShiftOrdersStream,
       builder: (context, snapshot) {
         int disponibile = 0, preluate = 0, livrate = 0;
 
@@ -318,16 +348,7 @@ class _SoferHomeScreenState extends State<SoferHomeScreen> {
 
 
   void _navigate(BuildContext context, int index) {
-    if (index == 0) return;
-    Widget nextScreen;
-    if (index == 1) nextScreen = const SoferDocumenteScreen();
-    else if (index == 2) nextScreen = const SoferIstoricScreen();
-    else nextScreen = const SoferProfileScreen();
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(pageBuilder: (context, a1, a2) => nextScreen, transitionDuration: Duration.zero),
-    );
+    SoferShellState.of(context)?.switchTab(index);
   }
 }
 

@@ -9,13 +9,10 @@ import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
 
-// --- SCREENS ---
-import '../home/dispecer_home_screen.dart';
-import '../documente/dispecer_documente_screen.dart';
-import '../profile/dispecer_profile_screen.dart';
+// --- SHELL ---
+import 'package:gazprof/screens/dispecer/dispecer_shell.dart';
 
 // --- COMPONENTS  ---
 import 'dispecer_istoric_empty.dart';
@@ -41,6 +38,18 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
+  // --- FETCH: stream pentru azi, future pentru perioade trecute ---
+  Stream<QuerySnapshot>? _istoricStream;
+  Future<QuerySnapshot>? _istoricFuture;
+
+  bool _isToday() {
+    final now = DateTime.now();
+    final s = _selectedDateRange.start;
+    final e = _selectedDateRange.end;
+    return s.year == now.year && s.month == now.month && s.day == now.day &&
+           e.year == now.year && e.month == now.month && e.day == now.day;
+  }
+
   void _onSearchSubmitted(String value) {
     setState(() => _searchQuery = value.toLowerCase().trim());
   }
@@ -48,6 +57,33 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
   void _clearSearch() {
     _searchController.clear();
     setState(() => _searchQuery = '');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadIstoric();
+  }
+
+  void _reloadIstoric() {
+    final start = DateTime(_selectedDateRange.start.year, _selectedDateRange.start.month, _selectedDateRange.start.day, 0, 0, 0);
+    final end = DateTime(_selectedDateRange.end.year, _selectedDateRange.end.month, _selectedDateRange.end.day, 23, 59, 59);
+    final query = FirebaseFirestore.instance
+        .collection(FirestoreCollections.orders)
+        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
+        .where('data_creare', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('data_creare', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .orderBy('data_creare', descending: true);
+
+    setState(() {
+      if (_isToday()) {
+        _istoricStream = query.snapshots();
+        _istoricFuture = null;
+      } else {
+        _istoricFuture = query.get();
+        _istoricStream = null;
+      }
+    });
   }
 
   @override
@@ -104,7 +140,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
                   // Option 2: Today
                   _buildMenuButton(Icons.today_rounded, "Astăzi", "Doar comenzile de azi", false, () {
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now()));
+                    _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
 
@@ -113,7 +150,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                   // Option 3: Last Month
                   _buildMenuButton(Icons.calendar_view_month_rounded, "Luna curentă", "Toate comenzile din această lună", false, () {
                     final now = DateTime.now();
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, now.month, 1), end: DateTime(now.year, now.month + 1, 0)));
+                    _selectedDateRange = DateTimeRange(start: DateTime(now.year, now.month, 1), end: DateTime(now.year, now.month + 1, 0));
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
 
@@ -122,7 +160,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
                   // Option 4: Last Year
                   _buildMenuButton(Icons.calendar_month_rounded, "Anul curent", "Toate comenzile de anul acesta", false, () {
                     final now = DateTime.now();
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, 1, 1), end: DateTime(now.year, 12, 31)));
+                    _selectedDateRange = DateTimeRange(start: DateTime(now.year, 1, 1), end: DateTime(now.year, 12, 31));
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
                   const SizedBox(height: 15),
@@ -176,7 +215,8 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
     );
 
     if (picked != null) {
-      setState(() => _selectedDateRange = picked);
+      _selectedDateRange = picked;
+      _reloadIstoric();
     }
   }
 
@@ -249,194 +289,150 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
                 // --- FIREBASE DINAMIC SPACE ---
                 Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection(FirestoreCollections.orders)
-                        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
-                        .orderBy('data_creare', descending: true)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                      final allIstoric = snapshot.data?.docs ?? [];
-
-                      final filteredComenzi = allIstoric.where((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-
-                        final ts = data['data_creare'] as Timestamp?;
-                        if (ts == null) return false;
-                        final dt = ts.toDate();
-
-                        DateTime startBound = DateTime(_selectedDateRange.start.year, _selectedDateRange.start.month, _selectedDateRange.start.day, 0, 0, 0);
-                        DateTime endBound = DateTime(_selectedDateRange.end.year, _selectedDateRange.end.month, _selectedDateRange.end.day, 23, 59, 59);
-
-                        if (dt.isBefore(startBound) || dt.isAfter(endBound)) return false;
-
-                          if (_typeFilter != 'Toate') {
-                          final tip = data['tip_adresa'] ?? 'oras';
-                          if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
-                        }
-
-                        if (_searchQuery.isNotEmpty) {
-                          final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
-                          final telefon = (data['telefon_client'] ?? '').toString();
-                          if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) return false;
-                        }
-
-                        return true;
-                      }).toList();
-
-                      // CALC STATS
-                      double _cardDiscountFromData(Map data) {
-                        final produse = data['produse'] as List? ?? [];
-                        double count = 0;
-                        for (var p in produse) {
-                          if (p['nume'].toString().startsWith('Butelie')) {
-                            count += (p['cantitate'] ?? 0).toDouble();
-                          }
-                        }
-                        return count * AppConstants.discountPerBottle;
-                      }
-                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
-                      int countCreate = filteredComenzi.length;
-                      double sumIncasati = 0;
-                      for (var doc in filteredComenzi) {
-                        final data = doc.data() as Map;
-                        if (data['status'] == OrderStatus.completed.label) {
-                          double total = (data['total_comanda'] ?? 0).toDouble();
-                          if (data['card_fidelitate'] == true) {
-                            total -= _cardDiscountFromData(data);
-                          }
-                          sumIncasati += total;
-                        }
-                      }
-
-                      return Column(
-                        children: [
-                          // --- STATS ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildStatBox(countCreate.toString(), "Create", theme.brandBlue, theme)),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // --- CĂUTARE TEXT ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: TextField(
-                              controller: _searchController,
-                              maxLength: 200,
-                              inputFormatters: [LengthLimitingTextInputFormatter(200)],
-                              onSubmitted: _onSearchSubmitted,
-                              textInputAction: TextInputAction.search,
-                              style: TextStyle(color: theme.textPrimary, fontSize: 14),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
-                                prefixIcon: GestureDetector(
-                                  onTap: () => _onSearchSubmitted(_searchController.text),
-                                  child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
-                                ),
-                                hintText: 'Caută după adresă sau telefon...',
-                                hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
-                                counterText: '',
-                                suffixIcon: _searchQuery.isNotEmpty
-                                    ? GestureDetector(
-                                        onTap: _clearSearch,
-                                        child: Icon(Icons.clear, color: theme.textSecondary, size: 18),
-                                      )
-                                    : null,
-                                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: theme.textCardOutline),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // --- FILTER INTERN/EXTERN ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
-                              ],
-                            ),
-                          ),
-
-                          // --- OPEN CALENDAR MENU BUTTON ---
-                          GestureDetector(
-                            onTap: () => _openDateMenu(context, theme),
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.date_range_rounded, color: theme.brandBlue, size: 18),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        _formatDateRange(_selectedDateRange),
-                                        style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 20),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // --- LIST OR EMPTY STATE
-                          Expanded(
-                            child: isLoading
-                                ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
-                                : filteredComenzi.isEmpty
-                                    ? const DispecerIstoricEmpty()
-                                    : DispecerIstoricList(comenzi: filteredComenzi),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                  child: _istoricStream != null
+                    ? StreamBuilder<QuerySnapshot>(
+                        stream: _istoricStream,
+                        builder: (context, snapshot) => _buildIstoricContent(context, snapshot, theme),
+                      )
+                    : FutureBuilder<QuerySnapshot>(
+                        future: _istoricFuture,
+                        builder: (context, snapshot) => _buildIstoricContent(context, snapshot, theme),
+                      ),
                 ),
               ],
             ),
           ),
 
-          // --- NAVBAR  ---
-          AppNavBar(
-            selectedIndex: 2,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
+
         ],
       ),
+    );
+  }
+
+  Widget _buildIstoricContent(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot, ThemeProvider theme) {
+    final isLoading = snapshot.connectionState == ConnectionState.waiting;
+    final allIstoric = snapshot.data?.docs ?? [];
+
+    final filteredComenzi = allIstoric.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (_typeFilter != 'Toate') {
+        final tip = data['tip_adresa'] ?? 'oras';
+        if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
+      }
+      if (_searchQuery.isNotEmpty) {
+        final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
+        final telefon = (data['telefon_client'] ?? '').toString();
+        if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) return false;
+      }
+      return true;
+    }).toList();
+
+    double cardDiscountFromData(Map data) {
+      final produse = data['produse'] as List? ?? [];
+      double count = 0;
+      for (var p in produse) {
+        if (p['nume'].toString().startsWith('Butelie')) count += (p['cantitate'] ?? 0).toDouble();
+      }
+      return count * AppConstants.discountPerBottle;
+    }
+    int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
+    int countCreate = filteredComenzi.length;
+    double sumIncasati = 0;
+    for (var doc in filteredComenzi) {
+      final data = doc.data() as Map;
+      if (data['status'] == OrderStatus.completed.label) {
+        double total = (data['total_comanda'] ?? 0).toDouble();
+        if (data['card_fidelitate'] == true) total -= cardDiscountFromData(data);
+        sumIncasati += total;
+      }
+    }
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildStatBox(countCreate.toString(), "Create", theme.brandBlue, theme)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: TextField(
+            controller: _searchController,
+            maxLength: 200,
+            inputFormatters: [LengthLimitingTextInputFormatter(200)],
+            onSubmitted: _onSearchSubmitted,
+            textInputAction: TextInputAction.search,
+            style: TextStyle(color: theme.textPrimary, fontSize: 14),
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+              prefixIcon: GestureDetector(
+                onTap: () => _onSearchSubmitted(_searchController.text),
+                child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
+              ),
+              hintText: 'Caută după adresă sau telefon...',
+              hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+              counterText: '',
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? GestureDetector(onTap: _clearSearch, child: Icon(Icons.clear, color: theme.textSecondary, size: 18))
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
+              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.textCardOutline)),
+              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: theme.brandBlue, width: 1.5)),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            children: [
+              Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
+            ],
+          ),
+        ),
+        GestureDetector(
+          onTap: () => _openDateMenu(context, theme),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(children: [
+                  Icon(Icons.date_range_rounded, color: theme.brandBlue, size: 18),
+                  const SizedBox(width: 10),
+                  Text(_formatDateRange(_selectedDateRange), style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold)),
+                ]),
+                Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 20),
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: isLoading
+              ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
+              : filteredComenzi.isEmpty
+                  ? const DispecerIstoricEmpty()
+                  : DispecerIstoricList(comenzi: filteredComenzi),
+        ),
+      ],
     );
   }
 
@@ -485,17 +481,7 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 2) return;
-    Widget nextScreen;
-    if (index == 0) nextScreen = const DispecerHomeScreen();
-    else if (index == 1) nextScreen = const DispecerDocumenteScreen();
-    else if (index == 3) nextScreen = const DispecerProfileScreen();
-    else return;
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(pageBuilder: (context, a1, a2) => nextScreen, transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero),
-    );
+    DispecerShellState.of(context)?.switchTab(index);
   }
 
 }

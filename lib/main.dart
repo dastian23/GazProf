@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +13,7 @@ import 'package:gazprof/core/constants.dart';
 // --- PROVIDERS & SERVICES ---
 import 'package:gazprof/core/theme_provider.dart';
 import 'package:gazprof/core/user_provider.dart';
+import 'package:gazprof/core/products_provider.dart';
 import 'package:gazprof/services/notification_service.dart';
 import 'package:gazprof/services/fcm_service.dart';
 import 'package:flutter/services.dart';
@@ -18,9 +21,9 @@ import 'package:flutter/services.dart';
 // --- SCREENS ---
 import 'package:gazprof/auth/login_screen.dart';
 import 'package:gazprof/screens/niciunul/home/niciunul_home_screen.dart';
-import 'package:gazprof/screens/sofer/home/sofer_home_screen.dart';
-import 'package:gazprof/screens/dispecer/home/dispecer_home_screen.dart';
-import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
+import 'package:gazprof/screens/sofer/sofer_shell.dart';
+import 'package:gazprof/screens/dispecer/dispecer_shell.dart';
+import 'package:gazprof/screens/admin/admin_shell.dart';
 
 
 void main() async {
@@ -63,6 +66,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ProductsProvider()),
       ],
       child: const GazProfApp(),
     ),
@@ -123,8 +127,31 @@ class AuthWrapper extends StatelessWidget {
 }
 
 // RoleRouter — reads the role and redirect to the right screen
-class RoleRouter extends StatelessWidget {
+class RoleRouter extends StatefulWidget {
   const RoleRouter({super.key});
+
+  @override
+  State<RoleRouter> createState() => _RoleRouterState();
+}
+
+class _RoleRouterState extends State<RoleRouter> {
+  // Cache the future in initState so it is never recreated on rebuild
+  late final Future<DocumentSnapshot> _userFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _userFuture = FirebaseFirestore.instance
+          .collection(FirestoreCollections.users)
+          .doc(user.uid)
+          .get();
+    } else {
+      // Provide a never-completing future; AuthWrapper will redirect to login
+      _userFuture = Completer<DocumentSnapshot>().future;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -135,10 +162,7 @@ class RoleRouter extends StatelessWidget {
     }
 
     return FutureBuilder<DocumentSnapshot>(
-      future: FirebaseFirestore.instance
-          .collection(FirestoreCollections.users)
-          .doc(user.uid)
-          .get(),
+      future: _userFuture,
       builder: (context, snapshot) {
 
         if (snapshot.connectionState == ConnectionState.waiting) {
@@ -192,11 +216,11 @@ class RoleRouter extends StatelessWidget {
         if (rol == 'neatribuit') {
           return const NiciunulHomeScreen();
         } else if (rol == 'sofer') {
-          return const SoferHomeScreen();
+          return const SoferShell();
         } else if (rol == 'dispecer') {
-          return const DispecerHomeScreen();
+          return const DispecerShell();
         } else if (rol == 'admin' || rol == 'administrator') {
-          return const AdminHomeScreen();
+          return const AdminShell();
         } else {
           WidgetsBinding.instance.addPostFrameCallback((_) async {
             await FirebaseAuth.instance.signOut();

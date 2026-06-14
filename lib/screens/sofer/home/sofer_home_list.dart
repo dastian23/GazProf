@@ -46,12 +46,30 @@ class _SoferHomeListState extends State<SoferHomeList> {
   }
 
   Future<void> _takeOrder(String id) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
     try {
-      await FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id).update({
-        'status': OrderStatus.allocated.label,
-        'id_sofer': FirebaseAuth.instance.currentUser?.uid,
-        'data_preluare': FieldValue.serverTimestamp(),
+      final ref = FirebaseFirestore.instance.collection(FirestoreCollections.orders).doc(id);
+      await FirebaseFirestore.instance.runTransaction((tx) async {
+        final snap = await tx.get(ref);
+        if (!snap.exists) throw Exception('Comanda nu mai există.');
+        final currentStatus = (snap.data() as Map<String, dynamic>)['status'] as String?;
+        if (currentStatus != OrderStatus.waiting.label) {
+          throw Exception('Comanda a fost deja preluată de altcineva.');
+        }
+        tx.update(ref, {
+          'status': OrderStatus.allocated.label,
+          'id_sofer': uid,
+          'data_preluare': FieldValue.serverTimestamp(),
+        });
       });
+    } on Exception catch (e) {
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg), backgroundColor: Colors.orange.shade800),
+        );
+      }
     } catch (e) {
       debugPrint('Eroare alocare comandă: $e');
     }

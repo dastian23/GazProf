@@ -13,15 +13,13 @@ import 'package:gazprof/models/product_item.dart';
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
-import '../profile/dispecer_profile_screen.dart';
+import '../../../../core/products_provider.dart';
 import '../../../services/fcm_service.dart';
 
-// --- SCREENS ---
-import 'package:gazprof/screens/dispecer/documente/dispecer_documente_screen.dart';
-import 'package:gazprof/screens/dispecer/istoric/dispecer_istoric_screen.dart';
+// --- SHELL ---
+import 'package:gazprof/screens/dispecer/dispecer_shell.dart';
 
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
 
 // --- COMPONENTS ---
@@ -34,14 +32,13 @@ class DispecerHomeScreen extends StatefulWidget {
   State<DispecerHomeScreen> createState() => _DispecerHomeScreenState();
 }
 
-class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
+class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBindingObserver {
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _addressLine2Controller = TextEditingController();
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isProductsLoading = true;
   bool _isMentionsExpanded = false;
   bool _cardFidelitate = false;
   String _selectedPayment = 'cash';
@@ -49,14 +46,53 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
 
   List<ProductItem> products = [];
 
+  late DateTime _startOfShift;
+  late DateTime _endOfShift;
+  late bool _inProgram;
+
+  void _recomputeShift() {
+    final now = DateTime.now();
+    final newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    final newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    final newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    if (newStart != _startOfShift || newEnd != _endOfShift || newInProgram != _inProgram) {
+      setState(() {
+        _startOfShift = newStart;
+        _endOfShift = newEnd;
+        _inProgram = newInProgram;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadLiveProducts();
+    WidgetsBinding.instance.addObserver(this);
+    final now = DateTime.now();
+    _startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
+    _endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+    _inProgram = now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
+  }
+
+  /// Apelat din build() când ProductsProvider semnalează că lista s-a schimbat.
+  /// Merge produs cu produs prin lista nouă și păstrează cantitățile deja introduse.
+  void _reloadProducts(ProductsProvider productsProvider) {
+    productsProvider.loadIfNeeded().then((_) {
+      if (!mounted) return;
+      final newProducts = productsProvider.freshCopy();
+      setState(() {
+        for (final newP in newProducts) {
+          final existing = products.where((p) => p.name == newP.name).firstOrNull;
+          newP.quantity = existing?.quantity ?? 0;
+        }
+        products = newProducts;
+      });
+    });
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _phoneController.dispose();
     _addressController.dispose();
     _addressLine2Controller.dispose();
@@ -64,69 +100,14 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
     super.dispose();
   }
 
-  // --- GETTERS FOR CURRENT SHIFT
-  DateTime get _startOfShift {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day, 7, 0, 0);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _recomputeShift();
   }
 
-  DateTime get _endOfShift {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
-  }
 
-  bool _esteInProgram() {
-    final now = DateTime.now();
-    return now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
-  }
 
-  Future<void> _loadLiveProducts() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection(FirestoreCollections.products)
-          .orderBy('pozitie')
-          .get();
 
-      if (snapshot.docs.isEmpty) {
-        final defaultProducts = [
-          {"nume": "Butelie 10kg", "pret": 120.0},
-          {"nume": "Butelie 11kg", "pret": 115.0},
-          {"nume": "Butelie 11kg filet", "pret": 115.0},
-          {"nume": "Butelie 35kg", "pret": 400.0},
-          {"nume": "Ambalaj", "pret": 250.0},
-          {"nume": "Ceas butelie", "pret": 40.0},
-        ];
-
-        for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
-            'nume': defaultProducts[i]['nume'],
-            'pret': defaultProducts[i]['pret'],
-            'pozitie': i,
-          });
-        }
-        return _loadLiveProducts();
-      }
-
-      if (mounted) {
-        setState(() {
-          products = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return ProductItem(
-              data['nume'] ?? 'Produs',
-              (data['pret'] ?? 0.0).toDouble(),
-              0,
-            );
-          }).toList();
-          _isProductsLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Eroare la încărcarea nomenclatorului de produse în Dispecer: $e");
-      if (mounted) {
-        setState(() => _isProductsLoading = false);
-      }
-    }
-  }
 
   double get _calculateTotal {
     if (_selectedPayment == 'factura') return 0;
@@ -273,9 +254,15 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
-    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
 
-    final bool inProgram = _esteInProgram();
+    // Ascultăm ProductsProvider — când invalidate() e apelat de admin,
+    // notifyListeners() declanșează acest rebuild și reîncărcăm lista
+    final productsProvider = context.watch<ProductsProvider>();
+    if (!productsProvider.isLoaded && !productsProvider.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reloadProducts(productsProvider);
+      });
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -333,7 +320,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
 
                   // --- DYNAMIC ZONE ---
                   Expanded(
-                    child: !inProgram
+                    child: !_inProgram
                         ? const DispecerHomeEmpty()
                         : SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
@@ -360,7 +347,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                           _buildSectionTitle("TIP BUTELIE", theme),
                           _buildCardContainer(
                             theme,
-                            _isProductsLoading
+                            products.isEmpty
                                 ? const Center(
                               child: Padding(
                                 padding: EdgeInsets.all(20),
@@ -497,7 +484,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
                               boxShadow: theme.buttonShadow,
                             ),
                             child: ElevatedButton(
-                              onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
+                              onPressed: _isLoading || products.isEmpty ? null : _createOrder,
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
                                 shape: RoundedRectangleBorder(
@@ -520,14 +507,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
               ),
             ),
 
-            if (!isKeyboardOpen)
-              AppNavBar(
-                selectedIndex: 0,
-                onTab: (i) => _navigate(context, i),
-                navBarBg: theme.navBarBg,
-                navIconUnselected: theme.navIconUnselected,
-                brandBlue: theme.brandBlue,
-              ),
+
           ],
         ),
       ),
@@ -704,28 +684,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 0) return;
-
-    Widget nextScreen;
-
-    if (index == 1) {
-      nextScreen = const DispecerDocumenteScreen();
-    } else if (index == 2) {
-      nextScreen = const DispecerIstoricScreen();
-    } else if (index == 3) {
-      nextScreen = const DispecerProfileScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    DispecerShellState.of(context)?.switchTab(index);
   }
 
 }

@@ -8,14 +8,11 @@ import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
 
-// --- SCREENS FOR NAVBAR ---
-import '../home/admin_home_screen.dart';
-import '../documente/admin_documente_screen.dart';
-import '../profile/admin_profile_screen.dart';
-
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
+
+// --- SHELL ---
+import 'package:gazprof/screens/admin/admin_shell.dart';
 
 // --- COMPONENTS ---
 import 'admin_istoric_empty.dart';
@@ -45,6 +42,45 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
   // --- CĂUTARE TEXT ---
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // --- FETCH: stream pentru azi, future pentru perioade trecute ---
+  Stream<QuerySnapshot>? _istoricStream;
+  Future<QuerySnapshot>? _istoricFuture;
+
+  bool _isToday() {
+    final now = DateTime.now();
+    final s = _selectedDateRange.start;
+    final e = _selectedDateRange.end;
+    return s.year == now.year && s.month == now.month && s.day == now.day &&
+           e.year == now.year && e.month == now.month && e.day == now.day;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _reloadIstoric();
+  }
+
+  void _reloadIstoric() {
+    final start = DateTime(_selectedDateRange.start.year, _selectedDateRange.start.month, _selectedDateRange.start.day, 0, 0, 0);
+    final end = DateTime(_selectedDateRange.end.year, _selectedDateRange.end.month, _selectedDateRange.end.day, 23, 59, 59);
+    final query = FirebaseFirestore.instance
+        .collection(FirestoreCollections.orders)
+        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
+        .where('data_creare', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
+        .where('data_creare', isLessThanOrEqualTo: Timestamp.fromDate(end))
+        .orderBy('data_creare', descending: true);
+
+    setState(() {
+      if (_isToday()) {
+        _istoricStream = query.snapshots();
+        _istoricFuture = null;
+      } else {
+        _istoricFuture = query.get();
+        _istoricStream = null;
+      }
+    });
+  }
 
   void _onSearchSubmitted(String value) {
     setState(() => _searchQuery = value.toLowerCase().trim());
@@ -265,19 +301,22 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
                   Divider(color: theme.isDark ? Colors.white10 : Colors.black12),
                   const SizedBox(height: 10),
                   _buildMenuButton(Icons.today_rounded, "Astăzi", "Doar comenzile de azi", false, () {
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now()));
+                    _selectedDateRange = DateTimeRange(start: DateTime.now(), end: DateTime.now());
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
                   const SizedBox(height: 10),
                   _buildMenuButton(Icons.calendar_view_month_rounded, "Luna curentă", "Toate comenzile din această lună", false, () {
                     final now = DateTime.now();
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, now.month, 1), end: DateTime(now.year, now.month + 1, 0)));
+                    _selectedDateRange = DateTimeRange(start: DateTime(now.year, now.month, 1), end: DateTime(now.year, now.month + 1, 0));
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
                   const SizedBox(height: 10),
                   _buildMenuButton(Icons.calendar_month_rounded, "Anul curent", "Toate comenzile de anul acesta", false, () {
                     final now = DateTime.now();
-                    setState(() => _selectedDateRange = DateTimeRange(start: DateTime(now.year, 1, 1), end: DateTime(now.year, 12, 31)));
+                    _selectedDateRange = DateTimeRange(start: DateTime(now.year, 1, 1), end: DateTime(now.year, 12, 31));
+                    _reloadIstoric();
                     Navigator.pop(bottomSheetContext);
                   }, theme),
                   const SizedBox(height: 15),
@@ -343,7 +382,8 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
     );
 
     if (picked != null) {
-      setState(() => _selectedDateRange = picked);
+      _selectedDateRange = picked;
+      _reloadIstoric();
     }
   }
 
@@ -416,255 +456,233 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
 
                 // --- DYNAMIC ZONE ---
                 Expanded(
-                  child: StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection(FirestoreCollections.orders)
-                        .where('status', whereIn: [OrderStatus.completed.label, OrderStatus.cancelled.label])
-                        .orderBy('data_creare', descending: true)
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      final isLoading = snapshot.connectionState == ConnectionState.waiting;
-                      final allIstoric = snapshot.data?.docs ?? [];
-
-                      final filteredComenzi = allIstoric.where((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-
-                        // 1. Filter date
-                        final ts = data['data_creare'] as Timestamp?;
-                        if (ts == null) { return false; }
-                        final dt = ts.toDate();
-
-                        DateTime startBound = DateTime(_selectedDateRange.start.year, _selectedDateRange.start.month, _selectedDateRange.start.day, 0, 0, 0);
-                        DateTime endBound = DateTime(_selectedDateRange.end.year, _selectedDateRange.end.month, _selectedDateRange.end.day, 23, 59, 59);
-
-                        if (dt.isBefore(startBound) || dt.isAfter(endBound)) { return false; }
-
-                        // 2. Filter Oraș / Rute
-                        if (_typeFilter != 'Toate') {
-                          final tip = data['tip_adresa'] ?? 'oras';
-                          if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) { return false; }
-                        }
-
-                        // 3. Advanced filter based on selected user
-                        if (_selectedUserId != null) {
-                          final idSofer = data['id_sofer'];
-                          final creatDe = data['creat_de']?.toString().toLowerCase();
-                          final userEmailLower = _selectedUserEmail?.toLowerCase();
-
-                          bool matchesDriver = idSofer == _selectedUserId;
-                          bool matchesCreator = (creatDe == _selectedUserId || (userEmailLower != null && creatDe == userEmailLower));
-
-                          if (!matchesDriver && !matchesCreator) { return false; }
-                        }
-
-                        // 4. Căutare text după adresă sau telefon
-                        if (_searchQuery.isNotEmpty) {
-                          final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
-                          final telefon = (data['telefon_client'] ?? '').toString();
-                          if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) {
-                            return false;
-                          }
-                        }
-
-                        return true;
-                      }).toList();
-
-                      // --- STATS CALC ---
-                      double _cardDiscountFromData(Map data) {
-                        final produse = data['produse'] as List? ?? [];
-                        double count = 0;
-                        for (var p in produse) {
-                          if (p['nume'].toString().startsWith('Butelie')) {
-                            count += (p['cantitate'] ?? 0).toDouble();
-                          }
-                        }
-                        return count * AppConstants.discountPerBottle;
-                      }
-                      int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
-                      int countCreate = filteredComenzi.length;
-                      double sumIncasati = 0;
-                      for (var doc in filteredComenzi) {
-                        final data = doc.data() as Map;
-                        if (data['status'] == OrderStatus.completed.label) {
-                          double total = (data['total_comanda'] ?? 0).toDouble();
-                          if (data['card_fidelitate'] == true) {
-                            total -= _cardDiscountFromData(data);
-                          }
-                          sumIncasati += total;
-                        }
-                      }
-
-                      // --- PRELOAD DRIVER NAMES ---
-                      final istoricIds = filteredComenzi
-                          .map((d) => (d.data() as Map<String, dynamic>)['id_sofer'] as String?)
-                          .whereType<String>()
-                          .toSet();
-                      final Map<String, String> istoricDriverNames = {};
-                      for (final id in istoricIds) {
-                        final name = istoricDriverNameCache[id];
-                        if (name != null) istoricDriverNames[id] = name;
-                      }
-                      preloadIstoricDriverNames(istoricIds);
-
-                      return Column(
-                        children: [
-                          // --- STATS BOXES ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildStatBox(countCreate.toString(), "Total comenzi", theme.brandBlue, theme)),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-
-                          // --- CĂUTARE TEXT CU FILTRU UTILIZATOR ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: TextField(
-                              controller: _searchController,
-                              maxLength: 200,
-                              inputFormatters: [LengthLimitingTextInputFormatter(200)],
-                              onSubmitted: _onSearchSubmitted,
-                              textInputAction: TextInputAction.search,
-                              style: TextStyle(color: theme.textPrimary, fontSize: 14),
-                              decoration: InputDecoration(
-                                filled: true,
-                                fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
-                                prefixIcon: GestureDetector(
-                                  onTap: () => _onSearchSubmitted(_searchController.text),
-                                  child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
-                                ),
-                                hintText: _selectedUserId != null
-                                    ? 'Caută în comenzile lui $_selectedUserName...'
-                                    : 'Caută după adresă sau telefon...',
-                                hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
-                                counterText: '',
-                                suffixIcon: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_searchQuery.isNotEmpty)
-                                      GestureDetector(
-                                        onTap: _clearSearch,
-                                        child: Icon(Icons.clear, color: theme.textSecondary, size: 18),
-                                      ),
-                                    if (_searchQuery.isNotEmpty) const SizedBox(width: 4),
-                                    GestureDetector(
-                                      onTap: () => _openUserFilterMenu(context, theme),
-                                      child: _selectedUserId != null
-                                          ? _buildUserAvatar(theme)
-                                          : Container(
-                                              padding: const EdgeInsets.all(6),
-                                              child: Icon(Icons.person_search_outlined, color: theme.textSecondary, size: 20),
-                                            ),
-                                    ),
-                                    const SizedBox(width: 2),
-                                    if (_selectedUserId != null)
-                                      GestureDetector(
-                                        onTap: () => setState(() {
-                                          _selectedUserId = null;
-                                          _selectedUserName = null;
-                                          _selectedUserEmail = null;
-                                          _selectedUserRole = null;
-                                        }),
-                                        child: Container(
-                                          padding: const EdgeInsets.all(6),
-                                          child: Icon(Icons.cancel, color: theme.textSecondary, size: 16),
-                                        ),
-                                      )
-                                    else
-                                      const SizedBox(width: 4),
-                                  ],
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
-                                enabledBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: _selectedUserId != null ? theme.brandBlue.withValues(alpha: 0.5) : theme.textCardOutline),
-                                ),
-                                focusedBorder: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // --- FILTER TOGGLE ---
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: Row(
-                              children: [
-                                Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
-                                const SizedBox(width: 8),
-                                Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
-                              ],
-                            ),
-                          ),
-
-                          // --- BUTTON DATE ---
-                          GestureDetector(
-                            onTap: () => _openDateMenu(context, theme),
-                            child: Container(
-                              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
-                              decoration: BoxDecoration(
-                                color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Icon(Icons.date_range_rounded, color: theme.brandBlue, size: 18),
-                                      const SizedBox(width: 10),
-                                      Text(
-                                        _formatDateRange(_selectedDateRange),
-                                        style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                  Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 20),
-                                ],
-                              ),
-                            ),
-                          ),
-
-                          // --- LIST OR EMPTY ---
-                          Expanded(
-                            child: isLoading
-                                ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
-                                : filteredComenzi.isEmpty
-                                    ? const AdminIstoricEmpty()
-                                    : AdminIstoricList(comenzi: filteredComenzi, driverNames: istoricDriverNames),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                  child: _istoricStream != null
+                    ? StreamBuilder<QuerySnapshot>(
+                        stream: _istoricStream,
+                        builder: (context, snapshot) => _buildIstoricContent(context, snapshot, theme),
+                      )
+                    : FutureBuilder<QuerySnapshot>(
+                        future: _istoricFuture,
+                        builder: (context, snapshot) => _buildIstoricContent(context, snapshot, theme),
+                      ),
                 ),
               ],
             ),
           ),
-
-          // --- NAVBAR  ---
-          AppNavBar(
-            selectedIndex: 2,
-            onTab: (i) => _navigate(context, i),
-            navBarBg: theme.navBarBg,
-            navIconUnselected: theme.navIconUnselected,
-            brandBlue: theme.brandBlue,
-          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildIstoricContent(BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot, ThemeProvider theme) {
+    final isLoading = snapshot.connectionState == ConnectionState.waiting;
+    final allIstoric = snapshot.data?.docs ?? [];
+
+    final filteredComenzi = allIstoric.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+
+      // 1. Filter Oraș / Rute (local, data e filtrata de Firestore)
+      if (_typeFilter != 'Toate') {
+        final tip = data['tip_adresa'] ?? 'oras';
+        if (tip.toString().toLowerCase() != _typeFilter.toLowerCase()) return false;
+      }
+
+      // 2. Filter după utilizator selectat
+      if (_selectedUserId != null) {
+        final idSofer = data['id_sofer'];
+        final creatDe = data['creat_de']?.toString().toLowerCase();
+        final userEmailLower = _selectedUserEmail?.toLowerCase();
+        bool matchesDriver = idSofer == _selectedUserId;
+        bool matchesCreator = (creatDe == _selectedUserId || (userEmailLower != null && creatDe == userEmailLower));
+        if (!matchesDriver && !matchesCreator) return false;
+      }
+
+      // 3. Căutare text după adresă sau telefon
+      if (_searchQuery.isNotEmpty) {
+        final adresa = (data['adresa_livrare'] ?? '').toString().toLowerCase();
+        final telefon = (data['telefon_client'] ?? '').toString();
+        if (!adresa.contains(_searchQuery) && !telefon.contains(_searchQuery)) return false;
+      }
+
+      return true;
+    }).toList();
+
+    // --- STATS CALC ---
+    double cardDiscountFromData(Map data) {
+      final produse = data['produse'] as List? ?? [];
+      double count = 0;
+      for (var p in produse) {
+        if (p['nume'].toString().startsWith('Butelie')) {
+          count += (p['cantitate'] ?? 0).toDouble();
+        }
+      }
+      return count * AppConstants.discountPerBottle;
+    }
+    int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
+    int countCreate = filteredComenzi.length;
+    double sumIncasati = 0;
+    for (var doc in filteredComenzi) {
+      final data = doc.data() as Map;
+      if (data['status'] == OrderStatus.completed.label) {
+        double total = (data['total_comanda'] ?? 0).toDouble();
+        if (data['card_fidelitate'] == true) total -= cardDiscountFromData(data);
+        sumIncasati += total;
+      }
+    }
+
+    // --- PRELOAD DRIVER NAMES ---
+    final istoricIds = filteredComenzi
+        .map((d) => (d.data() as Map<String, dynamic>)['id_sofer'] as String?)
+        .whereType<String>()
+        .toSet();
+    final Map<String, String> istoricDriverNames = {};
+    for (final id in istoricIds) {
+      final name = istoricDriverNameCache[id];
+      if (name != null) istoricDriverNames[id] = name;
+    }
+    preloadIstoricDriverNames(istoricIds);
+
+    return Column(
+                        children: [
+      // --- STATS BOXES ---
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildStatBox(countCreate.toString(), "Total comenzi", theme.brandBlue, theme)),
+          ],
+        ),
+      ),
+      const SizedBox(height: 12),
+
+      // --- CĂUTARE TEXT CU FILTRU UTILIZATOR ---
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: TextField(
+          controller: _searchController,
+          maxLength: 200,
+          inputFormatters: [LengthLimitingTextInputFormatter(200)],
+          onSubmitted: _onSearchSubmitted,
+          textInputAction: TextInputAction.search,
+          style: TextStyle(color: theme.textPrimary, fontSize: 14),
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: theme.isDark ? Colors.black26 : Colors.black.withValues(alpha: 0.03),
+            prefixIcon: GestureDetector(
+              onTap: () => _onSearchSubmitted(_searchController.text),
+              child: Icon(Icons.search_rounded, color: theme.textFieldIcon, size: 20),
+            ),
+            hintText: _selectedUserId != null
+                ? 'Caută în comenzile lui $_selectedUserName...'
+                : 'Caută după adresă sau telefon...',
+            hintStyle: TextStyle(color: theme.textSecondary, fontSize: 14),
+            counterText: '',
+            suffixIcon: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (_searchQuery.isNotEmpty)
+                  GestureDetector(
+                    onTap: _clearSearch,
+                    child: Icon(Icons.clear, color: theme.textSecondary, size: 18),
+                  ),
+                if (_searchQuery.isNotEmpty) const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () => _openUserFilterMenu(context, theme),
+                  child: _selectedUserId != null
+                      ? _buildUserAvatar(theme)
+                      : Container(
+                          padding: const EdgeInsets.all(6),
+                          child: Icon(Icons.person_search_outlined, color: theme.textSecondary, size: 20),
+                        ),
+                ),
+                const SizedBox(width: 2),
+                if (_selectedUserId != null)
+                  GestureDetector(
+                    onTap: () => setState(() {
+                      _selectedUserId = null;
+                      _selectedUserName = null;
+                      _selectedUserEmail = null;
+                      _selectedUserRole = null;
+                    }),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(Icons.cancel, color: theme.textSecondary, size: 16),
+                    ),
+                  )
+                else
+                  const SizedBox(width: 4),
+              ],
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 15),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: _selectedUserId != null ? theme.brandBlue.withValues(alpha: 0.5) : theme.textCardOutline),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: theme.brandBlue, width: 1.5),
+            ),
+          ),
+        ),
+      ),
+      const SizedBox(height: 10),
+
+      // --- FILTER TOGGLE ---
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          children: [
+            Expanded(child: _buildFilterToggle('Toate', _typeFilter == 'Toate', () => setState(() => _typeFilter = 'Toate'), theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildFilterToggle('Oraș', _typeFilter == 'oras', () => setState(() => _typeFilter = 'oras'), theme)),
+            const SizedBox(width: 8),
+            Expanded(child: _buildFilterToggle('Rute', _typeFilter == 'rute', () => setState(() => _typeFilter = 'rute'), theme)),
+          ],
+        ),
+      ),
+
+      // --- BUTTON DATE ---
+      GestureDetector(
+        onTap: () => _openDateMenu(context, theme),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.date_range_rounded, color: theme.brandBlue, size: 18),
+                  const SizedBox(width: 10),
+                  Text(
+                    _formatDateRange(_selectedDateRange),
+                    style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              Icon(Icons.keyboard_arrow_down, color: theme.textSecondary, size: 20),
+            ],
+          ),
+        ),
+      ),
+
+      // --- LIST OR EMPTY ---
+      Expanded(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: theme.brandBlue))
+            : filteredComenzi.isEmpty
+                ? const AdminIstoricEmpty()
+                : AdminIstoricList(comenzi: filteredComenzi, driverNames: istoricDriverNames),
+      ),
+    ],
     );
   }
 
@@ -742,17 +760,7 @@ class _AdminIstoricScreenState extends State<AdminIstoricScreen> {
   }
 
   void _navigate(BuildContext context, int index) {
-    if (index == 2) { return; }
-    Widget nextScreen;
-    if (index == 0) { nextScreen = const AdminHomeScreen(); }
-    else if (index == 1) { nextScreen = const AdminDocumenteScreen(); }
-    else if (index == 3) { nextScreen = const AdminProfileScreen(); }
-    else { return; }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(pageBuilder: (context, a1, a2) => nextScreen, transitionDuration: Duration.zero, reverseTransitionDuration: Duration.zero),
-    );
+    AdminShellState.of(context)?.switchTab(index);
   }
 }
 

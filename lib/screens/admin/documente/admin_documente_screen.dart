@@ -12,16 +12,14 @@ import 'package:gazprof/models/product_item.dart';
 // --- THEME & PROVIDERS ---
 import '../../../../core/theme_provider.dart';
 import '../../../../core/user_provider.dart';
+import '../../../../core/products_provider.dart';
 import '../../../services/fcm_service.dart';
 
 // --- WIDGETS ---
-import 'package:gazprof/widgets/app_nav_bar.dart';
 import 'package:gazprof/widgets/profile_avatar.dart';
 
-// --- SCREENS ---
-import 'package:gazprof/screens/admin/istoric/admin_istoric_screen.dart';
-import 'package:gazprof/screens/admin/home/admin_home_screen.dart';
-import 'package:gazprof/screens/admin/profile/admin_profile_screen.dart';
+// --- SHELL ---
+import 'package:gazprof/screens/admin/admin_shell.dart';
 
 class AdminDocumenteScreen extends StatefulWidget {
   const AdminDocumenteScreen({super.key});
@@ -37,18 +35,32 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   final TextEditingController _mentionsController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isProductsLoading = true; 
   bool _isMentionsExpanded = false;
   bool _cardFidelitate = false;
   String _selectedPayment = 'cash';
   String _addressType = 'oras';
 
-  List<ProductItem> products = []; 
+  List<ProductItem> products = [];
 
   @override
   void initState() {
     super.initState();
-    _loadLiveProducts(); 
+  }
+
+  /// Apelat din build() când ProductsProvider semnalează că lista s-a schimbat.
+  /// Merge produs cu produs prin lista nouă și păstrează cantitățile deja introduse.
+  void _reloadProducts(ProductsProvider productsProvider) {
+    productsProvider.loadIfNeeded().then((_) {
+      if (!mounted) return;
+      final newProducts = productsProvider.freshCopy();
+      setState(() {
+        for (final newP in newProducts) {
+          final existing = products.where((p) => p.name == newP.name).firstOrNull;
+          newP.quantity = existing?.quantity ?? 0;
+        }
+        products = newProducts;
+      });
+    });
   }
 
   @override
@@ -72,53 +84,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
         .fold(0, (sum, p) => sum + p.quantity) * 5;
   }
 
-  Future<void> _loadLiveProducts() async {
-    try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection(FirestoreCollections.products)
-          .orderBy('pozitie')
-          .get();
-      
-      if (snapshot.docs.isEmpty) {
-        final defaultProducts = [
-          {"nume": "Butelie 10kg", "pret": 120.0},
-          {"nume": "Butelie 11kg", "pret": 115.0},
-          {"nume": "Butelie 11kg filet", "pret": 115.0},
-          {"nume": "Butelie 35kg", "pret": 400.0},
-          {"nume": "Ambalaj", "pret": 250.0},
-          {"nume": "Ceas butelie", "pret": 40.0},
-        ];
-        
-        for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance.collection(FirestoreCollections.products).add({
-            'nume': defaultProducts[i]['nume'],
-            'pret': defaultProducts[i]['pret'],
-            'pozitie': i,
-          });
-        }
-        return _loadLiveProducts(); 
-      }
 
-      if (mounted) {
-        setState(() {
-          products = snapshot.docs.map((doc) {
-            final data = doc.data();
-            return ProductItem(
-              data['nume'] ?? 'Produs',
-              (data['pret'] ?? 0.0).toDouble(),
-              0,
-            );
-          }).toList();
-          _isProductsLoading = false;
-        });
-      }
-    } catch (e) {
-      debugPrint("Eroare la încărcarea produselor din Firebase: $e");
-      if (mounted) {
-        setState(() => _isProductsLoading = false);
-      }
-    }
-  }
 
   // --- EDIT PRICE LOGIC ---
   void _showEditPriceDialog(ProductItem item, ThemeProvider theme) {
@@ -256,7 +222,15 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   Widget build(BuildContext context) {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
-    final isKeyboardOpen = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    // Ascultăm ProductsProvider — când invalidate() e apelat de admin,
+    // notifyListeners() declanșează acest rebuild și reîncărcăm lista
+    final productsProvider = context.watch<ProductsProvider>();
+    if (!productsProvider.isLoaded && !productsProvider.isLoading) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _reloadProducts(productsProvider);
+      });
+    }
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -317,7 +291,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                         _buildSectionTitle("TIP BUTELIE", theme),
                         _buildCardContainer(
                           theme,
-                          _isProductsLoading
+                          products.isEmpty
                               ? const Center(
                                   child: Padding(
                                     padding: EdgeInsets.all(20),
@@ -455,7 +429,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                             boxShadow: theme.buttonShadow,
                           ),
                           child: ElevatedButton(
-                            onPressed: _isLoading || _isProductsLoading ? null : _createOrder,
+                            onPressed: _isLoading || products.isEmpty ? null : _createOrder,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: theme.isDark ? const Color(0xFF1E1E1E) : Colors.white,
                               shape: RoundedRectangleBorder(
@@ -478,15 +452,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
             ),
           ),
 
-          // Hide the navbar if keyboard is up
-          if (!isKeyboardOpen)
-            AppNavBar(
-              selectedIndex: 1,
-              onTab: (i) => _navigate(context, i),
-              navBarBg: theme.navBarBg,
-              navIconUnselected: theme.navIconUnselected,
-              brandBlue: theme.brandBlue,
-            ),
+
         ],
       ),
     );
@@ -668,27 +634,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
 
   // --- NAVIGATE LOGIC ---
   void _navigate(BuildContext context, int index) {
-    if (index == 1) return;
-
-    Widget nextScreen;
-    if (index == 0) {
-      nextScreen = const AdminHomeScreen();
-    } else if (index == 2) {
-      nextScreen = const AdminIstoricScreen();
-    } else if (index == 3) {
-      nextScreen = const AdminProfileScreen();
-    } else {
-      return;
-    }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => nextScreen,
-        transitionDuration: Duration.zero,
-        reverseTransitionDuration: Duration.zero,
-      ),
-    );
+    AdminShellState.of(context)?.switchTab(index);
   }
 }
 

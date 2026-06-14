@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 // --- THEME & PROVIDERS ---
 import 'package:gazprof/core/constants.dart';
 import '../../../../core/theme_provider.dart';
+import '../../../../core/products_provider.dart';
 
 class AdminProductSettingScreen extends StatefulWidget {
   const AdminProductSettingScreen({super.key});
@@ -86,7 +87,10 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
                   'pret': pret,
                   'pozitie': snapshot.docs.length,
                 });
-                if (mounted) Navigator.pop(context);
+                if (mounted) {
+                  Provider.of<ProductsProvider>(context, listen: false).invalidate();
+                  Navigator.pop(context);
+                }
               }
             },
             child: Text("Salvează", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold)),
@@ -128,7 +132,10 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
               final noulPret = double.tryParse(priceEditController.text.trim());
               if (noulPret != null && noulPret > 0) {
                 await FirebaseFirestore.instance.collection(FirestoreCollections.products).doc(docId).update({'pret': noulPret});
-                if (mounted) Navigator.pop(context);
+                if (mounted) {
+                  Provider.of<ProductsProvider>(context, listen: false).invalidate();
+                  Navigator.pop(context);
+                }
               }
             },
             child: Text("Salvează", style: TextStyle(color: theme.brandBlue, fontWeight: FontWeight.bold)),
@@ -160,7 +167,10 @@ class _AdminProductSettingScreenState extends State<AdminProductSettingScreen> {
           TextButton(
             onPressed: () async {
               await FirebaseFirestore.instance.collection(FirestoreCollections.products).doc(docId).delete();
-              if (mounted) Navigator.pop(context);
+              if (mounted) {
+                Provider.of<ProductsProvider>(context, listen: false).invalidate();
+                Navigator.pop(context);
+              }
             },
             child: const Text("Șterge", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
           ),
