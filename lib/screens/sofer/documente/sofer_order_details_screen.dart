@@ -29,41 +29,30 @@ class SoferOrderDetailsScreen extends StatefulWidget {
 }
 
 class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
-  late Map<String, dynamic> _orderData;
   late ValueNotifier<String> _paymentTypeNotifier;
   bool _cardFidelitate = false;
-  StreamSubscription<DocumentSnapshot>? _subscription;
 
   @override
   void initState() {
     super.initState();
-    _orderData = widget.orderData;
     _cardFidelitate = widget.orderData['card_fidelitate'] == true;
     _paymentTypeNotifier = ValueNotifier<String>(
       (widget.orderData['tip_plata'] as String?) ?? PaymentType.cash.value,
     );
-    _subscription = FirebaseFirestore.instance
-        .collection(FirestoreCollections.orders)
-        .doc(widget.orderId)
-        .snapshots()
-        .listen((snapshot) {
-      if (!snapshot.exists || !mounted) return;
-      final data = snapshot.data() as Map<String, dynamic>;
-      setState(() {
-        _orderData = data;
-        _cardFidelitate = data['card_fidelitate'] == true;
-        if (data['tip_plata'] != _paymentTypeNotifier.value) {
-          _paymentTypeNotifier.value = data['tip_plata'] as String? ?? PaymentType.cash.value;
-        }
-      });
-    });
   }
 
   @override
   void dispose() {
-    _subscription?.cancel();
     _paymentTypeNotifier.dispose();
     super.dispose();
+  }
+
+  void _syncNotifiers(Map<String, dynamic> data) {
+    _cardFidelitate = data['card_fidelitate'] == true;
+    final tip = data['tip_plata'] as String? ?? PaymentType.cash.value;
+    if (tip != _paymentTypeNotifier.value) {
+      _paymentTypeNotifier.value = tip;
+    }
   }
 
   double _cardDiscount(Map data) {
@@ -77,8 +66,8 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     return count * AppConstants.discountPerBottle;
   }
 
-  Future<void> _openNavigation(UserProvider userProvider) async {
-    final address = Uri.encodeComponent('${_orderData['adresa_livrare']}');
+  Future<void> _openNavigation(UserProvider userProvider, Map<String, dynamic> data) async {
+    final address = Uri.encodeComponent('${data['adresa_livrare']}');
     Uri uri;
     if (userProvider.navigationApp == AppConstants.navigationWaze) {
       uri = Uri.parse('waze://?q=$address&navigate=yes');
@@ -96,8 +85,8 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     }
   }
 
-  Future<void> _callClient() async {
-    final phone = _orderData['telefon_client'] ?? '';
+  Future<void> _callClient(Map<String, dynamic> data) async {
+    final phone = data['telefon_client'] ?? '';
     final String cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     final Uri uri = Uri(scheme: 'tel', path: cleanPhone);
     try {
@@ -161,7 +150,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     }
   }
 
-  Future<void> _unassignOrder(BuildContext context) async {
+  Future<void> _unassignOrder(BuildContext context, Map<String, dynamic> data) async {
     try {
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
@@ -170,7 +159,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
         'status': OrderStatus.waiting.label,
         'id_sofer': FieldValue.delete(),
       });
-      FcmService().sendNewOrderNotification(widget.orderId, _orderData);
+      FcmService().sendNewOrderNotification(widget.orderId, data);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       debugPrint("Eroare la _unassignOrder: $e");
@@ -182,15 +171,15 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     }
   }
 
-  Future<bool> _showUnassignDialog(BuildContext context, ThemeProvider theme) async {
+  Future<bool> _showUnassignDialog(BuildContext context, ThemeProvider theme, Map<String, dynamic> data) async {
     return await showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (context) => UnassignOrderDialog(orderData: _orderData),
+      builder: (context) => UnassignOrderDialog(orderData: data),
     );
   }
 
-  Future<bool> _showCancelDialog(BuildContext context, ThemeProvider theme) async {
+  Future<bool> _showCancelDialog(BuildContext context, ThemeProvider theme, Map<String, dynamic> data) async {
     return await showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha:0.6),
@@ -280,8 +269,8 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Builder(builder: (context) {
-                          final blocAp = _orderData['bloc_apartament'] ?? '';
-                          final adresaFull = blocAp.isNotEmpty ? '${_orderData['adresa_livrare']}, $blocAp' : '${_orderData['adresa_livrare'] ?? '-'}';
+                          final blocAp = data['bloc_apartament'] ?? '';
+                          final adresaFull = blocAp.isNotEmpty ? '${data['adresa_livrare']}, $blocAp' : '${data['adresa_livrare'] ?? '-'}';
                           return Text(
                             adresaFull,
                             style: TextStyle(
@@ -376,6 +365,22 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection(FirestoreCollections.orders)
+          .doc(widget.orderId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        final data = (snapshot.hasData && snapshot.data!.exists)
+            ? snapshot.data!.data() as Map<String, dynamic>
+            : widget.orderData;
+        _syncNotifiers(data);
+        return _buildPage(context, data);
+      },
+    );
+  }
+
+  Widget _buildPage(BuildContext context, Map<String, dynamic> data) {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
 
@@ -420,9 +425,9 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildMainCard(context, theme),
+              _buildMainCard(context, theme, data),
               const SizedBox(height: 25),
-              _buildNavigationRow(userProvider, theme),
+              _buildNavigationRow(userProvider, theme, data),
               const SizedBox(height: 30),
               Text(
                 "PROGRES LIVRARE",
@@ -436,7 +441,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
               const SizedBox(height: 20),
               _buildDeliveryProgress(theme),
               const SizedBox(height: 40),
-              _buildActionButtons(context, theme),
+              _buildActionButtons(context, theme, data),
               const SizedBox(height: 30),
             ],
           ),
@@ -445,9 +450,9 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     );
   }
 
-  Widget _buildMainCard(BuildContext context, ThemeProvider theme) {
-    List produse = _orderData['produse'] ?? [];
-    String mentiuni = _orderData['mentiuni'] ?? "";
+  Widget _buildMainCard(BuildContext context, ThemeProvider theme, Map<String, dynamic> data) {
+    List produse = data['produse'] ?? [];
+    String mentiuni = data['mentiuni'] ?? "";
 
     return Container(
       width: double.infinity,
@@ -477,43 +482,43 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
           ),
           const SizedBox(height: 15),
           Text(
-            _orderData['adresa_livrare'] ?? 'Adresă lipsă',
+            data['adresa_livrare'] ?? 'Adresă lipsă',
             style: TextStyle(
               color: theme.textPrimary,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
-          if ((_orderData['bloc_apartament'] ?? '') != '')
+          if ((data['bloc_apartament'] ?? '') != '')
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(_orderData['bloc_apartament'], style: TextStyle(color: theme.textSecondary, fontSize: 16)),
+              child: Text(data['bloc_apartament'], style: TextStyle(color: theme.textSecondary, fontSize: 16)),
             ),
           const SizedBox(height: 6),
           Text(
-            "Contact: ${_orderData['telefon_client'] ?? '-'}",
+            "Contact: ${data['telefon_client'] ?? '-'}",
             style: TextStyle(color: theme.textGriFix, fontSize: 14),
           ),
           const SizedBox(height: 6),
           _buildPaymentRow(context, theme),
-          if ((_orderData['creat_de_nume'] ?? '') != '')
+          if ((data['creat_de_nume'] ?? '') != '')
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
                   Flexible(
-                    child: Text("Creat de: ${_orderData['creat_de_nume']} • ",
+                    child: Text("Creat de: ${data['creat_de_nume']} • ",
                       style: TextStyle(color: theme.textGriFix, fontSize: 12),
                       overflow: TextOverflow.ellipsis),
                     ),
                   Text(
                     () {
-                      final r = (_orderData['creat_de'] ?? '').toString();
+                      final r = (data['creat_de'] ?? '').toString();
                       return r == 'sofer' ? 'șofer' : r == 'dispecer' ? 'dispecer' : 'admin';
                     }(),
                     style: TextStyle(
                       color: () {
-                        final r = (_orderData['creat_de'] ?? '').toString();
+                        final r = (data['creat_de'] ?? '').toString();
                         return r == 'sofer' ? theme.brandBlue
                             : r == 'dispecer' ? theme.statusTextFinalizata
                             : theme.statusTextInAsteptare;
@@ -601,8 +606,8 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
           ],
           const Divider(height: 35, color: Colors.black12),
           () {
-            final double totalOriginal = (_orderData['total_comanda'] ?? 0).toDouble();
-            final double discount = _cardFidelitate ? _cardDiscount(_orderData) : 0;
+            final double totalOriginal = (data['total_comanda'] ?? 0).toDouble();
+            final double discount = _cardFidelitate ? _cardDiscount(data) : 0;
             final double totalDisplay = totalOriginal - discount;
             return Column(
               children: [
@@ -668,14 +673,14 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     );
   }
 
-  Widget _buildNavigationRow(UserProvider up, ThemeProvider theme) {
+  Widget _buildNavigationRow(UserProvider up, ThemeProvider theme, Map<String, dynamic> data) {
     return Row(
       children: [
         Expanded(
           child: SizedBox(
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: () => _openNavigation(up),
+              onPressed: () => _openNavigation(up, data),
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.brandBlue,
                 shape: RoundedRectangleBorder(
@@ -695,7 +700,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
         ),
         const SizedBox(width: 12),
         GestureDetector(
-          onTap: _callClient,
+          onTap: () => _callClient(data),
           child: Container(
             height: 50,
             width: 60,
@@ -723,7 +728,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context, ThemeProvider theme) {
+  Widget _buildActionButtons(BuildContext context, ThemeProvider theme, Map<String, dynamic> data) {
     return Column(
       children: [
         SizedBox(
@@ -754,9 +759,9 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
           height: 52,
           child: OutlinedButton(
             onPressed: () async {
-              bool confirm = await _showUnassignDialog(context, theme);
+              bool confirm = await _showUnassignDialog(context, theme, data);
               if (confirm && context.mounted) {
-                _unassignOrder(context);
+                _unassignOrder(context, data);
               }
             },
             style: OutlinedButton.styleFrom(
@@ -781,7 +786,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
           height: 52,
           child: OutlinedButton(
             onPressed: () async {
-              bool confirm = await _showCancelDialog(context, theme);
+              bool confirm = await _showCancelDialog(context, theme, data);
               if (confirm && context.mounted) {
                 _updateStatus(context, OrderStatus.cancelled.label);
               }
