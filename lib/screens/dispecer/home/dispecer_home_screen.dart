@@ -64,6 +64,8 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
     }
   }
 
+  ProductsProvider? _productsProviderRef;
+
   @override
   void initState() {
     super.initState();
@@ -74,24 +76,57 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
     _inProgram = now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
   }
 
-  /// Apelat din build() când ProductsProvider semnalează că lista s-a schimbat.
-  /// Merge produs cu produs prin lista nouă și păstrează cantitățile deja introduse.
-  void _reloadProducts(ProductsProvider productsProvider) {
-    productsProvider.loadIfNeeded().then((_) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = Provider.of<ProductsProvider>(context, listen: false);
+    // Înregistrăm listener-ul o singură dată
+    if (_productsProviderRef != provider) {
+      _productsProviderRef?.removeListener(_onProductsChanged);
+      _productsProviderRef = provider;
+      provider.addListener(_onProductsChanged);
+      // Primul load
+      _loadProductsFromProvider(provider);
+    }
+  }
+
+  void _onProductsChanged() {
+    final provider = _productsProviderRef;
+    if (provider == null || !mounted) return;
+    // Reîncărcăm doar dacă invalidate() a fost apelat (isLoaded=false)
+    // și nu se încarcă deja și nu avem deja produse locale valide
+    if (!provider.isLoaded && !provider.isLoading) {
+      _loadProductsFromProvider(provider);
+    }
+    // Dacă isLoaded=true (load terminat cu succes), actualizăm lista locală
+    if (provider.isLoaded && !provider.hasError) {
+      _mergeProducts(provider.freshCopy());
+    }
+  }
+
+  void _loadProductsFromProvider(ProductsProvider provider) {
+    provider.loadIfNeeded().then((_) {
       if (!mounted) return;
-      final newProducts = productsProvider.freshCopy();
-      setState(() {
-        for (final newP in newProducts) {
-          final existing = products.where((p) => p.name == newP.name).firstOrNull;
-          newP.quantity = existing?.quantity ?? 0;
-        }
-        products = newProducts;
-      });
+      if (provider.isLoaded && !provider.hasError) {
+        _mergeProducts(provider.freshCopy());
+      }
+    });
+  }
+
+  /// Merge produsele noi cu cele existente, păstrând cantitățile.
+  void _mergeProducts(List<ProductItem> newProducts) {
+    setState(() {
+      for (final newP in newProducts) {
+        final existing = products.where((p) => p.name == newP.name).firstOrNull;
+        newP.quantity = existing?.quantity ?? 0;
+      }
+      products = newProducts;
     });
   }
 
   @override
   void dispose() {
+    _productsProviderRef?.removeListener(_onProductsChanged);
     WidgetsBinding.instance.removeObserver(this);
     _phoneController.dispose();
     _addressController.dispose();
@@ -255,14 +290,9 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
 
-    // Ascultăm ProductsProvider — când invalidate() e apelat de admin,
-    // notifyListeners() declanșează acest rebuild și reîncărcăm lista
-    final productsProvider = context.watch<ProductsProvider>();
-    if (!productsProvider.isLoaded && !productsProvider.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _reloadProducts(productsProvider);
-      });
-    }
+    // ProductsProvider e gestionat prin addListener în didChangeDependencies —
+    // nu folosim context.watch pentru a evita cicluri de rebuild.
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -348,12 +378,14 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
                           _buildCardContainer(
                             theme,
                             products.isEmpty
-                                ? const Center(
-                              child: Padding(
-                                padding: EdgeInsets.all(20),
-                                child: CircularProgressIndicator(),
-                              ),
-                            )
+                                ? productsProvider.hasError
+                                    ? _buildProductsError(productsProvider, theme)
+                                    : const Center(
+                                        child: Padding(
+                                          padding: EdgeInsets.all(20),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      )
                                 : Column(
                               children: [
                                 ...products.map((p) => _buildProductRow(p, theme)),
@@ -515,6 +547,49 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
   }
 
   // --- HELPERS  ---
+
+  Widget _buildProductsError(ProductsProvider productsProvider, ThemeProvider theme) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off_rounded, color: theme.textSecondary, size: 32),
+          const SizedBox(height: 10),
+          Text(
+            "Eroare la încărcarea produselor",
+            style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Verifică conexiunea și încearcă din nou.",
+            style: TextStyle(color: theme.textSecondary, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () {
+              productsProvider.retry().then((_) {
+                if (mounted) {
+                  final newProducts = productsProvider.freshCopy();
+                  setState(() { products = newProducts; });
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.brandBlue,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text("Reîncearcă", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildSectionTitle(String title, ThemeProvider theme) {
     return Padding(

@@ -42,29 +42,58 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
 
   List<ProductItem> products = [];
 
+  ProductsProvider? _productsProviderRef;
+
   @override
   void initState() {
     super.initState();
   }
 
-  /// Apelat din build() când ProductsProvider semnalează că lista s-a schimbat.
-  /// Merge produs cu produs prin lista nouă și păstrează cantitățile deja introduse.
-  void _reloadProducts(ProductsProvider productsProvider) {
-    productsProvider.loadIfNeeded().then((_) {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final provider = Provider.of<ProductsProvider>(context, listen: false);
+    if (_productsProviderRef != provider) {
+      _productsProviderRef?.removeListener(_onProductsChanged);
+      _productsProviderRef = provider;
+      provider.addListener(_onProductsChanged);
+      _loadProductsFromProvider(provider);
+    }
+  }
+
+  void _onProductsChanged() {
+    final provider = _productsProviderRef;
+    if (provider == null || !mounted) return;
+    if (!provider.isLoaded && !provider.isLoading) {
+      _loadProductsFromProvider(provider);
+    }
+    if (provider.isLoaded && !provider.hasError) {
+      _mergeProducts(provider.freshCopy());
+    }
+  }
+
+  void _loadProductsFromProvider(ProductsProvider provider) {
+    provider.loadIfNeeded().then((_) {
       if (!mounted) return;
-      final newProducts = productsProvider.freshCopy();
-      setState(() {
-        for (final newP in newProducts) {
-          final existing = products.where((p) => p.name == newP.name).firstOrNull;
-          newP.quantity = existing?.quantity ?? 0;
-        }
-        products = newProducts;
-      });
+      if (provider.isLoaded && !provider.hasError) {
+        _mergeProducts(provider.freshCopy());
+      }
+    });
+  }
+
+  void _mergeProducts(List<ProductItem> newProducts) {
+    setState(() {
+      for (final newP in newProducts) {
+        final existing = products.where((p) => p.name == newP.name).firstOrNull;
+        newP.quantity = existing?.quantity ?? 0;
+      }
+      products = newProducts;
     });
   }
 
   @override
   void dispose() {
+    _productsProviderRef?.removeListener(_onProductsChanged);
     _phoneController.dispose();
     _addressController.dispose();
     _addressLine2Controller.dispose();
@@ -223,14 +252,9 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
     final theme = Provider.of<ThemeProvider>(context);
     final userProvider = Provider.of<UserProvider>(context);
 
-    // Ascultăm ProductsProvider — când invalidate() e apelat de admin,
-    // notifyListeners() declanșează acest rebuild și reîncărcăm lista
-    final productsProvider = context.watch<ProductsProvider>();
-    if (!productsProvider.isLoaded && !productsProvider.isLoading) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _reloadProducts(productsProvider);
-      });
-    }
+    // ProductsProvider e gestionat prin addListener în didChangeDependencies —
+    // nu folosim context.watch pentru a evita cicluri de rebuild.
+    final productsProvider = Provider.of<ProductsProvider>(context, listen: false);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -292,12 +316,14 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                         _buildCardContainer(
                           theme,
                           products.isEmpty
-                              ? const Center(
-                                  child: Padding(
-                                    padding: EdgeInsets.all(20),
-                                    child: CircularProgressIndicator(),
-                                  ),
-                                )
+                              ? productsProvider.hasError
+                                  ? _buildProductsError(productsProvider, theme)
+                                  : const Center(
+                                      child: Padding(
+                                        padding: EdgeInsets.all(20),
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    )
                               : Column(
                                   children: [
                                     ...products.map((p) => _buildProductRow(p, theme)),
@@ -459,6 +485,49 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   }
 
   // --- HELPERS UI ---
+  Widget _buildProductsError(ProductsProvider productsProvider, ThemeProvider theme) {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off_rounded, color: theme.textSecondary, size: 32),
+          const SizedBox(height: 10),
+          Text(
+            "Eroare la încărcarea produselor",
+            style: TextStyle(color: theme.textPrimary, fontSize: 14, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            "Verifică conexiunea și încearcă din nou.",
+            style: TextStyle(color: theme.textSecondary, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 14),
+          GestureDetector(
+            onTap: () {
+              productsProvider.retry().then((_) {
+                if (mounted) {
+                  final newProducts = productsProvider.freshCopy();
+                  setState(() { products = newProducts; });
+                }
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              decoration: BoxDecoration(
+                color: theme.brandBlue,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text("Reîncearcă", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildSectionTitle(String title, ThemeProvider theme) {
     return Padding(
       padding: const EdgeInsets.only(left: 10, bottom: 8),

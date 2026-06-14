@@ -10,10 +10,14 @@ class ProductsProvider extends ChangeNotifier {
   List<ProductItem> _products = [];
   bool _isLoading = false;
   bool _isLoaded = false;
+  bool _hasError = false;
 
   List<ProductItem> get products => _products;
   bool get isLoading => _isLoading;
   bool get isLoaded => _isLoaded;
+
+  /// True dacă ultimul fetch a eșuat. Ecranele pot afișa un mesaj + buton retry.
+  bool get hasError => _hasError;
 
   /// Returns a deep copy of the products list (each screen gets its own
   /// quantity-independent copy so one screen's counter doesn't affect another).
@@ -24,7 +28,9 @@ class ProductsProvider extends ChangeNotifier {
   Future<void> loadIfNeeded() async {
     if (_isLoaded || _isLoading) return;
     _isLoading = true;
-    notifyListeners();
+    _hasError = false;
+    // Nu apelăm notifyListeners() la start — evităm un rebuild inutil
+    // (guard-ul din ecrane verifică isLoading, nu avem nevoie de rebuild acum)
 
     try {
       final snapshot = await FirebaseFirestore.instance
@@ -69,15 +75,28 @@ class ProductsProvider extends ChangeNotifier {
       _isLoaded = true;
     } catch (e) {
       debugPrint('ProductsProvider: eroare la încărcarea produselor: $e');
+      // Marcăm _isLoaded = true pentru a opri ciclul infinit de retry.
+      // _hasError = true permite ecranelor să afișeze un mesaj + buton retry.
+      _isLoaded = true;
+      _hasError = true;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  /// Permite reîncărcarea manuală după o eroare (apelat din butonul Retry).
+  Future<void> retry() async {
+    _isLoaded = false;
+    _hasError = false;
+    _products = [];
+    await loadIfNeeded();
+  }
+
   /// Call this when an admin changes the product list so it reloads on next use.
   void invalidate() {
     _isLoaded = false;
+    _hasError = false;
     _products = [];
     notifyListeners();
   }
