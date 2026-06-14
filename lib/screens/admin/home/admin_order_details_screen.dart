@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,18 +14,58 @@ import '../../../../services/fcm_service.dart';
 // --- SHARED WIDGETS ---
 import '../../shared/order_dialogs.dart';
 
-class AdminOrderDetailsScreen extends StatelessWidget {
+class AdminOrderDetailsScreen extends StatefulWidget {
   final String orderId;
   final Map<String, dynamic> orderData;
-  final ValueNotifier<String> paymentTypeNotifier;
-  final ValueNotifier<bool> cardFidelitateNotifier;
 
-  AdminOrderDetailsScreen({
+  const AdminOrderDetailsScreen({
     super.key,
     required this.orderId,
     required this.orderData,
-  }) : paymentTypeNotifier = ValueNotifier<String>((orderData['tip_plata'] as String?) ?? PaymentType.cash.value),
-       cardFidelitateNotifier = ValueNotifier<bool>(orderData['card_fidelitate'] == true);
+  });
+
+  @override
+  State<AdminOrderDetailsScreen> createState() => _AdminOrderDetailsScreenState();
+}
+
+class _AdminOrderDetailsScreenState extends State<AdminOrderDetailsScreen> {
+  late Map<String, dynamic> _orderData;
+  late ValueNotifier<String> _paymentTypeNotifier;
+  late ValueNotifier<bool> _cardFidelitateNotifier;
+  StreamSubscription<DocumentSnapshot>? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _orderData = widget.orderData;
+    _paymentTypeNotifier = ValueNotifier<String>(
+      (widget.orderData['tip_plata'] as String?) ?? PaymentType.cash.value,
+    );
+    _cardFidelitateNotifier = ValueNotifier<bool>(widget.orderData['card_fidelitate'] == true);
+    _subscription = FirebaseFirestore.instance
+        .collection(FirestoreCollections.orders)
+        .doc(widget.orderId)
+        .snapshots()
+        .listen((snapshot) {
+      if (!snapshot.exists || !mounted) return;
+      final data = snapshot.data() as Map<String, dynamic>;
+      setState(() {
+        _orderData = data;
+        _cardFidelitateNotifier.value = data['card_fidelitate'] == true;
+        if (data['tip_plata'] != _paymentTypeNotifier.value) {
+          _paymentTypeNotifier.value = data['tip_plata'] as String? ?? PaymentType.cash.value;
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    _paymentTypeNotifier.dispose();
+    _cardFidelitateNotifier.dispose();
+    super.dispose();
+  }
 
   double _cardDiscount(Map data) {
     final produse = data['produse'] as List? ?? [];
@@ -38,7 +79,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
   }
 
   Future<void> _openNavigation(UserProvider userProvider) async {
-    final address = Uri.encodeComponent('${orderData['adresa_livrare']}');
+    final address = Uri.encodeComponent('${_orderData['adresa_livrare']}');
     Uri uri;
     if (userProvider.navigationApp == AppConstants.navigationWaze) {
       uri = Uri.parse('waze://?q=$address&navigate=yes');
@@ -57,7 +98,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
   }
 
   Future<void> _callClient() async {
-    final phone = orderData['telefon_client'] ?? '';
+    final phone = _orderData['telefon_client'] ?? '';
     final String cleanPhone = phone.replaceAll(RegExp(r'[^0-9+]'), '');
     final Uri uri = Uri(scheme: 'tel', path: cleanPhone);
     try {
@@ -80,7 +121,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
 
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
-          .doc(orderId)
+          .doc(widget.orderId)
           .update(updateData);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
@@ -97,7 +138,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     try {
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
-          .doc(orderId)
+          .doc(widget.orderId)
           .update({'tip_plata': tipPlata});
     } catch (e) {
       debugPrint("Eroare la _updatePaymentType: $e");
@@ -117,18 +158,18 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     );
     if (result != null && context.mounted) {
       await _updatePaymentType(context, result);
-      paymentTypeNotifier.value = result;
+      _paymentTypeNotifier.value = result;
     }
   }
 
   Future<void> _toggleCardFidelitate(BuildContext context) async {
-    final newValue = !cardFidelitateNotifier.value;
+    final newValue = !_cardFidelitateNotifier.value;
     try {
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
-          .doc(orderId)
+          .doc(widget.orderId)
           .update({'card_fidelitate': newValue});
-      cardFidelitateNotifier.value = newValue;
+      _cardFidelitateNotifier.value = newValue;
     } catch (e) {
       debugPrint("Eroare la _toggleCardFidelitate: $e");
       if (context.mounted) {
@@ -143,12 +184,12 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     try {
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
-          .doc(orderId)
+          .doc(widget.orderId)
           .update({
         'status': OrderStatus.waiting.label,
         'id_sofer': FieldValue.delete(),
       });
-      FcmService().sendNewOrderNotification(orderId, orderData);
+      FcmService().sendNewOrderNotification(widget.orderId, _orderData);
       if (context.mounted) Navigator.pop(context);
     } catch (e) {
       debugPrint("Eroare la _unassignOrder: $e");
@@ -164,7 +205,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
     return await showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (context) => UnassignOrderDialog(orderData: orderData),
+      builder: (context) => UnassignOrderDialog(orderData: _orderData),
     );
   }
 
@@ -218,8 +259,8 @@ class AdminOrderDetailsScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Builder(builder: (context) {
-                          final blocAp = orderData['bloc_apartament'] ?? '';
-                          final adresaFull = blocAp.isNotEmpty ? '${orderData['adresa_livrare']}, $blocAp' : '${orderData['adresa_livrare'] ?? '-'}';
+                          final blocAp = _orderData['bloc_apartament'] ?? '';
+                          final adresaFull = blocAp.isNotEmpty ? '${_orderData['adresa_livrare']}, $blocAp' : '${_orderData['adresa_livrare'] ?? '-'}';
                           return Text(
                             adresaFull,
                             style: TextStyle(color: theme.textPrimary, fontSize: 13, fontWeight: FontWeight.w500),
@@ -320,8 +361,8 @@ class AdminOrderDetailsScreen extends StatelessWidget {
   }
 
   Widget _buildMainCard(BuildContext context, ThemeProvider theme) {
-    List produse = orderData['produse'] ?? [];
-    String mentiuni = orderData['mentiuni'] ?? "";
+    List produse = _orderData['produse'] ?? [];
+    String mentiuni = _orderData['mentiuni'] ?? "";
 
     return Container(
       width: double.infinity,
@@ -340,34 +381,34 @@ class AdminOrderDetailsScreen extends StatelessWidget {
             child: Text("Alocată", style: TextStyle(color: theme.statusTextAlocata, fontWeight: FontWeight.bold, fontSize: 12)),
           ),
           const SizedBox(height: 15),
-          Text(orderData['adresa_livrare'] ?? 'Adresă lipsă', style: TextStyle(color: theme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
-          if ((orderData['bloc_apartament'] ?? '') != '')
+          Text(_orderData['adresa_livrare'] ?? 'Adresă lipsă', style: TextStyle(color: theme.textPrimary, fontSize: 22, fontWeight: FontWeight.bold)),
+          if ((_orderData['bloc_apartament'] ?? '') != '')
             Padding(
               padding: const EdgeInsets.only(top: 4),
-              child: Text(orderData['bloc_apartament'], style: TextStyle(color: theme.textSecondary, fontSize: 16)),
+              child: Text(_orderData['bloc_apartament'], style: TextStyle(color: theme.textSecondary, fontSize: 16)),
             ),
           const SizedBox(height: 6),
-          Text("Contact: ${orderData['telefon_client'] ?? '-'}", style: TextStyle(color: theme.textGriFix, fontSize: 14)),
+          Text("Contact: ${_orderData['telefon_client'] ?? '-'}", style: TextStyle(color: theme.textGriFix, fontSize: 14)),
           const SizedBox(height: 6),
           _buildPaymentRow(context, theme),
-          if ((orderData['creat_de_nume'] ?? '') != '')
+          if ((_orderData['creat_de_nume'] ?? '') != '')
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Row(
                 children: [
                   Flexible(
-                    child: Text("Creat de: ${orderData['creat_de_nume']} • ",
+                    child: Text("Creat de: ${_orderData['creat_de_nume']} • ",
                       style: TextStyle(color: theme.textGriFix, fontSize: 12),
                       overflow: TextOverflow.ellipsis),
                     ),
                   Text(
                     () {
-                      final r = (orderData['creat_de'] ?? '').toString();
+                      final r = (_orderData['creat_de'] ?? '').toString();
                       return r == 'sofer' ? 'șofer' : r == 'dispecer' ? 'dispecer' : 'admin';
                     }(),
                     style: TextStyle(
                       color: () {
-                        final r = (orderData['creat_de'] ?? '').toString();
+                        final r = (_orderData['creat_de'] ?? '').toString();
                         return r == 'sofer' ? theme.brandBlue
                             : r == 'dispecer' ? theme.statusTextFinalizata
                             : theme.statusTextInAsteptare;
@@ -419,10 +460,10 @@ class AdminOrderDetailsScreen extends StatelessWidget {
           ],
           const Divider(height: 35, color: Colors.black12),
           ValueListenableBuilder<bool>(
-            valueListenable: cardFidelitateNotifier,
+            valueListenable: _cardFidelitateNotifier,
             builder: (context, cardFidelitate, _) {
-              final double totalOriginal = (orderData['total_comanda'] ?? 0).toDouble();
-              final double discount = cardFidelitate ? _cardDiscount(orderData) : 0;
+              final double totalOriginal = (_orderData['total_comanda'] ?? 0).toDouble();
+              final double discount = cardFidelitate ? _cardDiscount(_orderData) : 0;
               final double totalDisplay = totalOriginal - discount;
               return Column(
                 children: [
@@ -470,7 +511,7 @@ class AdminOrderDetailsScreen extends StatelessWidget {
 
   Widget _buildPaymentRow(BuildContext context, ThemeProvider theme) {
     return ValueListenableBuilder<String>(
-      valueListenable: paymentTypeNotifier,
+      valueListenable: _paymentTypeNotifier,
       builder: (context, tipPlata, _) {
         final isCard = tipPlata.toLowerCase() == PaymentType.card.value;
         final isFactura = tipPlata.toLowerCase() == PaymentType.invoice.value;
