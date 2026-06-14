@@ -1,22 +1,22 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:gazprof/core/constants.dart';
 import 'package:gazprof/models/product_item.dart';
 
-/// Singleton provider that loads the products list once per app session.
-/// All order-creation screens (DispecerHome, AdminDocumente, SoferCreateOrder)
-/// read from this cache instead of each issuing a separate Firestore read.
+/// Singleton provider that listens to the products collection in real time.
+/// Any admin change to Firestore propagates instantly to all connected clients.
 class ProductsProvider extends ChangeNotifier {
   List<ProductItem> _products = [];
   bool _isLoading = false;
   bool _isLoaded = false;
   bool _hasError = false;
+  bool _initialized = false;
+  StreamSubscription<QuerySnapshot>? _subscription;
 
   List<ProductItem> get products => _products;
   bool get isLoading => _isLoading;
   bool get isLoaded => _isLoaded;
-
-  /// True dacă ultimul fetch a eșuat. Ecranele pot afișa un mesaj + buton retry.
   bool get hasError => _hasError;
 
   /// Returns a deep copy of the products list (each screen gets its own
@@ -25,42 +25,27 @@ class ProductsProvider extends ChangeNotifier {
     return _products.map((p) => ProductItem(p.name, p.price, 0)).toList();
   }
 
+  /// Loads products on first call, then subscribes to Firestore snapshots
+  /// so any future changes propagate automatically.
   Future<void> loadIfNeeded() async {
-    if (_isLoaded || _isLoading) return;
+    if (_initialized) return;
+    if (_isLoading) return;
+
     _isLoading = true;
     _hasError = false;
-    // Nu apelăm notifyListeners() la start — evităm un rebuild inutil
-    // (guard-ul din ecrane verifică isLoading, nu avem nevoie de rebuild acum)
 
     try {
-      final snapshot = await FirebaseFirestore.instance
+      var snapshot = await FirebaseFirestore.instance
           .collection(FirestoreCollections.products)
           .orderBy('pozitie')
           .get();
 
       if (snapshot.docs.isEmpty) {
-        // Seed default products only once if the collection is empty
-        final defaultProducts = [
-          {"nume": "Butelie 10kg", "pret": 120.0},
-          {"nume": "Butelie 11kg", "pret": 115.0},
-          {"nume": "Butelie 11kg filet", "pret": 115.0},
-          {"nume": "Butelie 35kg", "pret": 400.0},
-          {"nume": "Ambalaj", "pret": 250.0},
-          {"nume": "Ceas butelie", "pret": 40.0},
-        ];
-        for (int i = 0; i < defaultProducts.length; i++) {
-          await FirebaseFirestore.instance
-              .collection(FirestoreCollections.products)
-              .add({
-            'nume': defaultProducts[i]['nume'],
-            'pret': defaultProducts[i]['pret'],
-            'pozitie': i,
-          });
-        }
-        // Reload after seeding
-        _isLoading = false;
-        await loadIfNeeded();
-        return;
+        await _seedDefaultProducts();
+        snapshot = await FirebaseFirestore.instance
+            .collection(FirestoreCollections.products)
+            .orderBy('pozitie')
+            .get();
       }
 
       _products = snapshot.docs.map((doc) {
@@ -73,10 +58,16 @@ class ProductsProvider extends ChangeNotifier {
       }).toList();
 
       _isLoaded = true;
+      _initialized = true;
+
+      // Subscribe to real-time updates
+      _subscription = FirebaseFirestore.instance
+          .collection(FirestoreCollections.products)
+          .orderBy('pozitie')
+          .snapshots()
+          .listen(_onSnapshot, onError: _onError);
     } catch (e) {
       debugPrint('ProductsProvider: eroare la încărcarea produselor: $e');
-      // Marcăm _isLoaded = true pentru a opri ciclul infinit de retry.
-      // _hasError = true permite ecranelor să afișeze un mesaj + buton retry.
       _isLoaded = true;
       _hasError = true;
     } finally {
@@ -85,19 +76,74 @@ class ProductsProvider extends ChangeNotifier {
     }
   }
 
-  /// Permite reîncărcarea manuală după o eroare (apelat din butonul Retry).
-  Future<void> retry() async {
-    _isLoaded = false;
+  void _onSnapshot(QuerySnapshot snapshot) {
+    _products = snapshot.docs.map((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      return ProductItem(
+        data['nume'] ?? 'Produs',
+        (data['pret'] ?? 0.0).toDouble(),
+        0,
+      );
+    }).toList();
+    _isLoaded = true;
     _hasError = false;
-    _products = [];
-    await loadIfNeeded();
+    notifyListeners();
   }
 
-  /// Call this when an admin changes the product list so it reloads on next use.
-  void invalidate() {
+  void _onError(Object e) {
+    debugPrint('ProductsProvider stream error: $e');
+    _hasError = true;
+    notifyListeners();
+  }
+
+  Future<void> _seedDefaultProducts() async {
+    final defaultProducts = [
+      {"nume": "Butelie 10kg", "pret": 120.0},
+      {"nume": "Butelie 11kg", "pret": 115.0},
+      {"nume": "Butelie 11kg filet", "pret": 115.0},
+      {"nume": "Butelie 35kg", "pret": 400.0},
+      {"nume": "Ambalaj", "pret": 250.0},
+      {"nume": "Ceas butelie", "pret": 40.0},
+    ];
+    for (int i = 0; i < defaultProducts.length; i++) {
+      await FirebaseFirestore.instance
+          .collection(FirestoreCollections.products)
+          .add({
+        'nume': defaultProducts[i]['nume'],
+        'pret': defaultProducts[i]['pret'],
+        'pozitie': i,
+      });
+    }
+  }
+
+  /// Retry after an error — tears down the stream and re-initializes.
+  Future<void> retry() async {
+    _subscription?.cancel();
+    _subscription = null;
+    _initialized = false;
     _isLoaded = false;
     _hasError = false;
     _products = [];
     notifyListeners();
+    await loadIfNeeded();
+  }
+
+  /// Force a reload. With the stream, this is rarely needed, but kept for
+  /// callers (e.g. admin_product_setting_screen) that expect instant feedback.
+  void invalidate() {
+    _subscription?.cancel();
+    _subscription = null;
+    _initialized = false;
+    _isLoaded = false;
+    _hasError = false;
+    _products = [];
+    notifyListeners();
+    loadIfNeeded();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }
