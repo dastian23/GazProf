@@ -4,9 +4,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:gazprof/core/constants.dart';
-
-import '../screens/sofer/documente/sofer_documente_screen.dart';
+import 'package:gazprof/core/user_provider.dart';
+import 'package:gazprof/screens/sofer/sofer_shell.dart';
+import 'package:gazprof/screens/admin/admin_shell.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -133,8 +135,29 @@ class NotificationService {
   }
 
   void _navigateToOrder(String orderId) {
+    final context = navigatorKey.currentContext;
+    if (context == null) return;
+
+    final role = Provider.of<UserProvider>(context, listen: false).userRole.toLowerCase();
+
+    Widget shell;
+    if (role == 'sofer') {
+      // Șoferul ajunge pe tab-ul Documente (index 1) — comenzile lui alocate
+      shell = const SoferShell(initialIndex: 1);
+    } else if (role == 'admin' || role == 'administrator') {
+      // Adminul ajunge pe tab-ul Home (index 0) — comenzile live
+      shell = const AdminShell(initialIndex: 0);
+    } else {
+      // Dispecer sau neatribuit — nu primesc notificări, nu navigăm
+      return;
+    }
+
     navigatorKey.currentState?.pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const SoferDocumenteScreen()),
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => shell,
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
+      ),
       (route) => false,
     );
   }
