@@ -33,7 +33,6 @@ class AdminShellState extends State<AdminShell> {
     setState(() => _currentIndex = index);
   }
 
-  // Allow inner screens to request a tab switch without Navigator.pushReplacement
   static AdminShellState? of(BuildContext context) =>
       context.findAncestorStateOfType<AdminShellState>();
 
@@ -48,6 +47,7 @@ class AdminShellState extends State<AdminShell> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           IndexedStack(
@@ -72,7 +72,6 @@ class AdminShellState extends State<AdminShell> {
   }
 }
 
-/// Wraps a tab child and keeps it alive when the IndexedStack hides it.
 class _KeepAliveTab extends StatefulWidget {
   const _KeepAliveTab({required this.child});
   final Widget child;

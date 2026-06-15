@@ -47,6 +47,7 @@ class SoferShellState extends State<SoferShell> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           IndexedStack(

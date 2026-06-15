@@ -47,6 +47,7 @@ class DispecerShellState extends State<DispecerShell> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBg,
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           IndexedStack(

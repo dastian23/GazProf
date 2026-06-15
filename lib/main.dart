@@ -107,9 +107,7 @@ class GazProfApp extends StatelessWidget {
           onSurface: Colors.white,
         ),
       ),
-      home: Scaffold(
-        body: const AuthWrapper(),
-      ),
+      home: const AuthWrapper(),
     );
   }
 }
