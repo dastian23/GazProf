@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -30,11 +31,31 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> with Widget
   late bool _inProgram;
   Stream<QuerySnapshot>? _allShiftOrdersStream;
 
+  Timer? _shiftTimer;
+
   void _recomputeShift() {
     final now = DateTime.now();
-    final newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
-    final newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
-    final newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    final hour = now.hour;
+
+    DateTime newStart;
+    DateTime newEnd;
+    bool newInProgram;
+
+    if (hour < 1) {
+      final prevDay = now.subtract(const Duration(days: 1));
+      newStart = DateTime(prevDay.year, prevDay.month, prevDay.day, 7, 0, 0);
+      newEnd = DateTime(now.year, now.month, now.day, 1, 0, 0);
+      newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    } else if (hour < 7) {
+      newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+      newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+      newInProgram = false;
+    } else {
+      newStart = DateTime(now.year, now.month, now.day, 7, 0, 0);
+      newEnd = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
+      newInProgram = now.isAfter(newStart) && now.isBefore(newEnd);
+    }
+
     if (newStart != _startOfShift || newEnd != _endOfShift || newInProgram != _inProgram) {
       setState(() {
         _startOfShift = newStart;
@@ -59,19 +80,14 @@ class _SoferDocumenteScreenState extends State<SoferDocumenteScreen> with Widget
     final now = DateTime.now();
     _startOfShift = DateTime(now.year, now.month, now.day, 7, 0, 0);
     _endOfShift = DateTime(now.year, now.month, now.day + 1, 1, 0, 0);
-    _inProgram = now.isAfter(_startOfShift) && now.isBefore(_endOfShift);
-    if (_inProgram) {
-      _allShiftOrdersStream = FirebaseFirestore.instance
-          .collection(FirestoreCollections.orders)
-          .where('data_creare', isGreaterThanOrEqualTo: _startOfShift)
-          .where('data_creare', isLessThan: _endOfShift)
-          .orderBy('data_creare', descending: true)
-          .snapshots();
-    }
+    _inProgram = false;
+    _recomputeShift();
+    _shiftTimer = Timer.periodic(const Duration(seconds: 30), (_) => _recomputeShift());
   }
 
   @override
   void dispose() {
+    _shiftTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
