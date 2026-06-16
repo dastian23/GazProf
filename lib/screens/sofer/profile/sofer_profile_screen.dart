@@ -114,7 +114,7 @@ class SoferProfileScreen extends StatelessWidget {
 
                         const Spacer(flex: 1),
                         Text(
-                          "Versiune 1.0.1.5",
+                          "Versiune 1.1.0.0",
                           style: TextStyle(color: theme.textSecondary, fontSize: 10),
                         ),
                         const SizedBox(height: 80),
