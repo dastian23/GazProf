@@ -37,6 +37,7 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
   // --- CĂUTARE TEXT ---
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _showPaymentStats = false;
 
   // --- FETCH: stream pentru azi, future pentru perioade trecute ---
   Stream<QuerySnapshot>? _istoricStream;
@@ -337,29 +338,93 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
     }
     int countAnulate = filteredComenzi.where((c) => (c.data() as Map)['status'] == OrderStatus.cancelled.label).length;
     int countCreate = filteredComenzi.length;
-    double sumIncasati = 0;
+    double sumIncasati = 0, sumCash = 0, sumCard = 0, sumInvoice = 0;
     for (var doc in filteredComenzi) {
       final data = doc.data() as Map;
       if (data['status'] == OrderStatus.completed.label) {
         double total = (data['total_comanda'] ?? 0).toDouble();
         if (data['card_fidelitate'] == true) total -= cardDiscountFromData(data);
         sumIncasati += total;
+        final tipPlata = (data['tip_plata'] ?? 'cash').toString();
+        if (tipPlata == 'cash') { sumCash += total; }
+        else if (tipPlata == 'card') { sumCard += total; }
+        else if (tipPlata == 'factura') { sumInvoice += total; }
       }
     }
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
+        GestureDetector(
+          onTap: () => setState(() => _showPaymentStats = !_showPaymentStats),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+            decoration: BoxDecoration(
+              color: theme.isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.bar_chart_rounded, color: theme.brandBlue, size: 18),
+                const SizedBox(width: 8),
+                Text("Statistici", style: TextStyle(color: theme.textPrimary, fontWeight: FontWeight.w600, fontSize: 13)),
+                const Spacer(),
+                AnimatedRotation(
+                  turns: _showPaymentStats ? 0.5 : 0,
+                  duration: const Duration(milliseconds: 200),
+                  child: Icon(Icons.keyboard_arrow_down, color: theme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          firstChild: const SizedBox(width: double.infinity),
+          secondChild: Column(
             children: [
-              Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
-              const SizedBox(width: 8),
-              Expanded(child: _buildStatBox(countCreate.toString(), "Create", theme.brandBlue, theme)),
+              Padding(
+                padding: const EdgeInsets.only(left: 24, top: 8, bottom: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Status comenzi", style: TextStyle(color: theme.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildStatBox(countAnulate.toString(), "Anulate", theme.statusTextAnulata, theme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildStatBox(sumIncasati.toStringAsFixed(0), "Lei încasați", theme.statusTextFinalizata, theme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildStatBox(countCreate.toString(), "Create", theme.brandBlue, theme)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.only(left: 24, bottom: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text("Tip plată", style: TextStyle(color: theme.textSecondary, fontSize: 11, fontWeight: FontWeight.w600)),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildStatBox(sumCash.toStringAsFixed(0), "Cash", const Color(0xFF4CAF50), theme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildStatBox(sumCard.toStringAsFixed(0), "Card", const Color(0xFF2196F3), theme)),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildStatBox(sumInvoice.toStringAsFixed(0), "Factura", const Color(0xFFFF9800), theme)),
+                  ],
+                ),
+              ),
             ],
           ),
+          crossFadeState: _showPaymentStats ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+          duration: const Duration(milliseconds: 250),
         ),
         const SizedBox(height: 12),
         Padding(
@@ -463,18 +528,18 @@ class _DispecerIstoricScreenState extends State<DispecerIstoricScreen> {
 
   Widget _buildStatBox(String value, String label, Color valueColor, ThemeProvider theme) {
     return Container(
-      height: 70,
+      height: 55,
       decoration: BoxDecoration(
         color: theme.cardFill,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: theme.cardOutline, width: 1.0),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(value, style: TextStyle(color: valueColor, fontSize: 18, fontWeight: FontWeight.w900)),
-          const SizedBox(height: 2),
-          Text(label, style: TextStyle(color: theme.textSecondary, fontSize: 10, fontWeight: FontWeight.w600)),
+          Text(value, style: TextStyle(color: valueColor, fontSize: 15, fontWeight: FontWeight.w900)),
+          const SizedBox(height: 1),
+          Text(label, style: TextStyle(color: theme.textSecondary, fontSize: 9, fontWeight: FontWeight.w600)),
         ],
       ),
     );
