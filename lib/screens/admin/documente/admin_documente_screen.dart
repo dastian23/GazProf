@@ -102,7 +102,6 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
   }
 
   double get _calculateTotal {
-    if (_selectedPayment == 'factura') return 0;
     return products.fold(0, (val, item) => val + (item.price * item.quantity));
   }
 
@@ -349,7 +348,7 @@ class _AdminDocumenteScreenState extends State<AdminDocumenteScreen> {
                                     if (_selectedPayment == 'factura')
                                       Padding(
                                         padding: const EdgeInsets.only(top: 4),
-                                        child: Text("Facturare ulterioară — totalul este 0 lei",
+                                        child: Text("Plata se va face ulterior prin factură — Total: ${_calculateTotal.toStringAsFixed(0)} lei",
                                           style: TextStyle(color: theme.statusTextInAsteptare, fontSize: 12, fontStyle: FontStyle.italic)),
                                       ),
                                   ],

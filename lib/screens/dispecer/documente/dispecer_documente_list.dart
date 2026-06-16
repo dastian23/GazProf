@@ -35,6 +35,7 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
   }
 
   double _cardDiscount(Map data) {
+    if ((data['tip_plata'] ?? '').toString().toLowerCase() == PaymentType.invoice.value) return 0;
     final produse = data['produse'] as List? ?? [];
     double count = 0;
     for (var p in produse) {
@@ -297,6 +298,33 @@ class _DispecerDocumenteListState extends State<DispecerDocumenteList> {
                                     fontSize: 12,
                                     fontStyle: FontStyle.italic
                                 ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+
+                    if (tipPlata.toString().toLowerCase() == PaymentType.invoice.value) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: theme.statusCardInAsteptare.withValues(alpha: 0.3),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: theme.statusTextInAsteptare.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.receipt, size: 14, color: Color(0xFFFF6B00)),
+                            const SizedBox(width: 8),
+                            Text(
+                              "Plată cu factură",
+                              style: TextStyle(
+                                color: theme.statusTextInAsteptare,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],

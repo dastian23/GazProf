@@ -145,7 +145,6 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
 
 
   double get _calculateTotal {
-    if (_selectedPayment == 'factura') return 0;
     return products.fold(0, (sum, item) => sum + (item.price * item.quantity));
   }
 
@@ -411,7 +410,7 @@ class _DispecerHomeScreenState extends State<DispecerHomeScreen> with WidgetsBin
                                 if (_selectedPayment == 'factura')
                                   Padding(
                                     padding: const EdgeInsets.only(top: 4),
-                                    child: Text("Facturare ulterioară — totalul este 0 lei",
+                                    child: Text("Plata se va face ulterior prin factură — Total: ${_calculateTotal.toStringAsFixed(0)} lei",
                                       style: TextStyle(color: theme.statusTextInAsteptare, fontSize: 12, fontStyle: FontStyle.italic)),
                                   ),
                               ],

@@ -60,7 +60,6 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
   }
 
   double get _calculateTotal {
-    if (_selectedPayment == PaymentType.invoice.value) return 0;
     return products.fold(0, (total, item) => total + (item.price * item.quantity));
   }
 
@@ -267,7 +266,7 @@ class _SoferCreateOrderScreenState extends State<SoferCreateOrderScreen> {
                           if (_selectedPayment == PaymentType.invoice.value)
                             Padding(
                               padding: const EdgeInsets.only(top: 4),
-                              child: Text("Facturare ulterioară — totalul este 0 lei",
+                              child: Text("Plata se va face ulterior prin factură — Total: ${_calculateTotal.toStringAsFixed(0)} lei",
                                 style: TextStyle(color: theme.statusTextInAsteptare, fontSize: 12, fontStyle: FontStyle.italic)),
                             ),
                         ],

@@ -56,6 +56,7 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
   }
 
   double _cardDiscount(Map data) {
+    if ((data['tip_plata'] ?? '').toString().toLowerCase() == PaymentType.invoice.value) return 0;
     final produse = data['produse'] as List? ?? [];
     double count = 0;
     for (var p in produse) {
@@ -122,12 +123,27 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
     }
   }
 
+  double _calculateTotalFromProducts(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double total = 0;
+    for (var p in produse) {
+      total += (p['subtotal'] ?? 0).toDouble();
+    }
+    return total;
+  }
+
   Future<void> _updatePaymentType(BuildContext context, String tipPlata) async {
     try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection(FirestoreCollections.orders)
+          .doc(widget.orderId)
+          .get();
+      final data = snapshot.data() as Map<String, dynamic>;
+      final newTotal = _calculateTotalFromProducts(data);
       await FirebaseFirestore.instance
           .collection(FirestoreCollections.orders)
           .doc(widget.orderId)
-          .update({'tip_plata': tipPlata});
+          .update({'tip_plata': tipPlata, 'total_comanda': newTotal});
     } catch (e) {
       debugPrint("Eroare la _updatePaymentType: $e");
       if (context.mounted) {
@@ -641,6 +657,14 @@ class _SoferOrderDetailsScreenState extends State<SoferOrderDetailsScreen> {
                     ),
                   ],
                 ),
+                if (_paymentTypeNotifier.value.toLowerCase() == PaymentType.invoice.value)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      "Plata se va face ulterior prin factură — Total: ${totalDisplay.toStringAsFixed(0)} lei",
+                      style: TextStyle(color: theme.statusTextInAsteptare, fontSize: 12, fontStyle: FontStyle.italic),
+                    ),
+                  ),
               ],
             );
           }(),
