@@ -237,6 +237,17 @@ class AdminProfileScreen extends StatelessWidget {
     );
   }
 
+  double _cardDiscountFromData(Map data) {
+    final produse = data['produse'] as List? ?? [];
+    double count = 0;
+    for (var p in produse) {
+      if (p['nume'].toString().startsWith('Butelie')) {
+        count += (p['cantitate'] ?? 0).toDouble();
+      }
+    }
+    return count * AppConstants.discountPerBottle;
+  }
+
   Widget _buildAdminStatsRow(ThemeProvider theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -268,7 +279,9 @@ class AdminProfileScreen extends StatelessWidget {
                   for (var doc in snapshot.data!.docs) {
                     final data = doc.data() as Map<String, dynamic>;
                     if (data['status'] == OrderStatus.completed.label) {
-                      leiIncasati += (data['total_comanda'] ?? 0).toDouble();
+                      double total = (data['total_comanda'] ?? 0).toDouble();
+                      if (data['card_fidelitate'] == true) total -= _cardDiscountFromData(data);
+                      leiIncasati += total;
                       comenziFinalizate++;
                     }
                   }
